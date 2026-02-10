@@ -6,7 +6,7 @@ A complete microservices-based system with 5 NestJS services, 2 frontends (Next.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                              CLIENT LAYER                                    │
+│                              CLIENT LAYER                                   │
 │  ┌──────────────┐    ┌──────────────┐                                       │
 │  │  Next.js     │    │   Angular    │                                       │
 │  │  (Public)    │    │   (Admin)    │                                       │
@@ -17,9 +17,9 @@ A complete microservices-based system with 5 NestJS services, 2 frontends (Next.
           └─────────┬─────────┘
                     │
 ┌───────────────────▼─────────────────────────────────────────────────────────┐
-│                           API GATEWAY (Kong)                                 │
-│                         Port: 8000 (Proxy)                                   │
-│                         Port: 8001 (Admin)                                   │
+│                           API GATEWAY (Kong)                                │
+│                         Port: 8000 (Proxy)                                  │
+│                         Port: 8001 (Admin)                                  │
 └───────────────────┬─────────────────────────────────────────────────────────┘
                     │
         ┌───────────┼───────────┐
@@ -50,7 +50,7 @@ A complete microservices-based system with 5 NestJS services, 2 frontends (Next.
                                    │
                     ┌──────────────┼──────────────┐
                     │              │              │
-              ┌─────▼────┐  ┌─────▼────┐  ┌─────▼────┐
+              ┌─────▼─────┐  ┌─────▼────┐  ┌─────▼────┐
               │ Prometheus│  │ Grafana  │  │  Jaeger  │
               │ Port:9090 │  │Port:3001 │  │Port:16686│
               └───────────┘  └──────────┘  └──────────┘

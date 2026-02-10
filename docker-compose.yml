@@ -1,5 +1,8 @@
 version: '3.8'
 
+# MINIMAL INFRASTRUCTURE ONLY - NO MICROSERVICES
+# Use this to test if the issue is with infrastructure or microservices
+
 services:
   # ==========================================
   # Database Services
@@ -40,7 +43,7 @@ services:
       retries: 5
 
   # ==========================================
-  # Kafka (KRaft Mode - No Zookeeper)
+  # Kafka (KRaft Mode)
   # ==========================================
   kafka:
     image: confluentinc/cp-kafka:7.5.0
@@ -171,6 +174,16 @@ services:
       KC_HOSTNAME: localhost
       KC_HTTP_ENABLED: "true"
       KC_PROXY: edge
+      KC_TRANSACTION_XA_ENABLED: "false"
+      KC_PROXY_HEADERS: xforwarded
+      KC_DB_POOL_INITIAL_SIZE: "5"
+      KC_DB_POOL_MIN_SIZE: "5"
+      KC_DB_POOL_MAX_SIZE: "20"
+      KC_HEALTH_ENABLED: "true"
+      KC_METRICS_ENABLED: "true"
+      KC_LOG_LEVEL: INFO
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_STRICT_HTTPS: "false"
     ports:
       - "8080:8080"
     command: start-dev
@@ -179,12 +192,7 @@ services:
         condition: service_healthy
     networks:
       - microservices-network
-    healthcheck:
-      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && timeout 1 cat <&3 | grep -q '200 OK'"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
+    restart: unless-stopped
 
   # ==========================================
   # Monitoring & Observability
@@ -217,7 +225,6 @@ services:
       GF_USERS_ALLOW_SIGN_UP: "false"
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./docker/grafana/provisioning:/etc/grafana/provisioning
     depends_on:
       - prometheus
     networks:
@@ -270,209 +277,209 @@ services:
   # ==========================================
   # Microservices (Development Mode)
   # ==========================================
-  auth-service:
-    build:
-      context: ./services/auth-service
-      dockerfile: Dockerfile
-    container_name: microservices-auth-service
-    environment:
-      NODE_ENV: development
-      HTTP_PORT: 3001
-      GRPC_PORT: 50051
-      DB_CONNECTION: postgres
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USERNAME: admin
-      DB_PASSWORD: admin123
-      DB_DATABASE: auth_db
-      DB_TIMEZONE: Asia/Phnom_Penh
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      KAFKA_BROKERS: kafka:9092
-      KAFKA_GROUP_ID: auth-service
-      JWT_SECRET: your-secret-key-change-in-production
-      JWT_EXPIRATION: 3600
-      KEYCLOAK_URL: http://keycloak:8080
-      KEYCLOAK_REALM: master
-      KEYCLOAK_CLIENT_ID: auth-service-client
-      KEYCLOAK_CLIENT_SECRET: auth-service-secret
-    ports:
-      - "3001:3001"
-      - "50051:50051"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
-      keycloak:
-        condition: service_healthy
-    networks:
-      - microservices-network
-    volumes:
-      - ./services/auth-service:/app
-      - /app/node_modules
-    command: npm run start:dev
+  # auth-service:
+  #   build:
+  #     context: ./services/auth-service
+  #     dockerfile: Dockerfile
+  #   container_name: microservices-auth-service
+  #   environment:
+  #     NODE_ENV: development
+  #     HTTP_PORT: 3001
+  #     GRPC_PORT: 50051
+  #     DB_CONNECTION: postgres
+  #     DB_HOST: postgres
+  #     DB_PORT: 5432
+  #     DB_USERNAME: admin
+  #     DB_PASSWORD: admin123
+  #     DB_DATABASE: auth_db
+  #     DB_TIMEZONE: Asia/Phnom_Penh
+  #     REDIS_HOST: redis
+  #     REDIS_PORT: 6379
+  #     KAFKA_BROKERS: kafka:9092
+  #     KAFKA_GROUP_ID: auth-service
+  #     JWT_SECRET: your-secret-key-change-in-production
+  #     JWT_EXPIRATION: 3600
+  #     KEYCLOAK_URL: http://keycloak:8080
+  #     KEYCLOAK_REALM: master
+  #     KEYCLOAK_CLIENT_ID: auth-service-client
+  #     KEYCLOAK_CLIENT_SECRET: auth-service-secret
+  #   ports:
+  #     - "3001:3001"
+  #     - "50051:50051"
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #     kafka:
+  #       condition: service_healthy
+  #     keycloak:
+  #       condition: service_healthy
+  #   networks:
+  #     - microservices-network
+  #   volumes:
+  #     - ./services/auth-service:/app
+  #     - /app/node_modules
+  #   command: npm run start:dev
 
-  user-service:
-    build:
-      context: ./services/user-service
-      dockerfile: Dockerfile
-    container_name: microservices-user-service
-    environment:
-      NODE_ENV: development
-      HTTP_PORT: 3002
-      GRPC_PORT: 50052
-      DB_CONNECTION: postgres
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USERNAME: admin
-      DB_PASSWORD: admin123
-      DB_DATABASE: user_db
-      DB_TIMEZONE: Asia/Phnom_Penh
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      KAFKA_BROKERS: kafka:9092
-      KAFKA_GROUP_ID: user-service
-      JWT_SECRET: your-secret-key-change-in-production
-    ports:
-      - "3002:3002"
-      - "50052:50052"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
-    networks:
-      - microservices-network
-    volumes:
-      - ./services/user-service:/app
-      - /app/node_modules
-    command: npm run start:dev
+  # user-service:
+  #   build:
+  #     context: ./services/user-service
+  #     dockerfile: Dockerfile
+  #   container_name: microservices-user-service
+  #   environment:
+  #     NODE_ENV: development
+  #     HTTP_PORT: 3002
+  #     GRPC_PORT: 50052
+  #     DB_CONNECTION: postgres
+  #     DB_HOST: postgres
+  #     DB_PORT: 5432
+  #     DB_USERNAME: admin
+  #     DB_PASSWORD: admin123
+  #     DB_DATABASE: user_db
+  #     DB_TIMEZONE: Asia/Phnom_Penh
+  #     REDIS_HOST: redis
+  #     REDIS_PORT: 6379
+  #     KAFKA_BROKERS: kafka:9092
+  #     KAFKA_GROUP_ID: user-service
+  #     JWT_SECRET: your-secret-key-change-in-production
+  #   ports:
+  #     - "3002:3002"
+  #     - "50052:50052"
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #     kafka:
+  #       condition: service_healthy
+  #   networks:
+  #     - microservices-network
+  #   volumes:
+  #     - ./services/user-service:/app
+  #     - /app/node_modules
+  #   command: npm run start:dev
 
-  order-service:
-    build:
-      context: ./services/order-service
-      dockerfile: Dockerfile
-    container_name: microservices-order-service
-    environment:
-      NODE_ENV: development
-      HTTP_PORT: 3004
-      GRPC_PORT: 50054
-      DB_CONNECTION: postgres
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USERNAME: admin
-      DB_PASSWORD: admin123
-      DB_DATABASE: order_db
-      DB_TIMEZONE: Asia/Phnom_Penh
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      KAFKA_BROKERS: kafka:9092
-      KAFKA_GROUP_ID: order-service
-      JWT_SECRET: your-secret-key-change-in-production
-    ports:
-      - "3004:3004"
-      - "50054:50054"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
-    networks:
-      - microservices-network
-    volumes:
-      - ./services/order-service:/app
-      - /app/node_modules
-    command: npm run start:dev
+  # order-service:
+  #   build:
+  #     context: ./services/order-service
+  #     dockerfile: Dockerfile
+  #   container_name: microservices-order-service
+  #   environment:
+  #     NODE_ENV: development
+  #     HTTP_PORT: 3004
+  #     GRPC_PORT: 50054
+  #     DB_CONNECTION: postgres
+  #     DB_HOST: postgres
+  #     DB_PORT: 5432
+  #     DB_USERNAME: admin
+  #     DB_PASSWORD: admin123
+  #     DB_DATABASE: order_db
+  #     DB_TIMEZONE: Asia/Phnom_Penh
+  #     REDIS_HOST: redis
+  #     REDIS_PORT: 6379
+  #     KAFKA_BROKERS: kafka:9092
+  #     KAFKA_GROUP_ID: order-service
+  #     JWT_SECRET: your-secret-key-change-in-production
+  #   ports:
+  #     - "3004:3004"
+  #     - "50054:50054"
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #     kafka:
+  #       condition: service_healthy
+  #   networks:
+  #     - microservices-network
+  #   volumes:
+  #     - ./services/order-service:/app
+  #     - /app/node_modules
+  #   command: npm run start:dev
 
-  payment-service:
-    build:
-      context: ./services/payment-service
-      dockerfile: Dockerfile
-    container_name: microservices-payment-service
-    environment:
-      NODE_ENV: development
-      HTTP_PORT: 3005
-      GRPC_PORT: 50055
-      DB_CONNECTION: postgres
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USERNAME: admin
-      DB_PASSWORD: admin123
-      DB_DATABASE: payment_db
-      DB_TIMEZONE: Asia/Phnom_Penh
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      KAFKA_BROKERS: kafka:9092
-      KAFKA_GROUP_ID: payment-service
-      JWT_SECRET: your-secret-key-change-in-production
-      PAYMENT_GATEWAY_URL: https://api.stripe.com
-      PAYMENT_GATEWAY_SECRET_KEY: sk_test_xxx
-    ports:
-      - "3005:3005"
-      - "50055:50055"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
-    networks:
-      - microservices-network
-    volumes:
-      - ./services/payment-service:/app
-      - /app/node_modules
-    command: npm run start:dev
+  # payment-service:
+  #   build:
+  #     context: ./services/payment-service
+  #     dockerfile: Dockerfile
+  #   container_name: microservices-payment-service
+  #   environment:
+  #     NODE_ENV: development
+  #     HTTP_PORT: 3005
+  #     GRPC_PORT: 50055
+  #     DB_CONNECTION: postgres
+  #     DB_HOST: postgres
+  #     DB_PORT: 5432
+  #     DB_USERNAME: admin
+  #     DB_PASSWORD: admin123
+  #     DB_DATABASE: payment_db
+  #     DB_TIMEZONE: Asia/Phnom_Penh
+  #     REDIS_HOST: redis
+  #     REDIS_PORT: 6379
+  #     KAFKA_BROKERS: kafka:9092
+  #     KAFKA_GROUP_ID: payment-service
+  #     JWT_SECRET: your-secret-key-change-in-production
+  #     PAYMENT_GATEWAY_URL: https://api.stripe.com
+  #     PAYMENT_GATEWAY_SECRET_KEY: sk_test_xxx
+  #   ports:
+  #     - "3005:3005"
+  #     - "50055:50055"
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #     kafka:
+  #       condition: service_healthy
+  #   networks:
+  #     - microservices-network
+  #   volumes:
+  #     - ./services/payment-service:/app
+  #     - /app/node_modules
+  #   command: npm run start:dev
 
-  notification-service:
-    build:
-      context: ./services/notification-service
-      dockerfile: Dockerfile
-    container_name: microservices-notification-service
-    environment:
-      NODE_ENV: development
-      HTTP_PORT: 3006
-      GRPC_PORT: 50056
-      DB_CONNECTION: postgres
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USERNAME: admin
-      DB_PASSWORD: admin123
-      DB_DATABASE: notification_db
-      DB_TIMEZONE: Asia/Phnom_Penh
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      KAFKA_BROKERS: kafka:9092
-      KAFKA_GROUP_ID: notification-service
-      JWT_SECRET: your-secret-key-change-in-production
-      SMTP_HOST: smtp.gmail.com
-      SMTP_PORT: 587
-      SMTP_USER: your-email@gmail.com
-      SMTP_PASSWORD: your-app-password
-      SMTP_FROM: noreply@microservices.com
-    ports:
-      - "3006:3006"
-      - "50056:50056"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      kafka:
-        condition: service_healthy
-    networks:
-      - microservices-network
-    volumes:
-      - ./services/notification-service:/app
-      - /app/node_modules
-    command: npm run start:dev
+  # notification-service:
+  #   build:
+  #     context: ./services/notification-service
+  #     dockerfile: Dockerfile
+  #   container_name: microservices-notification-service
+  #   environment:
+  #     NODE_ENV: development
+  #     HTTP_PORT: 3006
+  #     GRPC_PORT: 50056
+  #     DB_CONNECTION: postgres
+  #     DB_HOST: postgres
+  #     DB_PORT: 5432
+  #     DB_USERNAME: admin
+  #     DB_PASSWORD: admin123
+  #     DB_DATABASE: notification_db
+  #     DB_TIMEZONE: Asia/Phnom_Penh
+  #     REDIS_HOST: redis
+  #     REDIS_PORT: 6379
+  #     KAFKA_BROKERS: kafka:9092
+  #     KAFKA_GROUP_ID: notification-service
+  #     JWT_SECRET: your-secret-key-change-in-production
+  #     SMTP_HOST: smtp.gmail.com
+  #     SMTP_PORT: 587
+  #     SMTP_USER: your-email@gmail.com
+  #     SMTP_PASSWORD: your-app-password
+  #     SMTP_FROM: noreply@microservices.com
+  #   ports:
+  #     - "3006:3006"
+  #     - "50056:50056"
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #     kafka:
+  #       condition: service_healthy
+  #   networks:
+  #     - microservices-network
+  #   volumes:
+  #     - ./services/notification-service:/app
+  #     - /app/node_modules
+  #   command: npm run start:dev
 
 # ==========================================
 # Volumes
