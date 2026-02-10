@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+package user;
+
+import "common.proto";
+
+option go_package = "./proto";
+
+// User Service
+service UserService {
+    rpc GetProfile (common.UUID) returns (ProfileResponse);
+    rpc CreateProfile (CreateProfileRequest) returns (ProfileResponse);
+    rpc UpdateProfile (UpdateProfileRequest) returns (ProfileResponse);
+    rpc DeleteProfile (common.UUID) returns (common.StatusResponse);
+    
+    rpc GetPreferences (common.UUID) returns (PreferencesResponse);
+    rpc CreatePreferences (CreatePreferencesRequest) returns (PreferencesResponse);
+    rpc UpdatePreferences (UpdatePreferencesRequest) returns (PreferencesResponse);
+    
+    rpc HealthCheck (common.Empty) returns (HealthCheckResponse);
+}
+
+// Profile messages
+message ProfileResponse {
+    string id = 1;
+    string userId = 2;
+    string avatar = 3;
+    string bio = 4;
+    string phone = 5;
+    string address = 6;
+    string createdAt = 7;
+    string updatedAt = 8;
+}
+
+message CreateProfileRequest {
+    string userId = 1;
+    string avatar = 2;
+    string bio = 3;
+    string phone = 4;
+    string address = 5;
+}
+
+message UpdateProfileRequest {
+    string userId = 1;
+    string avatar = 2;
+    string bio = 3;
+    string phone = 4;
+    string address = 5;
+}
+
+// Preferences messages
+message PreferencesResponse {
+    string id = 1;
+    string userId = 2;
+    string language = 3;
+    string theme = 4;
+    bool notifications = 5;
+    string createdAt = 6;
+    string updatedAt = 7;
+}
+
+message CreatePreferencesRequest {
+    string userId = 1;
+    string language = 2;
+    string theme = 3;
+    bool notifications = 4;
+}
+
+message UpdatePreferencesRequest {
+    string userId = 1;
+    string language = 2;
+    string theme = 3;
+    bool notifications = 4;
+}
+
+message HealthCheckResponse {
+    string status = 1;
+    string timestamp = 2;
+    string service = 3;
+}

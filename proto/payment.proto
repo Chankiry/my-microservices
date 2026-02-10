@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+package payment;
+
+import "common.proto";
+
+option go_package = "./proto";
+
+// Payment Service
+service PaymentService {
+    rpc ProcessPayment (ProcessPaymentRequest) returns (PaymentResponse);
+    rpc GetPayment (common.UUID) returns (PaymentResponse);
+    rpc GetPaymentsByUser (GetPaymentsByUserRequest) returns (PaymentListResponse);
+    rpc RefundPayment (RefundPaymentRequest) returns (PaymentResponse);
+    rpc GetPaymentStatus (common.UUID) returns (PaymentStatusResponse);
+    rpc HealthCheck (common.Empty) returns (HealthCheckResponse);
+}
+
+// Payment messages
+message PaymentResponse {
+    string id = 1;
+    string orderId = 2;
+    string userId = 3;
+    double amount = 4;
+    string currency = 5;
+    string status = 6;
+    string paymentMethod = 7;
+    string transactionId = 8;
+    string createdAt = 9;
+    string updatedAt = 10;
+}
+
+message ProcessPaymentRequest {
+    string orderId = 1;
+    string userId = 2;
+    double amount = 3;
+    string currency = 4;
+    string paymentMethod = 5;
+    string paymentToken = 6;
+}
+
+message GetPaymentsByUserRequest {
+    string userId = 1;
+    common.PaginationRequest pagination = 2;
+}
+
+message PaymentListResponse {
+    repeated PaymentResponse payments = 1;
+    common.PaginationResponse pagination = 2;
+}
+
+message RefundPaymentRequest {
+    string paymentId = 1;
+    string reason = 2;
+}
+
+message PaymentStatusResponse {
+    string paymentId = 1;
+    string status = 2;
+    string message = 3;
+}
+
+message HealthCheckResponse {
+    string status = 1;
+    string timestamp = 2;
+    string service = 3;
+}

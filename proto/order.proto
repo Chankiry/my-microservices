@@ -1,0 +1,69 @@
+syntax = "proto3";
+
+package order;
+
+import "common.proto";
+
+option go_package = "./proto";
+
+// Order Service
+service OrderService {
+    rpc CreateOrder (CreateOrderRequest) returns (OrderResponse);
+    rpc GetOrder (common.UUID) returns (OrderResponse);
+    rpc GetOrdersByUser (GetOrdersByUserRequest) returns (OrderListResponse);
+    rpc UpdateOrderStatus (UpdateOrderStatusRequest) returns (OrderResponse);
+    rpc CancelOrder (common.UUID) returns (OrderResponse);
+    rpc HealthCheck (common.Empty) returns (HealthCheckResponse);
+}
+
+// Order messages
+message OrderItem {
+    string id = 1;
+    string productName = 2;
+    int32 quantity = 3;
+    double price = 4;
+    double subtotal = 5;
+}
+
+message OrderResponse {
+    string id = 1;
+    string userId = 2;
+    string orderNumber = 3;
+    double totalAmount = 4;
+    string status = 5;
+    repeated OrderItem items = 6;
+    string createdAt = 7;
+    string updatedAt = 8;
+}
+
+message CreateOrderRequest {
+    string userId = 1;
+    repeated CreateOrderItemRequest items = 2;
+}
+
+message CreateOrderItemRequest {
+    string productName = 1;
+    int32 quantity = 2;
+    double price = 3;
+}
+
+message GetOrdersByUserRequest {
+    string userId = 1;
+    common.PaginationRequest pagination = 2;
+}
+
+message OrderListResponse {
+    repeated OrderResponse orders = 1;
+    common.PaginationResponse pagination = 2;
+}
+
+message UpdateOrderStatusRequest {
+    string orderId = 1;
+    string status = 2;
+}
+
+message HealthCheckResponse {
+    string status = 1;
+    string timestamp = 2;
+    string service = 3;
+}
