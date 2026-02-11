@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { Order, OrderItem, OrderStatus } from '../models';
 import { CreateOrderDto, OrderItemDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { KafkaService } from '../kafka/kafka.service';
+import Order, { OrderStatus } from 'src/models/order.model';
+import OrderItem from 'src/models/order-item.model';
 
 @Injectable()
 export class OrderService {

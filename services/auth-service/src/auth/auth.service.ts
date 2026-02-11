@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException, BadRequestException, ConflictException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/sequelize';
-import { User } from '../models/user.model';
+import User from '../models/user.model';
 import { KeycloakService } from './keycloak.service';
 import { KafkaService } from '../kafka/kafka.service';
 import { LoginDto } from './dto/login.dto';

@@ -4,7 +4,7 @@ import { HttpModule } from '@nestjs/axios';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { KeycloakService } from './keycloak.service';
-import { User } from '../models/user.model';
+import User from '../models/user.model';
 import { JwtStrategy } from './guards/jwt.strategy';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 

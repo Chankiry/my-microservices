@@ -1,7 +1,8 @@
 import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
 import { InjectModel } from '@nestjs/sequelize';
-import { Order, OrderItem } from '../models';
+import OrderItem from 'src/models/order-item.model';
+import Order, { OrderStatus } from 'src/models/order.model';
 
 @Controller()
 export class GrpcController {
@@ -29,7 +30,7 @@ export class GrpcController {
             userId: data.userId,
             orderNumber: Order.generateOrderNumber(),
             totalAmount,
-            status: 'pending',
+            status: OrderStatus.PENDING,
         });
 
         await this.orderItemModel.bulkCreate(
@@ -132,7 +133,7 @@ export class GrpcController {
     }
 
     @GrpcMethod('OrderService', 'UpdateOrderStatus')
-    async updateOrderStatus(data: { orderId: string; status: string }) {
+    async updateOrderStatus(data: { orderId: string; status: OrderStatus }) {
         const order = await this.orderModel.findByPk(data.orderId);
 
         if (!order) {
@@ -160,7 +161,7 @@ export class GrpcController {
             return null;
         }
 
-        await order.update({ status: 'cancelled' });
+        await order.update({ status: OrderStatus.CANCELLED });
 
         return {
             id: order.id,

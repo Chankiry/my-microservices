@@ -1,7 +1,8 @@
 import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
 import { InjectModel } from '@nestjs/sequelize';
-import { Profile, Preference } from '../models';
+import Preference from 'src/models/preference.model';
+import Profile from 'src/models/profile.model';
 
 @Controller()
 export class GrpcController {

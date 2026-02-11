@@ -50,11 +50,11 @@ services:
     container_name: microservices-kafka
     environment:
       KAFKA_NODE_ID: 1
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092  # ✅ Fixed
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://kafka:29093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,CONTROLLER://0.0.0.0:29093,PLAINTEXT_HOST://0.0.0.0:9092  # ✅ Fixed
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
@@ -73,17 +73,18 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
     container_name: microservices-kafka-ui
     environment:
       KAFKA_CLUSTERS_0_NAME: local
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092  # ✅ Use internal port
+      DYNAMIC_CONFIG_ENABLED: 'true'
     ports:
       - "8089:8080"
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
     networks:
       - microservices-network
 
@@ -164,6 +165,8 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:23.0
     container_name: microservices-keycloak
+    ports:
+      - "8080:8080"
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin123
@@ -171,29 +174,24 @@ services:
       KC_DB_URL: jdbc:postgresql://postgres:5432/auth_db
       KC_DB_USERNAME: admin
       KC_DB_PASSWORD: admin123
-      KC_HOSTNAME: localhost
-      KC_HTTP_ENABLED: "true"
-      KC_PROXY: edge
-      KC_TRANSACTION_XA_ENABLED: "false"
-      KC_PROXY_HEADERS: xforwarded
-      KC_DB_POOL_INITIAL_SIZE: "5"
-      KC_DB_POOL_MIN_SIZE: "5"
-      KC_DB_POOL_MAX_SIZE: "20"
       KC_HEALTH_ENABLED: "true"
       KC_METRICS_ENABLED: "true"
-      KC_LOG_LEVEL: INFO
       KC_HOSTNAME_STRICT: "false"
-      KC_HOSTNAME_STRICT_HTTPS: "false"
-    ports:
-      - "8080:8080"
+      KC_HTTP_ENABLED: "true"
     command: start-dev
     depends_on:
       postgres:
         condition: service_healthy
     networks:
       - microservices-network
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && echo -e 'GET /health/ready HTTP/1.1\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && cat <&3 | grep -q '200\\|UP'"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 90s
     restart: unless-stopped
-
+    
   # ==========================================
   # Monitoring & Observability
   # ==========================================
@@ -246,21 +244,21 @@ services:
   # ==========================================
   # Database & Cache Management UIs
   # ==========================================
-  pgadmin:
-    image: dpage/pgadmin4:8.0
-    container_name: microservices-pgadmin
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@microservices.com
-      PGADMIN_DEFAULT_PASSWORD: admin123
-      PGADMIN_CONFIG_SERVER_MODE: "False"
-    ports:
-      - "5050:80"
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
-    depends_on:
-      - postgres
-    networks:
-      - microservices-network
+  # pgadmin:
+  #   image: dpage/pgadmin4:8.0
+  #   container_name: microservices-pgadmin
+  #   environment:
+  #     PGADMIN_DEFAULT_EMAIL: admin@microservices.com
+  #     PGADMIN_DEFAULT_PASSWORD: admin123
+  #     PGADMIN_CONFIG_SERVER_MODE: "False"
+  #   ports:
+  #     - "5050:80"
+  #   volumes:
+  #     - pgadmin_data:/var/lib/pgadmin
+  #   depends_on:
+  #     - postgres
+  #   networks:
+  #     - microservices-network
 
   redis-commander:
     image: rediscommander/redis-commander:latest

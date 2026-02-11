@@ -1,5 +1,5 @@
 import { Table, Column, Model, DataType, PrimaryKey, Default, CreatedAt, UpdatedAt, ForeignKey, BelongsTo } from 'sequelize-typescript';
-import { Payment } from './payment.model';
+import Payment from './payment.model';
 
 export enum TransactionStatus {
     SUCCESS = 'success',
@@ -12,7 +12,7 @@ export enum TransactionStatus {
     timestamps: true,
     underscored: true,
 })
-export class Transaction extends Model {
+class Transaction extends Model<Transaction> {
     @PrimaryKey
     @Default(DataType.UUIDV4)
     @Column(DataType.UUID)
@@ -84,3 +84,5 @@ export class Transaction extends Model {
     @Column({ field: 'updated_at' })
     updatedAt: Date;
 }
+
+export default Transaction;

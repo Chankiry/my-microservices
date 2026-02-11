@@ -1,7 +1,8 @@
 import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
 import { InjectModel } from '@nestjs/sequelize';
-import { Notification, EmailLog } from '../models';
+import EmailLog, { EmailStatus } from '../models/email-log.model';
+import Notification, { NotificationType } from '../models/notification.model';
 
 @Controller()
 export class GrpcController {
@@ -24,7 +25,7 @@ export class GrpcController {
             from: data.from,
             subject: data.subject,
             body: data.body,
-            status: 'sent',
+            status: EmailStatus.SENT,
             sentAt: new Date(),
         });
 
@@ -42,7 +43,7 @@ export class GrpcController {
     @GrpcMethod('NotificationService', 'SendNotification')
     async sendNotification(data: {
         userId: string;
-        type: string;
+        type: NotificationType;
         title: string;
         message: string;
         data?: Record<string, string>;

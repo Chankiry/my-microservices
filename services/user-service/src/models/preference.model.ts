@@ -1,3 +1,4 @@
+import e from 'express';
 import { Table, Column, Model, DataType, PrimaryKey, Default, CreatedAt, UpdatedAt, Index } from 'sequelize-typescript';
 
 @Table({
@@ -5,7 +6,7 @@ import { Table, Column, Model, DataType, PrimaryKey, Default, CreatedAt, Updated
     timestamps: true,
     underscored: true,
 })
-export class Preference extends Model {
+class Preference extends Model<Preference> {
     @PrimaryKey
     @Default(DataType.UUIDV4)
     @Column(DataType.UUID)
@@ -79,3 +80,5 @@ export class Preference extends Model {
     @Column({ field: 'updated_at' })
     updatedAt: Date;
 }
+
+export default Preference;

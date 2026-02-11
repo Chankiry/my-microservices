@@ -1,5 +1,5 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { Kafka, Producer, Consumer } from 'kafkajs';
+import { Injectable, Logger, OnModuleInit, Inject, forwardRef } from '@nestjs/common';
+import { Kafka, Producer, Consumer, Partitioners } from 'kafkajs';
 import { UserService } from '../user/user.service';
 
 @Injectable()
@@ -9,7 +9,10 @@ export class KafkaService implements OnModuleInit {
     private producer: Producer;
     private consumer: Consumer;
 
-    constructor(private userService: UserService) {
+    constructor(
+        @Inject(forwardRef(() => UserService))  // ✅ Use forwardRef
+        private userService: UserService,
+    ) {
         const brokers = (process.env.KAFKA_BROKERS || 'localhost:9092').split(',');
         
         this.kafka = new Kafka({
@@ -17,7 +20,9 @@ export class KafkaService implements OnModuleInit {
             brokers,
         });
 
-        this.producer = this.kafka.producer();
+        this.producer = this.kafka.producer({
+            createPartitioner: Partitioners.LegacyPartitioner,  // ✅ Fix warning
+        });
         this.consumer = this.kafka.consumer({ groupId: 'user-service-group' });
     }
 
@@ -49,7 +54,6 @@ export class KafkaService implements OnModuleInit {
                 messages: [
                     {
                         value: JSON.stringify(message),
-                        timestamp: Date.now().toString(),
                     },
                 ],
             });
@@ -110,7 +114,7 @@ export class KafkaService implements OnModuleInit {
                 await admin.createTopics({
                     topics: topicsToCreate.map(topic => ({
                         topic,
-                        numPartitions: 1,
+                        numPartitions: 3,
                         replicationFactor: 1,
                     })),
                 });

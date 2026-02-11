@@ -1,10 +1,11 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { Notification, EmailLog, NotificationType, EmailStatus } from '../models';
 import { EmailService } from './email.service';
 import { CreateNotificationDto } from './dto/create-notification.dto';
 import { SendEmailDto } from './dto/send-email.dto';
 import { KafkaService } from '../kafka/kafka.service';
+import EmailLog, { EmailStatus } from '../models/email-log.model';
+import Notification, { NotificationType } from '../models/notification.model';
 
 @Injectable()
 export class NotificationService {

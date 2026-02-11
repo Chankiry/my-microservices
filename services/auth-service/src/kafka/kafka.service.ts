@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
 import { Kafka, Producer, Consumer } from 'kafkajs';
+import { Partitioners } from 'kafkajs';
 
 @Injectable()
 export class KafkaService implements OnModuleInit {
@@ -17,7 +18,9 @@ export class KafkaService implements OnModuleInit {
             brokers,
         });
 
-        this.producer = this.kafka.producer();
+        this.producer = this.kafka.producer({
+            createPartitioner: Partitioners.LegacyPartitioner,
+        });
         this.consumer = this.kafka.consumer({ groupId: 'auth-service-group' });
     }
 

@@ -1,12 +1,12 @@
 import { Table, Column, Model, DataType, PrimaryKey, Default, CreatedAt, UpdatedAt, ForeignKey, BelongsTo } from 'sequelize-typescript';
-import { Order } from './order.model';
+import Order from './order.model';
 
 @Table({
     tableName: 'order_items',
     timestamps: true,
     underscored: true,
 })
-export class OrderItem extends Model {
+class OrderItem extends Model<OrderItem> {
     @PrimaryKey
     @Default(DataType.UUIDV4)
     @Column(DataType.UUID)
@@ -69,3 +69,5 @@ export class OrderItem extends Model {
         return parseFloat((quantity * price).toFixed(2));
     }
 }
+
+export default OrderItem;

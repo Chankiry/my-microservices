@@ -1,7 +1,8 @@
 import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
 import { InjectModel } from '@nestjs/sequelize';
-import { Payment, Transaction } from '../models';
+import Payment, { PaymentStatus } from '../models/payment.model';
+import Transaction, { TransactionStatus } from '../models/transaction.model';
 
 @Controller()
 export class GrpcController {
@@ -25,7 +26,7 @@ export class GrpcController {
             userId: data.userId,
             amount: data.amount,
             currency: data.currency || 'USD',
-            status: 'completed',
+            status: PaymentStatus.COMPLETED,
             paymentMethod: data.paymentMethod,
         });
 
@@ -35,7 +36,7 @@ export class GrpcController {
             type: 'charge',
             amount: data.amount,
             currency: data.currency || 'USD',
-            status: 'success',
+            status: TransactionStatus.SUCCESS,
         });
 
         return {
@@ -125,11 +126,11 @@ export class GrpcController {
             type: 'refund',
             amount: payment.amount,
             currency: payment.currency,
-            status: 'success',
+            status: TransactionStatus.SUCCESS,
             gatewayResponse: { reason: data.reason },
         });
 
-        await payment.update({ status: 'refunded' });
+        await payment.update({ status: PaymentStatus.REFUNDED });
 
         return {
             id: payment.id,

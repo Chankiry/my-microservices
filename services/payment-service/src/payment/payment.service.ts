@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { Payment, Transaction, PaymentStatus, TransactionStatus } from '../models';
 import { ProcessPaymentDto } from './dto/process-payment.dto';
 import { RefundPaymentDto } from './dto/refund-payment.dto';
 import { KafkaService } from '../kafka/kafka.service';
+import Payment, { PaymentStatus } from '../models/payment.model';
+import Transaction, { TransactionStatus } from '../models/transaction.model';
 
 @Injectable()
 export class PaymentService {

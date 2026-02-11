@@ -1,31 +1,48 @@
 'use client';
 
 import { ReactKeycloakProvider } from '@react-keycloak/web';
-import Keycloak from 'keycloak-js';
+import type { AuthClientEvent, AuthClientError } from '@react-keycloak/core';
+import { ReactNode, useState, useEffect } from 'react';
+import { getKeycloakInstance } from '@/lib/keycloak';
 
-const keycloakConfig = {
-  url: process.env.NEXT_PUBLIC_KEYCLOAK_URL || 'http://localhost:8080',
-  realm: process.env.NEXT_PUBLIC_KEYCLOAK_REALM || 'master',
-  clientId: process.env.NEXT_PUBLIC_KEYCLOAK_CLIENT_ID || 'next-web-client',
-};
-
-const keycloak = new Keycloak(keycloakConfig);
-
-const eventLogger = (event: string, error?: Error) => {
+const eventLogger = (event: AuthClientEvent, error?: AuthClientError) => {
   console.log('Keycloak event:', event, error);
 };
 
 const tokenLogger = (tokens: { token?: string; refreshToken?: string; idToken?: string }) => {
   console.log('Keycloak tokens updated');
-  if (tokens.token) {
-    localStorage.setItem('access_token', tokens.token);
-  }
-  if (tokens.refreshToken) {
-    localStorage.setItem('refresh_token', tokens.refreshToken);
+  
+  if (typeof window !== 'undefined') {
+    if (tokens.token) {
+      localStorage.setItem('access_token', tokens.token);
+    }
+    if (tokens.refreshToken) {
+      localStorage.setItem('refresh_token', tokens.refreshToken);
+    }
+    if (tokens.idToken) {
+      localStorage.setItem('id_token', tokens.idToken);
+    }
   }
 };
 
-export function KeycloakProvider({ children }: { children: React.ReactNode }) {
+export function KeycloakProvider({ children }: { children: ReactNode }) {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Only render on client side
+  if (!isClient) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-pulse text-lg">Loading...</div>
+      </div>
+    );
+  }
+
+  const keycloak = getKeycloakInstance();
+
   return (
     <ReactKeycloakProvider
       authClient={keycloak}
@@ -33,12 +50,19 @@ export function KeycloakProvider({ children }: { children: React.ReactNode }) {
       onTokens={tokenLogger}
       initOptions={{
         onLoad: 'check-sso',
-        silentCheckSsoRedirectUri: typeof window !== 'undefined' ? window.location.origin + '/silent-check-sso.html' : undefined,
+        checkLoginIframe: false,
+        silentCheckSsoRedirectUri: `${window.location.origin}/silent-check-sso.html`,
+        pkceMethod: 'S256',
       }}
+      LoadingComponent={
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-pulse text-lg">Authenticating...</div>
+        </div>
+      }
     >
       {children}
     </ReactKeycloakProvider>
   );
 }
 
-export { keycloak };
+export const keycloak = typeof window !== 'undefined' ? getKeycloakInstance() : null;

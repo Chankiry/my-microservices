@@ -5,7 +5,7 @@ import { Table, Column, Model, DataType, PrimaryKey, Default, CreatedAt, Updated
     timestamps: true,
     underscored: true,
 })
-export class Profile extends Model {
+class Profile extends Model<Profile> {
     @PrimaryKey
     @Default(DataType.UUIDV4)
     @Column(DataType.UUID)
@@ -76,3 +76,5 @@ export class Profile extends Model {
     @Column({ field: 'updated_at' })
     updatedAt: Date;
 }
+
+export default Profile;

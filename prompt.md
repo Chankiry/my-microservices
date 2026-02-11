@@ -283,7 +283,7 @@ export class User extends Model {
 
 ```typescript
 // In auth.service.ts
-import { User } from '../models/user.model';
+import User from '../models/user.model';
 
 export class AuthService {
     async findUserByEmail(email: string) {

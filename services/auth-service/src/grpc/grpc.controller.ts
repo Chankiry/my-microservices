@@ -3,7 +3,7 @@ import { GrpcMethod } from '@nestjs/microservices';
 import { AuthService } from '../auth/auth.service';
 import { KeycloakService } from '../auth/keycloak.service';
 import { InjectModel } from '@nestjs/sequelize';
-import { User } from '../models/user.model';
+import User from '../models/user.model';
 
 @Controller()
 export class GrpcController {

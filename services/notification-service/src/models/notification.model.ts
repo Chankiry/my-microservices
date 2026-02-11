@@ -11,7 +11,7 @@ export enum NotificationType {
     timestamps: true,
     underscored: true,
 })
-export class Notification extends Model {
+class Notification extends Model<Notification> {
     @PrimaryKey
     @Default(DataType.UUIDV4)
     @Column(DataType.UUID)
@@ -78,3 +78,5 @@ export class Notification extends Model {
     @Column({ field: 'updated_at' })
     updatedAt: Date;
 }
+
+export default Notification;

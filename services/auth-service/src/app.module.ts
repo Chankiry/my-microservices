@@ -38,6 +38,7 @@ const sequelizeConfig = {
         HealthModule,
         KafkaModule,
         GrpcModule,
+        ConfigModule,
     ],
 })
 export class AppModule {}

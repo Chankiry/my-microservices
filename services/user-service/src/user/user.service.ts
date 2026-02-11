@@ -1,11 +1,12 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { Profile, Preference } from '../models';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { CreatePreferenceDto } from './dto/create-preference.dto';
 import { UpdatePreferenceDto } from './dto/update-preference.dto';
 import { KafkaService } from '../kafka/kafka.service';
+import Profile from 'src/models/profile.model';
+import Preference from 'src/models/preference.model';
 
 @Injectable()
 export class UserService {
@@ -45,7 +46,7 @@ export class UserService {
 
         const profile = await this.profileModel.create({
             userId,
-            ...createProfileDto,
+            ...{createProfileDto},
         });
 
         // Emit Kafka event
@@ -71,7 +72,15 @@ export class UserService {
             throw new NotFoundException('Profile not found');
         }
 
-        await profile.update(updateProfileDto);
+        // Convert dateOfBirth string to Date if provided
+        const updateData = {
+            ...updateProfileDto,
+            ...(updateProfileDto.dateOfBirth && {
+            dateOfBirth: new Date(updateProfileDto.dateOfBirth)
+            })
+        };
+
+        await profile.update(updateData);
 
         // Emit Kafka event
         await this.kafkaService.emit('user.profile.updated', {

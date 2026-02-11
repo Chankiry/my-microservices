@@ -6,7 +6,7 @@ import * as bcrypt from 'bcrypt';
     timestamps: true,
     underscored: true,
 })
-export class User extends Model {
+class User extends Model<User> {
     @PrimaryKey
     @Default(DataType.UUIDV4)
     @Column(DataType.UUID)
@@ -91,3 +91,5 @@ export class User extends Model {
         return values;
     }
 }
+
+export default User;

@@ -11,7 +11,7 @@ export enum EmailStatus {
     timestamps: true,
     underscored: true,
 })
-export class EmailLog extends Model {
+class EmailLog extends Model<EmailLog> {
     @PrimaryKey
     @Default(DataType.UUIDV4)
     @Column(DataType.UUID)
@@ -69,3 +69,5 @@ export class EmailLog extends Model {
     @Column({ field: 'updated_at' })
     updatedAt: Date;
 }
+
+export default EmailLog;

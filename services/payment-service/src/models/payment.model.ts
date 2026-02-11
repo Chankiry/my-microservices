@@ -1,5 +1,5 @@
 import { Table, Column, Model, DataType, PrimaryKey, Default, CreatedAt, UpdatedAt, Index, HasMany } from 'sequelize-typescript';
-import { Transaction } from './transaction.model';
+import Transaction from './transaction.model';
 
 export enum PaymentStatus {
     PENDING = 'pending',
@@ -14,7 +14,7 @@ export enum PaymentStatus {
     timestamps: true,
     underscored: true,
 })
-export class Payment extends Model {
+class Payment extends Model<Payment> {
     @PrimaryKey
     @Default(DataType.UUIDV4)
     @Column(DataType.UUID)
@@ -87,3 +87,5 @@ export class Payment extends Model {
     @Column({ field: 'updated_at' })
     updatedAt: Date;
 }
+
+export default Payment;

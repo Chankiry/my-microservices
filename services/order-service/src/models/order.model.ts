@@ -1,5 +1,5 @@
 import { Table, Column, Model, DataType, PrimaryKey, Default, CreatedAt, UpdatedAt, Index, HasMany } from 'sequelize-typescript';
-import { OrderItem } from './order-item.model';
+import OrderItem from './order-item.model';
 
 export enum OrderStatus {
     PENDING = 'pending',
@@ -13,7 +13,7 @@ export enum OrderStatus {
     timestamps: true,
     underscored: true,
 })
-export class Order extends Model {
+class Order extends Model<Order> {
     @PrimaryKey
     @Default(DataType.UUIDV4)
     @Column(DataType.UUID)
@@ -81,3 +81,5 @@ export class Order extends Model {
         return `ORD-${timestamp}-${random}`;
     }
 }
+
+export default Order;
