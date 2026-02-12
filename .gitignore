@@ -20,3 +20,29 @@ Thumbs.db
 # IDE
 .vscode
 .idea
+
+.frontent/admin-web/.angular
+
+# Angular Cache
+frontend/admin-web/.angular/
+frontend/public-web/.next/
+
+# Node modules
+node_modules/
+**/node_modules/
+
+# Build outputs
+dist/
+**/dist/
+build/
+**/build/
+
+# Environment files
+.env
+**/.env
+.env.local
+**/.env.local
+
+# Logs
+*.log
+**/logs/
