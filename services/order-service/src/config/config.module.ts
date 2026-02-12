@@ -16,7 +16,7 @@ import { HttpModule } from '@nestjs/axios';
             storage: multer.memoryStorage(),
         }),
         SequelizeModule.forRoot({
-            ...sequelizeConfig
+            ...sequelizeConfig,
         }),
         HttpModule.register({
             timeout: 5000,

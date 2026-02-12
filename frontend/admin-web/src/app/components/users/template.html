@@ -1,0 +1,75 @@
+<nav class="navbar">
+<div class="container" style="display: flex; justify-content: space-between; align-items: center;">
+    <a class="navbar-brand" routerLink="/">Admin Dashboard</a>
+    <div class="navbar-nav">
+    <a class="nav-link" routerLink="/">Home</a>
+    <a class="nav-link" routerLink="/dashboard">Dashboard</a>
+    <a class="nav-link" routerLink="/users">Users</a>
+    <a class="nav-link" routerLink="/orders">Orders</a>
+    <a class="nav-link" routerLink="/payments">Payments</a>
+    <a class="nav-link" routerLink="/notifications">Notifications</a>
+    <button class="btn btn-danger" style="margin-left: 10px;" (click)="logout()">Logout</button>
+    </div>
+</div>
+</nav>
+
+<div class="container" style="padding-top: 30px;">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+    <h1>User Management</h1>
+    <button class="btn btn-primary" (click)="refresh()">Refresh</button>
+</div>
+
+<div class="card">
+    <h3 style="margin-bottom: 20px;">Users</h3>
+    <p style="color: #666; margin-bottom: 20px;">
+    User management is handled through Keycloak. Use the Keycloak Admin Console to manage users, roles, and permissions.
+    </p>
+    
+    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+    <h4 style="margin-bottom: 15px;">Keycloak Integration</h4>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+        <div>
+        <p style="color: #666; margin-bottom: 5px;">Keycloak URL</p>
+        <p style="font-weight: 500;">http://localhost:8080</p>
+        </div>
+        <div>
+        <p style="color: #666; margin-bottom: 5px;">Realm</p>
+        <p style="font-weight: 500;">master</p>
+        </div>
+        <div>
+        <p style="color: #666; margin-bottom: 5px;">Admin Credentials</p>
+        <p style="font-weight: 500;">admin / admin123</p>
+        </div>
+    </div>
+    </div>
+
+    <div style="display: flex; gap: 15px;">
+    <a href="http://localhost:8080/admin" target="_blank" class="btn btn-primary">
+        Open Keycloak Admin Console
+    </a>
+    <button class="btn" style="background: #6c757d; color: white;" (click)="showUserGuide = !showUserGuide">
+        {{ showUserGuide ? 'Hide' : 'Show' }} User Guide
+    </button>
+    </div>
+
+    <div *ngIf="showUserGuide" style="margin-top: 20px; padding: 20px; background: #e9ecef; border-radius: 8px;">
+    <h4 style="margin-bottom: 15px;">User Management Guide</h4>
+    <ul style="line-height: 1.8;">
+        <li><strong>Create User:</strong> Go to Users → Add User → Fill details → Save</li>
+        <li><strong>Assign Roles:</strong> Go to User → Role Mappings → Assign realm roles</li>
+        <li><strong>Reset Password:</strong> Go to User → Credentials → Reset Password</li>
+        <li><strong>Enable/Disable:</strong> Go to User → Settings → Toggle Enabled</li>
+        <li><strong>View Sessions:</strong> Go to User → Sessions</li>
+    </ul>
+    </div>
+</div>
+
+<div class="card" style="margin-top: 20px;">
+    <h3 style="margin-bottom: 20px;">Available Roles</h3>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+    <span style="padding: 8px 16px; background: #007bff; color: white; border-radius: 20px; font-size: 14px;">user</span>
+    <span style="padding: 8px 16px; background: #dc3545; color: white; border-radius: 20px; font-size: 14px;">admin</span>
+    <span style="padding: 8px 16px; background: #6c757d; color: white; border-radius: 20px; font-size: 14px;">super_admin</span>
+    </div>
+</div>
+</div>

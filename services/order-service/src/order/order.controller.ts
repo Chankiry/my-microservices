@@ -18,6 +18,7 @@ export class OrderController {
         @Query('page') page = 1,
         @Query('limit') limit = 10,
     ) {
+        console.log("hello");
         return this.orderService.findAll({ userId, page: +page, limit: +limit });
     }
 

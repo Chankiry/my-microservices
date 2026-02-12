@@ -1,4 +1,4 @@
-import { Table, Column, Model, DataType, PrimaryKey, Default, CreatedAt, UpdatedAt, Index, HasMany } from 'sequelize-typescript';
+import { Table, Column, Model, DataType, PrimaryKey, Default, CreatedAt, UpdatedAt, HasMany } from 'sequelize-typescript';
 import OrderItem from './order-item.model';
 
 export enum OrderStatus {
@@ -12,6 +12,13 @@ export enum OrderStatus {
     tableName: 'orders',
     timestamps: true,
     underscored: true,
+    // Define indexes explicitly here to ensure the correct column name is used
+    indexes: [
+        {
+            name: 'orders_user_id_idx', // Optional: explicit index name
+            fields: ['user_id'], // Use the actual database column name (snake_case)
+        },
+    ],
 })
 class Order extends Model<Order> {
     @PrimaryKey
@@ -19,7 +26,7 @@ class Order extends Model<Order> {
     @Column(DataType.UUID)
     id: string;
 
-    @Index
+    // REMOVED @Index from here
     @Column({
         type: DataType.UUID,
         allowNull: false,
@@ -74,7 +81,6 @@ class Order extends Model<Order> {
     @Column({ field: 'updated_at' })
     updatedAt: Date;
 
-    // Generate order number
     static generateOrderNumber(): string {
         const timestamp = Date.now().toString(36).toUpperCase();
         const random = Math.random().toString(36).substring(2, 6).toUpperCase();

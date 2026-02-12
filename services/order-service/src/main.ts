@@ -14,8 +14,15 @@ async function bootstrap() {
     }));
 
     app.enableCors({
-        origin: ['http://localhost:3000', 'http://localhost:4200'],
+        origin: (origin, callback) => {
+            // Allow all origins (including undefined for non-browser clients)
+            if (!origin) return callback(null, true);
+            callback(null, true); // Or check against a whitelist if needed
+        },
         credentials: true,
+        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE', // Allow common methods; customize as needed
+        allowedHeaders: 'Content-Type, Authorization', // Add any custom headers your app uses
+        exposedHeaders: 'Authorization', // If you need to expose headers to the client
     });
 
     const config = new DocumentBuilder()
@@ -32,7 +39,7 @@ async function bootstrap() {
         transport: Transport.GRPC,
         options: {
             package: 'order',
-            protoPath: join(__dirname, '../../proto/order.proto'),
+            protoPath: join(__dirname, '../../../proto/order.proto'),
             url: `0.0.0.0:${grpcPort}`,
         },
     });
