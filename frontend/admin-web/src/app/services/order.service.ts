@@ -16,22 +16,22 @@ export class OrderService {
     if (params?.page) httpParams = httpParams.set('page', params.page.toString());
     if (params?.limit) httpParams = httpParams.set('limit', params.limit.toString());
     
-    return this.api.get('/api/orders', httpParams);
+    return this.api.get('/orders', httpParams);
   }
 
   getOrder(id: string): Observable<{ success: boolean; data: Order }> {
-    return this.api.get(`/api/orders/${id}`);
+    return this.api.get(`/orders/${id}`);
   }
 
   createOrder(data: any): Observable<{ success: boolean; message: string; data: Order }> {
-    return this.api.post('/api/orders', data);
+    return this.api.post('/orders', data);
   }
 
   updateOrderStatus(id: string, status: string, reason?: string): Observable<{ success: boolean; message: string; data: Order }> {
-    return this.api.put(`/api/orders/${id}/status`, { status, reason });
+    return this.api.put(`/orders/${id}/status`, { status, reason });
   }
 
   cancelOrder(id: string): Observable<{ success: boolean; message: string; data: Order }> {
-    return this.api.delete(`/api/orders/${id}`);
+    return this.api.delete(`/orders/${id}`);
   }
 }
