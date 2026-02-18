@@ -14,7 +14,7 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
-  const { login, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { login, isAuthenticated, isLoading: authLoading, error: authError, clearError } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnUrl = searchParams.get('returnUrl') || '/dashboard';
@@ -25,9 +25,17 @@ export default function LoginPage() {
     }
   }, [authLoading, isAuthenticated, router, returnUrl]);
 
+  // Show auth context errors
+  useEffect(() => {
+    if (authError) {
+      setError(authError);
+    }
+  }, [authError]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    clearError();
     setIsLoading(true);
 
     try {
@@ -53,7 +61,10 @@ export default function LoginPage() {
   if (authLoading || isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-500">Loading...</p>
+        </div>
       </div>
     );
   }
@@ -62,10 +73,10 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
       <div className="w-full max-w-5xl flex bg-white rounded-2xl shadow-xl overflow-hidden">
         {/* Left Side - Branding */}
-        <div className="hidden lg:flex lg:flex-1 bg-gradient-to-br from-primary-600 to-primary-800 p-12 text-white">
+        <div className="hidden lg:flex lg:flex-1 bg-gradient-to-br from-blue-600 to-blue-800 p-12 text-white">
           <div className="max-w-md">
             <h1 className="text-4xl font-bold mb-4">Welcome Back</h1>
-            <p className="text-primary-100 text-lg mb-8">
+            <p className="text-blue-100 text-lg mb-8">
               Sign in to access the Microservices Platform and manage your applications.
             </p>
             
@@ -77,7 +88,7 @@ export default function LoginPage() {
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-3">
                   <span className="text-2xl">{item.icon}</span>
-                  <span className="text-primary-100">{item.text}</span>
+                  <span className="text-blue-100">{item.text}</span>
                 </div>
               ))}
             </div>
@@ -93,13 +104,16 @@ export default function LoginPage() {
             </div>
 
             {error && (
-              <div className="bg-red-50 text-red-700 p-4 rounded-lg mb-6 text-sm flex items-start gap-3">
+              <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg mb-6 text-sm flex items-start gap-3">
                 <svg className="w-5 h-5 mt-0.5 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="12" cy="12" r="10"/>
                   <line x1="15" y1="9" x2="9" y2="15"/>
                   <line x1="9" y1="9" x2="15" y2="15"/>
                 </svg>
-                {error}
+                <div>
+                  <p className="font-medium">Login Failed</p>
+                  <p className="mt-1 text-red-600">{error}</p>
+                </div>
               </div>
             )}
 
@@ -115,7 +129,7 @@ export default function LoginPage() {
                   placeholder="Enter your email"
                   required
                   disabled={isLoading}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all disabled:bg-gray-50"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all disabled:bg-gray-50"
                 />
               </div>
 
@@ -131,7 +145,7 @@ export default function LoginPage() {
                     placeholder="Enter your password"
                     required
                     disabled={isLoading}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition-all disabled:bg-gray-50 pr-12"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all disabled:bg-gray-50 pr-12"
                   />
                   <button
                     type="button"
@@ -156,7 +170,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isLoading || !email || !password}
-                className="w-full py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {isLoading ? (
                   <>
@@ -174,7 +188,7 @@ export default function LoginPage() {
 
             <div className="mt-6 text-center text-sm text-gray-500">
               Don't have an account?{' '}
-              <Link href="/register" className="text-primary-600 font-medium hover:underline">
+              <Link href="/register" className="text-blue-600 font-medium hover:underline">
                 Create one
               </Link>
             </div>
@@ -186,7 +200,7 @@ export default function LoginPage() {
                 onClick={() => setShowCredentials(!showCredentials)}
                 className="w-full px-4 py-3 bg-gray-50 text-left flex items-center justify-between text-sm font-medium text-gray-600 hover:bg-gray-100"
               >
-                Test Credentials
+                Test Credentials (Development Only)
                 <svg className={`w-4 h-4 transition-transform ${showCredentials ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M6 9l6 6 6-6"/>
                 </svg>
@@ -199,7 +213,7 @@ export default function LoginPage() {
                     className="w-full flex items-center gap-3 px-3 py-2 bg-gray-50 rounded-lg text-sm hover:bg-gray-100 text-left"
                   >
                     <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded text-xs font-medium">User</span>
-                    user@example.com
+                    user@example.com / Password123!
                   </button>
                   <button
                     type="button"
@@ -207,10 +221,26 @@ export default function LoginPage() {
                     className="w-full flex items-center gap-3 px-3 py-2 bg-gray-50 rounded-lg text-sm hover:bg-gray-100 text-left"
                   >
                     <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs font-medium">Admin</span>
-                    admin@example.com
+                    admin@example.com / Admin123!
                   </button>
+                  <p className="text-xs text-gray-400 mt-2">
+                    Note: These users must be created in Keycloak first.
+                  </p>
                 </div>
               )}
+            </div>
+
+            {/* Keycloak Status Info */}
+            <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+              <p className="text-sm text-blue-700">
+                <strong>Keycloak URL:</strong> {config.keycloak.url}
+              </p>
+              <p className="text-sm text-blue-700 mt-1">
+                <strong>Realm:</strong> {config.keycloak.realm}
+              </p>
+              <p className="text-sm text-blue-700 mt-1">
+                <strong>Client:</strong> {config.keycloak.clientId}
+              </p>
             </div>
           </div>
         </div>

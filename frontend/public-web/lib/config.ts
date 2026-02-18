@@ -16,3 +16,25 @@ export const config = {
     admin: { email: 'admin@example.com', password: 'Admin123!' },
   },
 };
+
+// Validate required configuration
+export function validateConfig(): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+  
+  if (!config.keycloak.url) {
+    errors.push('NEXT_PUBLIC_KEYCLOAK_URL is not set');
+  }
+  
+  if (!config.keycloak.realm) {
+    errors.push('NEXT_PUBLIC_KEYCLOAK_REALM is not set');
+  }
+  
+  if (!config.keycloak.clientId) {
+    errors.push('NEXT_PUBLIC_KEYCLOAK_CLIENT_ID is not set');
+  }
+  
+  return {
+    valid: errors.length === 0,
+    errors,
+  };
+}

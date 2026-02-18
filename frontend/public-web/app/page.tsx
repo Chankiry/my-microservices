@@ -18,7 +18,7 @@ export default function Home() {
             <div>
               <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
                 Welcome to{' '}
-                <span className="text-primary-600">Microservices Platform</span>
+                <span className="text-blue-600">Microservices Platform</span>
               </h1>
               <p className="text-lg text-gray-600 mb-8 leading-relaxed">
                 A modern, scalable platform built with enterprise-grade security powered by Keycloak. 
@@ -30,7 +30,7 @@ export default function Home() {
                 ) : isAuthenticated ? (
                   <Link
                     href="/dashboard"
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
                   >
                     Go to Dashboard
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -41,7 +41,7 @@ export default function Home() {
                   <>
                     <Link
                       href="/login"
-                      className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors"
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
                     >
                       Get Started
                     </Link>
@@ -130,7 +130,7 @@ export default function Home() {
                 key={index}
                 className="bg-white p-8 rounded-xl border border-gray-200 hover:shadow-lg transition-shadow"
               >
-                <div className="w-14 h-14 bg-primary-50 text-primary-600 rounded-xl flex items-center justify-center mb-6">
+                <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center mb-6">
                   {feature.icon}
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-3">
@@ -182,17 +182,17 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-primary-600 to-primary-800">
+      <section className="py-20 bg-gradient-to-r from-blue-600 to-blue-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl font-bold text-white mb-4">
             Ready to Get Started?
           </h2>
-          <p className="text-lg text-primary-100 mb-8">
+          <p className="text-lg text-blue-100 mb-8">
             Join our platform and start managing your microservices today.
           </p>
           <Link
             href={isAuthenticated ? '/dashboard' : '/register'}
-            className="inline-flex items-center gap-2 px-8 py-4 bg-white text-primary-700 rounded-lg font-semibold hover:bg-primary-50 transition-colors"
+            className="inline-flex items-center gap-2 px-8 py-4 bg-white text-blue-700 rounded-lg font-semibold hover:bg-blue-50 transition-colors"
           >
             {isAuthenticated ? 'Open Dashboard' : 'Create Free Account'}
           </Link>

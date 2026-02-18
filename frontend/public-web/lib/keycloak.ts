@@ -28,6 +28,11 @@ export interface TokenResponse {
   scope: string;
 }
 
+export interface KeycloakError {
+  error: string;
+  error_description: string;
+}
+
 // Get Keycloak instance (client-side only)
 export function getKeycloak(): Keycloak {
   if (typeof window === 'undefined') {
@@ -63,8 +68,20 @@ export async function login(username: string, password: string): Promise<TokenRe
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error_description || 'Login failed');
+    const error: KeycloakError = await response.json();
+    
+    // Provide user-friendly error messages
+    if (error.error === 'invalid_grant') {
+      throw new Error('Invalid username or password. Please try again.');
+    }
+    if (error.error === 'invalid_client') {
+      throw new Error('Client configuration error. Please contact support.');
+    }
+    if (error.error === 'unauthorized_client') {
+      throw new Error('Client is not authorized for this grant type. Check Keycloak client settings.');
+    }
+    
+    throw new Error(error.error_description || error.error || 'Login failed');
   }
 
   const data: TokenResponse = await response.json();
@@ -84,87 +101,117 @@ export async function register(
   firstName: string,
   lastName: string
 ): Promise<void> {
-  // Get admin token
-  const adminTokenUrl = `${config.keycloak.url}/realms/master/protocol/openid-connect/token`;
-  
-  const adminBody = new URLSearchParams();
-  adminBody.set('grant_type', 'password');
-  adminBody.set('client_id', 'admin-cli');
-  adminBody.set('username', 'admin');
-  adminBody.set('password', 'admin123');
+  try {
+    // Get admin token from master realm
+    const adminTokenUrl = `${config.keycloak.url}/realms/master/protocol/openid-connect/token`;
+    
+    const adminBody = new URLSearchParams();
+    adminBody.set('grant_type', 'password');
+    adminBody.set('client_id', 'admin-cli');
+    adminBody.set('username', 'admin');
+    adminBody.set('password', 'admin123');
 
-  const adminResponse = await fetch(adminTokenUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: adminBody.toString(),
-  });
-  
-  const adminData = await adminResponse.json();
-  const adminToken = adminData.access_token;
+    const adminResponse = await fetch(adminTokenUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: adminBody.toString(),
+    });
 
-  // Create user
-  const createUserUrl = `${config.keycloak.url}/admin/realms/${config.keycloak.realm}/users`;
-  
-  const userData = {
-    username: email,
-    email: email,
-    firstName: firstName,
-    lastName: lastName,
-    enabled: true,
-    emailVerified: true,
-    credentials: [{
-      type: 'password',
-      value: password,
-      temporary: false,
-    }],
-  };
+    if (!adminResponse.ok) {
+      const error = await adminResponse.json();
+      throw new Error('Unable to connect to authentication server. Please try again later.');
+    }
+    
+    const adminData = await adminResponse.json();
+    const adminToken = adminData.access_token;
 
-  const createResponse = await fetch(createUserUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${adminToken}`,
-    },
-    body: JSON.stringify(userData),
-  });
+    // Create user in the microservices realm
+    const createUserUrl = `${config.keycloak.url}/admin/realms/${config.keycloak.realm}/users`;
+    
+    const userData = {
+      username: email,
+      email: email,
+      firstName: firstName,
+      lastName: lastName,
+      enabled: true,
+      emailVerified: true,
+      credentials: [{
+        type: 'password',
+        value: password,
+        temporary: false,
+      }],
+    };
 
-  if (!createResponse.ok) {
-    const error = await createResponse.json();
-    throw new Error(error.errorMessage || 'Registration failed');
+    const createResponse = await fetch(createUserUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${adminToken}`,
+      },
+      body: JSON.stringify(userData),
+    });
+
+    if (!createResponse.ok) {
+      const error = await createResponse.json();
+      
+      // Handle specific errors
+      if (error.errorMessage?.includes('already exists')) {
+        throw new Error('An account with this email already exists.');
+      }
+      
+      throw new Error(error.errorMessage || 'Registration failed. Please try again.');
+    }
+
+    // Assign default 'user' role
+    await assignRole(adminToken, email, 'user');
+  } catch (error: any) {
+    // Re-throw with better message if it's a network error
+    if (error.message === 'Failed to fetch') {
+      throw new Error('Unable to connect to authentication server. Please check if Keycloak is running.');
+    }
+    throw error;
   }
-
-  // Assign default 'user' role
-  await assignRole(adminToken, email, 'user');
 }
 
 async function assignRole(adminToken: string, userEmail: string, roleName: string): Promise<void> {
-  // Get user ID
-  const usersUrl = `${config.keycloak.url}/admin/realms/${config.keycloak.realm}/users?email=${userEmail}`;
-  const usersResponse = await fetch(usersUrl, {
-    headers: { 'Authorization': `Bearer ${adminToken}` },
-  });
-  const users = await usersResponse.json();
-  const userId = users[0]?.id;
+  try {
+    // Get user ID
+    const usersUrl = `${config.keycloak.url}/admin/realms/${config.keycloak.realm}/users?email=${encodeURIComponent(userEmail)}`;
+    const usersResponse = await fetch(usersUrl, {
+      headers: { 'Authorization': `Bearer ${adminToken}` },
+    });
+    const users = await usersResponse.json();
+    const userId = users[0]?.id;
 
-  if (!userId) return;
+    if (!userId) return;
 
-  // Get role
-  const roleUrl = `${config.keycloak.url}/admin/realms/${config.keycloak.realm}/roles/${roleName}`;
-  const roleResponse = await fetch(roleUrl, {
-    headers: { 'Authorization': `Bearer ${adminToken}` },
-  });
-  const role = await roleResponse.json();
+    // Get role
+    const roleUrl = `${config.keycloak.url}/admin/realms/${config.keycloak.realm}/roles/${roleName}`;
+    const roleResponse = await fetch(roleUrl, {
+      headers: { 'Authorization': `Bearer ${adminToken}` },
+    });
+    
+    if (!roleResponse.ok) {
+      console.warn(`Role '${roleName}' not found. User created without role assignment.`);
+      return;
+    }
+    
+    const role = await roleResponse.json();
 
-  // Assign role
-  const assignUrl = `${config.keycloak.url}/admin/realms/${config.keycloak.realm}/users/${userId}/role-mappings/realm`;
-  await fetch(assignUrl, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${adminToken}`,
-    },
-    body: JSON.stringify([role]),
-  });
+    // Assign role
+    const assignUrl = `${config.keycloak.url}/admin/realms/${config.keycloak.realm}/users/${userId}/role-mappings/realm`;
+    await fetch(assignUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${adminToken}`,
+      },
+      body: JSON.stringify([role]),
+    });
+  } catch (error) {
+    console.warn('Failed to assign role:', error);
+    // Don't throw - user is created successfully, just without role
+  }
 }
 
 // Logout
@@ -204,10 +251,17 @@ export async function loadUserInfo(): Promise<UserInfo | null> {
       headers: { 'Authorization': `Bearer ${token}` },
     });
 
-    if (!response.ok) return null;
+    if (!response.ok) {
+      // Token might be invalid or expired
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('id_token');
+      return null;
+    }
     
     return await response.json();
   } catch (error) {
+    console.error('Load user info error:', error);
     return null;
   }
 }
@@ -230,21 +284,32 @@ export async function refreshToken(): Promise<TokenResponse | null> {
   body.set('client_id', config.keycloak.clientId);
   body.set('refresh_token', refreshTokenValue);
 
-  const response = await fetch(tokenUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: body.toString(),
-  });
+  try {
+    const response = await fetch(tokenUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body.toString(),
+    });
 
-  if (!response.ok) return null;
+    if (!response.ok) {
+      // Refresh token is invalid, clear everything
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('id_token');
+      return null;
+    }
 
-  const data: TokenResponse = await response.json();
-  
-  localStorage.setItem('access_token', data.access_token);
-  localStorage.setItem('refresh_token', data.refresh_token);
-  localStorage.setItem('id_token', data.id_token);
-  
-  return data;
+    const data: TokenResponse = await response.json();
+    
+    localStorage.setItem('access_token', data.access_token);
+    localStorage.setItem('refresh_token', data.refresh_token);
+    localStorage.setItem('id_token', data.id_token);
+    
+    return data;
+  } catch (error) {
+    console.error('Token refresh error:', error);
+    return null;
+  }
 }
 
 // Check if authenticated
@@ -268,4 +333,18 @@ export function getUserDisplayName(userInfo: UserInfo | null): string {
     return `${userInfo.given_name} ${userInfo.family_name}`;
   }
   return userInfo?.preferred_username || userInfo?.email || 'User';
+}
+
+// Check if token is expired
+export function isTokenExpired(): boolean {
+  const token = getToken();
+  if (!token) return true;
+  
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const exp = payload.exp * 1000; // Convert to milliseconds
+    return Date.now() >= exp;
+  } catch {
+    return true;
+  }
 }

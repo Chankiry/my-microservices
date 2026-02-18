@@ -17,7 +17,7 @@ export default function RegisterPage() {
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
-  const { register, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { register, isAuthenticated, isLoading: authLoading, clearError } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -53,6 +53,7 @@ export default function RegisterPage() {
     e.preventDefault();
     setError('');
     setSuccess('');
+    clearError();
 
     if (password !== confirmPassword) {
       setError('Passwords do not match');
@@ -82,7 +83,10 @@ export default function RegisterPage() {
   if (authLoading || isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-500">Loading...</p>
+        </div>
       </div>
     );
   }
@@ -122,14 +126,16 @@ export default function RegisterPage() {
             </div>
 
             {error && (
-              <div className="bg-red-50 text-red-700 p-4 rounded-lg mb-6 text-sm">
-                {error}
+              <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg mb-6 text-sm">
+                <p className="font-medium">Registration Failed</p>
+                <p className="mt-1">{error}</p>
               </div>
             )}
 
             {success && (
-              <div className="bg-green-50 text-green-700 p-4 rounded-lg mb-6 text-sm">
-                {success}
+              <div className="bg-green-50 border border-green-200 text-green-700 p-4 rounded-lg mb-6 text-sm">
+                <p className="font-medium">Success!</p>
+                <p className="mt-1">{success}</p>
               </div>
             )}
 
@@ -267,6 +273,14 @@ export default function RegisterPage() {
               <Link href="/login" className="text-green-600 font-medium hover:underline">
                 Sign in
               </Link>
+            </div>
+
+            {/* Info Box */}
+            <div className="mt-6 p-4 bg-yellow-50 rounded-lg">
+              <p className="text-sm text-yellow-700">
+                <strong>⚠️ Note:</strong> Registration requires Keycloak admin access. 
+                Make sure Keycloak is running and properly configured.
+              </p>
             </div>
           </div>
         </div>
