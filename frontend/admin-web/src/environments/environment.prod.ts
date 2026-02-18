@@ -1,7 +1,13 @@
 export const environment = {
   production: true,
-  apiUrl: 'http://localhost:8000',
-  keycloakUrl: 'http://localhost:8080',
-  realm: 'master',
-  clientId: 'angular-admin-client',
+  apiUrl: window.location.origin + '/api',
+  keycloak: {
+    url: window.location.origin + ':8080',
+    realm: 'microservices',
+    clientId: 'angular-admin-client',
+  },
+  testCredentials: {
+    user: { email: '', password: '' },
+    admin: { email: '', password: '' },
+  },
 };

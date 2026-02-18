@@ -1,115 +1,203 @@
 'use client';
 
-import { useKeycloak } from '@react-keycloak/web';
-import Navbar from './components/Navbar';
+import { useAuth } from '@/lib/auth-context';
+import Navbar from '@/components/Navbar';
+import Link from 'next/link';
 
 export default function Home() {
-  const { keycloak, initialized } = useKeycloak();
+  const { isAuthenticated, isLoading } = useAuth();
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
       <Navbar />
       
-      <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-        <div className="text-center">
-          <h1 className="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
-            <span className="block">Welcome to</span>
-            <span className="block text-primary-600">Microservices Platform</span>
-          </h1>
-          <p className="mt-3 max-w-md mx-auto text-base text-gray-500 sm:text-lg md:mt-5 md:text-xl md:max-w-3xl">
-            A modern, scalable microservices architecture built with NestJS, Next.js, and Kubernetes.
-          </p>
+      {/* Hero Section */}
+      <section className="bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-32">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
+                Welcome to{' '}
+                <span className="text-primary-600">Microservices Platform</span>
+              </h1>
+              <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+                A modern, scalable platform built with enterprise-grade security powered by Keycloak. 
+                Manage your applications with confidence.
+              </p>
+              <div className="flex flex-wrap gap-4">
+                {isLoading ? (
+                  <div className="animate-pulse bg-gray-200 h-12 w-32 rounded-lg"></div>
+                ) : isAuthenticated ? (
+                  <Link
+                    href="/dashboard"
+                    className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors"
+                  >
+                    Go to Dashboard
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                  </Link>
+                ) : (
+                  <>
+                    <Link
+                      href="/login"
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors"
+                    >
+                      Get Started
+                    </Link>
+                    <Link
+                      href="/register"
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                    >
+                      Create Account
+                    </Link>
+                  </>
+                )}
+              </div>
+            </div>
+            
+            <div className="hidden lg:block">
+              <div className="bg-white rounded-2xl shadow-xl p-6 border border-gray-200">
+                <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100">
+                  <div className="flex gap-2">
+                    <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                    <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+                    <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                  </div>
+                  <span className="text-sm text-gray-500">Dashboard Preview</span>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="h-24 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg animate-pulse"></div>
+                  <div className="h-24 bg-gradient-to-br from-green-100 to-green-200 rounded-lg animate-pulse"></div>
+                  <div className="h-24 bg-gradient-to-br from-purple-100 to-purple-200 rounded-lg animate-pulse"></div>
+                </div>
+                <div className="mt-4 space-y-3">
+                  <div className="h-4 bg-gray-100 rounded animate-pulse"></div>
+                  <div className="h-4 bg-gray-100 rounded w-3/4 animate-pulse"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Powerful Features
+            </h2>
+            <p className="text-lg text-gray-500">
+              Everything you need to manage your microservices platform
+            </p>
+          </div>
           
-          <div className="mt-5 max-w-md mx-auto sm:flex sm:justify-center md:mt-8">
-            {!initialized ? (
-              <div className="animate-pulse">
-                <div className="h-10 bg-gray-200 rounded w-32"></div>
-              </div>
-            ) : keycloak.authenticated ? (
-              <div className="rounded-md shadow">
-                <a
-                  href="/dashboard"
-                  className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 md:py-4 md:text-lg"
-                >
-                  Go to Dashboard
-                </a>
-              </div>
-            ) : (
-              <>
-                <div className="rounded-md shadow">
-                  <button
-                    onClick={() => keycloak.login()}
-                    className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 md:py-4 md:text-lg"
-                  >
-                    Get Started
-                  </button>
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              {
+                icon: (
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  </svg>
+                ),
+                title: 'Secure Authentication',
+                description: 'Enterprise-grade security with Keycloak, supporting OAuth2, OIDC, and SSO.',
+              },
+              {
+                icon: (
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                  </svg>
+                ),
+                title: 'User Management',
+                description: 'Comprehensive user administration with role-based access control.',
+              },
+              {
+                icon: (
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                  </svg>
+                ),
+                title: 'Real-time Monitoring',
+                description: 'Track performance metrics and system health in real-time.',
+              },
+            ].map((feature, index) => (
+              <div
+                key={index}
+                className="bg-white p-8 rounded-xl border border-gray-200 hover:shadow-lg transition-shadow"
+              >
+                <div className="w-14 h-14 bg-primary-50 text-primary-600 rounded-xl flex items-center justify-center mb-6">
+                  {feature.icon}
                 </div>
-                <div className="mt-3 rounded-md shadow sm:mt-0 sm:ml-3">
-                  <button
-                    onClick={() => keycloak.register()}
-                    className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-primary-600 bg-white hover:bg-gray-50 md:py-4 md:text-lg"
-                  >
-                    Register
-                  </button>
-                </div>
-              </>
-            )}
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                  {feature.title}
+                </h3>
+                <p className="text-gray-500">
+                  {feature.description}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
+      </section>
 
-        {/* Features Section */}
-        <div className="mt-20">
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="pt-6">
-              <div className="flow-root bg-white rounded-lg px-6 pb-8">
-                <div className="-mt-6">
-                  <div className="inline-flex items-center justify-center p-3 bg-primary-500 rounded-md shadow-lg">
-                    <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                  </div>
-                  <h3 className="mt-8 text-lg font-medium text-gray-900 tracking-tight">Fast & Scalable</h3>
-                  <p className="mt-5 text-base text-gray-500">
-                    Built with modern technologies for high performance and scalability.
-                  </p>
+      {/* Tech Stack Section */}
+      <section className="py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+              Technology Stack
+            </h2>
+            <p className="text-lg text-gray-500">
+              Built with modern, battle-tested technologies
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+            {[
+              { name: 'Keycloak', desc: 'IAM', color: 'bg-gray-700' },
+              { name: 'Kong', desc: 'Gateway', color: 'bg-blue-600' },
+              { name: 'Kafka', desc: 'Messaging', color: 'bg-gray-900' },
+              { name: 'PostgreSQL', desc: 'Database', color: 'bg-blue-700' },
+              { name: 'Redis', desc: 'Cache', color: 'bg-red-600' },
+              { name: 'Docker', desc: 'Container', color: 'bg-blue-500' },
+            ].map((tech, index) => (
+              <div
+                key={index}
+                className="bg-white p-6 rounded-xl border border-gray-200 text-center"
+              >
+                <div className={`w-12 h-12 ${tech.color} rounded-lg text-white flex items-center justify-center mx-auto mb-3 font-bold`}>
+                  {tech.name.charAt(0)}
                 </div>
+                <div className="font-semibold text-gray-900">{tech.name}</div>
+                <div className="text-sm text-gray-500">{tech.desc}</div>
               </div>
-            </div>
-
-            <div className="pt-6">
-              <div className="flow-root bg-white rounded-lg px-6 pb-8">
-                <div className="-mt-6">
-                  <div className="inline-flex items-center justify-center p-3 bg-primary-500 rounded-md shadow-lg">
-                    <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                    </svg>
-                  </div>
-                  <h3 className="mt-8 text-lg font-medium text-gray-900 tracking-tight">Secure</h3>
-                  <p className="mt-5 text-base text-gray-500">
-                    Enterprise-grade security with Keycloak authentication and authorization.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-6">
-              <div className="flow-root bg-white rounded-lg px-6 pb-8">
-                <div className="-mt-6">
-                  <div className="inline-flex items-center justify-center p-3 bg-primary-500 rounded-md shadow-lg">
-                    <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                    </svg>
-                  </div>
-                  <h3 className="mt-8 text-lg font-medium text-gray-900 tracking-tight">Microservices</h3>
-                  <p className="mt-5 text-base text-gray-500">
-                    Modular architecture with independent services for better maintainability.
-                  </p>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
-      </div>
-    </main>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 bg-gradient-to-r from-primary-600 to-primary-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h2 className="text-3xl font-bold text-white mb-4">
+            Ready to Get Started?
+          </h2>
+          <p className="text-lg text-primary-100 mb-8">
+            Join our platform and start managing your microservices today.
+          </p>
+          <Link
+            href={isAuthenticated ? '/dashboard' : '/register'}
+            className="inline-flex items-center gap-2 px-8 py-4 bg-white text-primary-700 rounded-lg font-semibold hover:bg-primary-50 transition-colors"
+          >
+            {isAuthenticated ? 'Open Dashboard' : 'Create Free Account'}
+          </Link>
+        </div>
+      </section>
+    </div>
   );
 }

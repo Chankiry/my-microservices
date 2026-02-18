@@ -1,0 +1,204 @@
+<div class="register-page">
+<div class="register-container">
+    <!-- Left Side - Branding -->
+    <div class="register-branding">
+    <div class="branding-content">
+        <h1>Join Us Today</h1>
+        <p>Create your account to get started with the Admin Dashboard and manage your microservices platform efficiently.</p>
+        
+        <div class="features-list">
+        <div class="feature-item">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="8.5" cy="7" r="4"/>
+            <line x1="20" y1="8" x2="20" y2="14"/>
+            <line x1="23" y1="11" x2="17" y2="11"/>
+            </svg>
+            <span>Quick Registration</span>
+        </div>
+        <div class="feature-item">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <span>Secure Account</span>
+        </div>
+        <div class="feature-item">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+            <span>Instant Access</span>
+        </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- Right Side - Register Form -->
+    <div class="register-form-container">
+    <div class="register-form">
+        <div class="form-header">
+        <h2>Create Account</h2>
+        <p>Fill in your details to get started</p>
+        </div>
+
+        <div *ngIf="error" class="alert alert-error">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="15" y1="9" x2="9" y2="15"/>
+            <line x1="9" y1="9" x2="15" y2="15"/>
+        </svg>
+        {{ error }}
+        </div>
+
+        <div *ngIf="success" class="alert alert-success">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+        </svg>
+        {{ success }}
+        </div>
+
+        <form (ngSubmit)="onSubmit()" #registerForm="ngForm">
+        <div class="form-row">
+            <div class="form-group">
+            <label class="form-label" for="firstName">First Name</label>
+            <input
+                type="text"
+                id="firstName"
+                class="form-control"
+                [(ngModel)]="firstName"
+                name="firstName"
+                placeholder="John"
+                required
+                [disabled]="isLoading"
+            />
+            </div>
+            <div class="form-group">
+            <label class="form-label" for="lastName">Last Name</label>
+            <input
+                type="text"
+                id="lastName"
+                class="form-control"
+                [(ngModel)]="lastName"
+                name="lastName"
+                placeholder="Doe"
+                required
+                [disabled]="isLoading"
+            />
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="email">Email Address</label>
+            <div class="input-icon-wrapper">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
+            </svg>
+            <input
+                type="email"
+                id="email"
+                class="form-control"
+                [(ngModel)]="email"
+                name="email"
+                placeholder="john@example.com"
+                required
+                email
+                [disabled]="isLoading"
+            />
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="password">Password</label>
+            <div class="input-icon-wrapper">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <input
+                [type]="showPassword ? 'text' : 'password'"
+                id="password"
+                class="form-control"
+                [(ngModel)]="password"
+                name="password"
+                placeholder="Min. 8 characters"
+                required
+                minlength="8"
+                [disabled]="isLoading"
+            />
+            <button type="button" class="password-toggle" (click)="showPassword = !showPassword">
+                <svg *ngIf="!showPassword" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <svg *ngIf="showPassword" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+            </button>
+            </div>
+            <div class="password-strength" *ngIf="password">
+            <div class="strength-bar">
+                <div class="strength-fill" [ngStyle]="{'width': passwordStrength + '%'}" [ngClass]="strengthClass"></div>
+            </div>
+            <span class="strength-text">{{ strengthText }}</span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="confirmPassword">Confirm Password</label>
+            <div class="input-icon-wrapper">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <input
+                [type]="showConfirmPassword ? 'text' : 'password'"
+                id="confirmPassword"
+                class="form-control"
+                [(ngModel)]="confirmPassword"
+                name="confirmPassword"
+                placeholder="Confirm your password"
+                required
+                [disabled]="isLoading"
+            />
+            <button type="button" class="password-toggle" (click)="showConfirmPassword = !showConfirmPassword">
+                <svg *ngIf="!showConfirmPassword" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <svg *ngIf="showConfirmPassword" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+            </button>
+            </div>
+            <span *ngIf="confirmPassword && password !== confirmPassword" class="form-error">
+            Passwords do not match
+            </span>
+        </div>
+
+        <button
+            type="submit"
+            class="btn btn-primary btn-lg btn-block"
+            [disabled]="isLoading || registerForm.invalid || password !== confirmPassword"
+        >
+            <span *ngIf="!isLoading">Create Account</span>
+            <span *ngIf="isLoading" class="loading-content">
+            <svg class="spinner-sm" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="30 70"/>
+            </svg>
+            Creating account...
+            </span>
+        </button>
+        </form>
+
+        <div class="form-footer">
+        <p>Already have an account? <a routerLink="/login">Sign in</a></p>
+        </div>
+    </div>
+    </div>
+</div>
+</div>

@@ -1,0 +1,240 @@
+<div class="profile-page">
+<div class="container">
+    <div class="page-header">
+    <h1>Profile Settings</h1>
+    <p>Manage your account settings and preferences</p>
+    </div>
+
+    <div class="profile-grid">
+    <!-- Profile Info Card -->
+    <div class="card profile-info-card">
+        <div class="card-header">
+        <h3 class="card-title">Profile Information</h3>
+        <button class="btn btn-sm btn-secondary" (click)="openEditProfile()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+            Edit Profile
+        </button>
+        </div>
+        <div class="profile-avatar-section">
+        <div class="avatar-large">{{ getUserInitials() }}</div>
+        <div class="avatar-info">
+            <h4>{{ userInfo?.name || userInfo?.preferred_username }}</h4>
+            <p>{{ userInfo?.email }}</p>
+            <div class="user-roles">
+            <span *ngFor="let role of getUserRoles()" class="role-badge" [class.admin]="role === 'admin'">
+                {{ role }}
+            </span>
+            </div>
+        </div>
+        </div>
+        <div class="info-list">
+        <div class="info-item">
+            <span class="info-label">User ID</span>
+            <span class="info-value code">{{ userInfo?.sub }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Username</span>
+            <span class="info-value">{{ userInfo?.preferred_username }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Email</span>
+            <span class="info-value">{{ userInfo?.email }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Email Verified</span>
+            <span class="info-value" [class.verified]="userInfo?.email_verified" [class.not-verified]="!userInfo?.email_verified">
+            {{ userInfo?.email_verified ? 'Yes' : 'No' }}
+            </span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">First Name</span>
+            <span class="info-value">{{ userInfo?.given_name || '-' }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Last Name</span>
+            <span class="info-value">{{ userInfo?.family_name || '-' }}</span>
+        </div>
+        </div>
+    </div>
+
+    <!-- Actions Card -->
+    <div class="card actions-card">
+        <div class="card-header">
+        <h3 class="card-title">Account Actions</h3>
+        </div>
+        <div class="action-list">
+        <button class="action-item" (click)="openChangePassword()">
+            <div class="action-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            </div>
+            <div class="action-content">
+            <span class="action-title">Change Password</span>
+            <span class="action-desc">Update your account password</span>
+            </div>
+            <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 18l6-6-6-6"/>
+            </svg>
+        </button>
+
+        <button class="action-item" (click)="refreshSession()">
+            <div class="action-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="23 4 23 10 17 10"/>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+            </svg>
+            </div>
+            <div class="action-content">
+            <span class="action-title">Refresh Session</span>
+            <span class="action-desc">Renew your access token</span>
+            </div>
+            <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 18l6-6-6-6"/>
+            </svg>
+        </button>
+
+        <button class="action-item danger" (click)="logout()">
+            <div class="action-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            </div>
+            <div class="action-content">
+            <span class="action-title">Sign Out</span>
+            <span class="action-desc">Sign out of your account</span>
+            </div>
+            <svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 18l6-6-6-6"/>
+            </svg>
+        </button>
+        </div>
+    </div>
+
+    <!-- Session Info Card -->
+    <div class="card session-card">
+        <div class="card-header">
+        <h3 class="card-title">Session Information</h3>
+        </div>
+        <div class="session-info">
+        <div class="session-item">
+            <span class="session-label">Access Token</span>
+            <div class="token-display">
+            <code>{{ tokenPreview }}</code>
+            </div>
+        </div>
+        <p class="session-note">
+            Your session is managed by Keycloak. The token above is used for API authentication.
+        </p>
+        </div>
+    </div>
+    </div>
+</div>
+</div>
+
+<!-- Edit Profile Modal -->
+<div class="modal-overlay" *ngIf="showEditModal" (click)="closeEditModal()">
+<div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+    <h3>Edit Profile</h3>
+    <button class="modal-close" (click)="closeEditModal()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+    </button>
+    </div>
+    <div class="modal-body">
+    <div *ngIf="modalError" class="alert alert-error">{{ modalError }}</div>
+    <div *ngIf="modalSuccess" class="alert alert-success">{{ modalSuccess }}</div>
+
+    <div class="form-row">
+        <div class="form-group">
+        <label class="form-label">First Name</label>
+        <input type="text" class="form-control" [(ngModel)]="editForm.firstName" placeholder="First name">
+        </div>
+        <div class="form-group">
+        <label class="form-label">Last Name</label>
+        <input type="text" class="form-control" [(ngModel)]="editForm.lastName" placeholder="Last name">
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-control" [(ngModel)]="editForm.email" placeholder="Email">
+        <p class="form-hint">Changing email may require re-verification</p>
+    </div>
+    </div>
+    <div class="modal-footer">
+    <button class="btn btn-secondary" (click)="closeEditModal()">Cancel</button>
+    <button class="btn btn-primary" (click)="saveProfile()" [disabled]="isSaving">
+        {{ isSaving ? 'Saving...' : 'Save Changes' }}
+    </button>
+    </div>
+</div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal-overlay" *ngIf="showPasswordModal" (click)="closePasswordModal()">
+<div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+    <h3>Change Password</h3>
+    <button class="modal-close" (click)="closePasswordModal()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"/>
+        <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+    </button>
+    </div>
+    <div class="modal-body">
+    <div *ngIf="modalError" class="alert alert-error">{{ modalError }}</div>
+    <div *ngIf="modalSuccess" class="alert alert-success">{{ modalSuccess }}</div>
+
+    <div class="form-group">
+        <label class="form-label">Current Password</label>
+        <input type="password" class="form-control" [(ngModel)]="passwordForm.currentPassword" placeholder="Enter current password">
+    </div>
+
+    <div class="form-group">
+        <label class="form-label">New Password</label>
+        <input type="password" class="form-control" [(ngModel)]="passwordForm.newPassword" placeholder="Enter new password">
+        <div class="password-strength" *ngIf="passwordForm.newPassword">
+        <div class="strength-bar">
+            <div class="strength-fill" [ngStyle]="{'width': passwordStrength + '%'}" [ngClass]="strengthClass"></div>
+        </div>
+        <span class="strength-text">{{ strengthText }}</span>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label class="form-label">Confirm New Password</label>
+        <input type="password" class="form-control" [(ngModel)]="passwordForm.confirmPassword" placeholder="Confirm new password">
+        <p *ngIf="passwordForm.confirmPassword && passwordForm.newPassword !== passwordForm.confirmPassword" class="form-error">
+        Passwords do not match
+        </p>
+    </div>
+
+    <div class="password-requirements">
+        <p class="requirements-title">Password requirements:</p>
+        <ul>
+        <li [class.met]="passwordForm.newPassword.length >= 8">At least 8 characters</li>
+        <li [class.met]="hasLowercase">One lowercase letter</li>
+        <li [class.met]="hasUppercase">One uppercase letter</li>
+        <li [class.met]="hasNumber">One number</li>
+        </ul>
+    </div>
+    </div>
+    <div class="modal-footer">
+    <button class="btn btn-secondary" (click)="closePasswordModal()">Cancel</button>
+    <button class="btn btn-primary" (click)="changePassword()" [disabled]="isSaving">
+        {{ isSaving ? 'Changing...' : 'Change Password' }}
+    </button>
+    </div>
+</div>
+</div>

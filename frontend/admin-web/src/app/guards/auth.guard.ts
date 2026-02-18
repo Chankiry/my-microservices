@@ -1,24 +1,45 @@
 import { Injectable } from '@angular/core';
-import { Router, CanActivate } from '@angular/router';
-import { KeycloakAuthGuard, KeycloakService } from 'keycloak-angular';
+import { CanActivate, Router, ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { KeycloakService } from '../services/keycloak.service';
 
-@Injectable()
-export class AuthGuard extends KeycloakAuthGuard implements CanActivate {
+@Injectable({
+  providedIn: 'root'
+})
+export class AuthGuard implements CanActivate {
   constructor(
-    protected override router: Router,
-    protected keycloakService: KeycloakService
-  ) {
-    super(router, keycloakService);
-  }
+    private keycloakService: KeycloakService,
+    private router: Router
+  ) {}
 
-  isAccessAllowed(): Promise<boolean> {
-    return new Promise(async (resolve) => {
-      if (!this.authenticated) {
-        this.keycloakService.login();
-        resolve(false);
-        return;
+  async canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Promise<boolean> {
+    const token = this.keycloakService.getToken();
+    
+    if (!token) {
+      this.router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
+      return false;
+    }
+
+    // Check if token is valid by loading user info
+    const userInfo = await this.keycloakService.loadUserInfo();
+    
+    if (!userInfo) {
+      // Token might be expired, try refresh
+      try {
+        await this.keycloakService.refreshToken().toPromise();
+        return true;
+      } catch {
+        this.router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
+        return false;
       }
-      resolve(true);
-    });
+    }
+
+    // Check for role requirement
+    const requiredRole = route.data['role'];
+    if (requiredRole && !this.keycloakService.hasRole(requiredRole)) {
+      this.router.navigate(['/']);
+      return false;
+    }
+
+    return true;
   }
 }
