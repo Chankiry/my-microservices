@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { getUserDisplayName, getToken } from '@/lib/keycloak';
-import { updateUser, changeOwnPassword, getUserById } from '@/lib/keycloak-admin';
+import { updateUser, changeOwnPassword } from '@/lib/keycloak-admin';
 import Navbar from '@/components/Navbar';
 
 export default function ProfilePage() {
@@ -190,7 +190,7 @@ export default function ProfilePage() {
       <div className="min-h-screen bg-gray-50">
         <Navbar />
         <div className="flex items-center justify-center h-[calc(100vh-64px)]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
       </div>
     );
@@ -225,7 +225,7 @@ export default function ProfilePage() {
             
             <div className="p-6">
               <div className="flex items-center gap-6 pb-6 border-b border-gray-100">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary-500 to-primary-700 text-white flex items-center justify-center text-2xl font-semibold">
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center text-2xl font-semibold">
                   {getUserInitials()}
                 </div>
                 <div>
@@ -383,7 +383,7 @@ export default function ProfilePage() {
                     type="text"
                     value={editForm.firstName}
                     onChange={e => setEditForm({ ...editForm, firstName: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
                 <div>
@@ -392,7 +392,7 @@ export default function ProfilePage() {
                     type="text"
                     value={editForm.lastName}
                     onChange={e => setEditForm({ ...editForm, lastName: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
               </div>
@@ -402,10 +402,10 @@ export default function ProfilePage() {
                 <input
                   type="email"
                   value={editForm.email}
-                  onChange={e => setEditForm({ ...editForm, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  disabled
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500"
                 />
-                <p className="text-xs text-gray-500 mt-1">Changing email may require re-verification</p>
+                <p className="text-xs text-gray-500 mt-1">Email cannot be changed</p>
               </div>
             </div>
 
@@ -416,7 +416,7 @@ export default function ProfilePage() {
               <button
                 onClick={saveProfile}
                 disabled={isSaving}
-                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
                 {isSaving ? 'Saving...' : 'Save Changes'}
               </button>
@@ -448,7 +448,7 @@ export default function ProfilePage() {
                   type="password"
                   value={passwordForm.currentPassword}
                   onChange={e => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
@@ -458,7 +458,7 @@ export default function ProfilePage() {
                   type="password"
                   value={passwordForm.newPassword}
                   onChange={e => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
                 {passwordForm.newPassword && (
                   <div className="mt-2 flex items-center gap-2">
@@ -479,7 +479,7 @@ export default function ProfilePage() {
                   type="password"
                   value={passwordForm.confirmPassword}
                   onChange={e => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
                 {passwordForm.confirmPassword && passwordForm.newPassword !== passwordForm.confirmPassword && (
                   <p className="text-red-500 text-xs mt-1">Passwords do not match</p>
@@ -512,7 +512,7 @@ export default function ProfilePage() {
               <button
                 onClick={handleChangePassword}
                 disabled={isSaving}
-                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
               >
                 {isSaving ? 'Changing...' : 'Change Password'}
               </button>

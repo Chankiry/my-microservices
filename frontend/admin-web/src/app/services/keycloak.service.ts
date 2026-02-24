@@ -152,8 +152,8 @@ export class KeycloakService {
   async register(email: string, password: string, firstName: string, lastName: string): Promise<void> {
     this.clearError();
     try {
-      // First, get admin token from master realm
-      const adminTokenUrl = `${environment.keycloak.url}/realms/master/protocol/openid-connect/token`;
+      // First, get admin token from microservices realm
+      const adminTokenUrl = `${environment.keycloak.url}/realms/${environment.keycloak.realm}/protocol/openid-connect/token`;
       
       const adminBody = new URLSearchParams();
       adminBody.set('grant_type', 'password');

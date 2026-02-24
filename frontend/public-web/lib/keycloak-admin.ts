@@ -61,7 +61,8 @@ export async function getAdminToken(): Promise<string> {
   });
 
   if (!response.ok) {
-    throw new Error('Failed to get admin token');
+    const error = await response.json();
+    throw new Error('Failed to get admin token. Make sure Keycloak is running and admin credentials are correct.');
   }
 
   const data = await response.json();
@@ -69,6 +70,12 @@ export async function getAdminToken(): Promise<string> {
   adminTokenExpiry = Date.now() + (data.expires_in * 1000);
   
   return adminToken;
+}
+
+// Clear admin token cache (useful after errors)
+export function clearAdminTokenCache(): void {
+  adminToken = null;
+  adminTokenExpiry = 0;
 }
 
 // ==========================================
@@ -89,6 +96,10 @@ export async function getUsers(search?: string): Promise<UserWithRoles[]> {
   });
 
   if (!response.ok) {
+    if (response.status === 401) {
+      clearAdminTokenCache();
+      throw new Error('Admin session expired. Please refresh and try again.');
+    }
     throw new Error('Failed to fetch users');
   }
 
@@ -97,8 +108,12 @@ export async function getUsers(search?: string): Promise<UserWithRoles[]> {
   // Fetch roles for each user
   const usersWithRoles = await Promise.all(
     users.map(async (user) => {
-      const roles = await getUserRoles(user.id!);
-      return { ...user, roles };
+      try {
+        const roles = await getUserRoles(user.id!);
+        return { ...user, roles };
+      } catch {
+        return { ...user, roles: [] };
+      }
     })
   );
 
@@ -163,6 +178,9 @@ export async function createUser(userData: {
 
   if (!response.ok) {
     const error = await response.json();
+    if (error.errorMessage?.includes('already exists')) {
+      throw new Error('A user with this email or username already exists');
+    }
     throw new Error(error.errorMessage || 'Failed to create user');
   }
 
@@ -173,7 +191,11 @@ export async function createUser(userData: {
   // Assign roles if specified
   if (userId && userData.roles && userData.roles.length > 0) {
     for (const role of userData.roles) {
-      await assignRole(userId, role);
+      try {
+        await assignRole(userId, role);
+      } catch (err) {
+        console.warn(`Failed to assign role ${role}:`, err);
+      }
     }
   }
 
@@ -195,6 +217,10 @@ export async function updateUser(userId: string, userData: Partial<KeycloakUser>
   });
 
   if (!response.ok) {
+    if (response.status === 401) {
+      clearAdminTokenCache();
+      throw new Error('Admin session expired. Please try again.');
+    }
     const error = await response.json();
     throw new Error(error.errorMessage || 'Failed to update user');
   }
@@ -293,7 +319,7 @@ export async function assignRole(userId: string, roleName: string): Promise<void
   });
   
   if (!roleResponse.ok) {
-    throw new Error(`Role ${roleName} not found`);
+    throw new Error(`Role '${roleName}' not found. Please create it in Keycloak first.`);
   }
   
   const role = await roleResponse.json();
@@ -325,7 +351,7 @@ export async function removeRole(userId: string, roleName: string): Promise<void
   });
   
   if (!roleResponse.ok) {
-    throw new Error(`Role ${roleName} not found`);
+    throw new Error(`Role '${roleName}' not found`);
   }
   
   const role = await roleResponse.json();
@@ -350,35 +376,49 @@ export async function removeRole(userId: string, roleName: string): Promise<void
 // Self-Service Operations (User's own account)
 // ==========================================
 
-// Change own password
+// Change own password using Admin API (requires user ID from token)
 export async function changeOwnPassword(userToken: string, data: PasswordUpdate): Promise<void> {
   if (data.newPassword !== data.confirmPassword) {
     throw new Error('New passwords do not match');
   }
 
-  // Keycloak Account API for password change
-  const url = `${config.keycloak.url}/realms/${config.keycloak.realm}/account/password`;
+  if (data.newPassword.length < 8) {
+    throw new Error('Password must be at least 8 characters');
+  }
 
-  const body = new URLSearchParams();
-  body.set('password', data.currentPassword);
-  body.set('password-new', data.newPassword);
-  body.set('password-confirm', data.confirmPassword);
+  // Decode the user token to get user ID
+  try {
+    const tokenParts = userToken.split('.');
+    const payload = JSON.parse(atob(tokenParts[1]));
+    const userId = payload.sub;
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'Authorization': `Bearer ${userToken}`,
-    },
-    body: body.toString(),
-  });
+    // Verify current password by trying to get a new token
+    const tokenUrl = `${config.keycloak.url}/realms/${config.keycloak.realm}/protocol/openid-connect/token`;
+    
+    const verifyBody = new URLSearchParams();
+    verifyBody.set('grant_type', 'password');
+    verifyBody.set('client_id', config.keycloak.clientId);
+    verifyBody.set('username', payload.preferred_username || payload.email);
+    verifyBody.set('password', data.currentPassword);
 
-  if (!response.ok) {
-    const text = await response.text();
-    if (text.includes('Invalid password')) {
+    const verifyResponse = await fetch(tokenUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: verifyBody.toString(),
+    });
+
+    if (!verifyResponse.ok) {
       throw new Error('Current password is incorrect');
     }
-    throw new Error('Failed to change password');
+
+    // Use admin API to reset password (since user is changing their own password)
+    await resetUserPassword(userId, data.newPassword, false);
+    
+  } catch (error: any) {
+    if (error.message === 'Current password is incorrect') {
+      throw error;
+    }
+    throw new Error('Failed to change password. Please try again.');
   }
 }
 

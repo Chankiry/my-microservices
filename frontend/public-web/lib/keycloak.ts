@@ -103,7 +103,7 @@ export async function register(
 ): Promise<void> {
   try {
     // Get admin token from master realm
-    const adminTokenUrl = `${config.keycloak.url}/realms/master/protocol/openid-connect/token`;
+    const adminTokenUrl = `${config.keycloak.url}/realms/${config.keycloak.realm}/protocol/openid-connect/token`;
     
     const adminBody = new URLSearchParams();
     adminBody.set('grant_type', 'password');
