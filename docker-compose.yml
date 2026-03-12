@@ -1,7 +1,5 @@
-version: '3.8'
-
-# MINIMAL INFRASTRUCTURE ONLY - NO MICROSERVICES
-# Use this to test if the issue is with infrastructure or microservices
+# CORE INFRASTRUCTURE ONLY
+# Monitoring stack is in docker-compose.monitoring.yml
 
 services:
   # ==========================================
@@ -13,7 +11,7 @@ services:
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin123
-      POSTGRES_MULTIPLE_DATABASES: auth_db,user_db,order_db,payment_db,notification_db
+      POSTGRES_MULTIPLE_DATABASES: auth_db,user_db,order_db,payment_db,notification_db,product_db,inventory_db,analytics_db
     ports:
       - "5455:5432"
     volumes:
@@ -30,6 +28,11 @@ services:
   redis:
     image: redis:8.6.0-alpine
     container_name: microservices-redis
+    command: >
+      redis-server
+      --requirepass redis123
+      --appendonly yes
+      --appendfsync everysec
     ports:
       - "6379:6379"
     volumes:
@@ -37,7 +40,7 @@ services:
     networks:
       - microservices-network
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "redis123", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -61,6 +64,10 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824
+      KAFKA_NUM_PARTITIONS: 3
       CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
     ports:
       - "9092:9092"
@@ -73,12 +80,13 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
     container_name: microservices-kafka-ui
     environment:
       KAFKA_CLUSTERS_0_NAME: local
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092  # ✅ Use internal port
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
       DYNAMIC_CONFIG_ENABLED: 'true'
     ports:
       - "8089:8080"
@@ -143,8 +151,20 @@ services:
       KONG_PROXY_LISTEN: 0.0.0.0:8000
       KONG_ADMIN_LISTEN: 0.0.0.0:8001
       KONG_ADMIN_GUI_URL: http://localhost:8002
+      KONG_ADMIN_GUI_API_URL: http://localhost:8001
+      KONG_ADMIN_GUI_PATH: /
       KONG_ADMIN_GUI_LISTEN: 0.0.0.0:8002
-      KONG_PLUGINS: bundled,jwt,cors,rate-limiting
+
+      # Add oidcify to the plugins list
+      KONG_PLUGINS: bundled,jwt,cors,rate-limiting,oidcify
+      # Plugin server config for OIDCify
+      KONG_PLUGINSERVER_NAMES: oidcify
+      KONG_PLUGINSERVER_OIDCIFY_START_CMD: /usr/local/bin/oidcify
+      KONG_PLUGINSERVER_OIDCIFY_QUERY_CMD: /usr/local/bin/oidcify -dump
+    volumes:
+      # Mount the oidcify binary from your host into the container
+      - ./oidcify_1.3.4_linux_amd64/oidcify:/usr/local/bin/oidcify
+      
     ports:
       - "8000:8000"
       - "8001:8001"
@@ -194,71 +214,6 @@ services:
       retries: 10
       start_period: 90s
     restart: unless-stopped
-    
-  # ==========================================
-  # Monitoring & Observability
-  # ==========================================
-  prometheus:
-    image: prom/prometheus:v3.9.1
-    container_name: microservices-prometheus
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus_data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--web.enable-lifecycle'
-    networks:
-      - microservices-network
-
-  grafana:
-    image: grafana/grafana:12.3
-    container_name: microservices-grafana
-    ports:
-      - "4001:3000"
-    environment:
-      GF_SECURITY_ADMIN_USER: admin
-      GF_SECURITY_ADMIN_PASSWORD: admin123
-      GF_USERS_ALLOW_SIGN_UP: "false"
-    volumes:
-      - grafana_data:/var/lib/grafana
-    depends_on:
-      - prometheus
-    networks:
-      - microservices-network
-
-  jaeger:
-    image: jaegertracing/all-in-one:1.76.0
-    container_name: microservices-jaeger
-    ports:
-      - "16686:16686"
-      - "14250:14250"
-      - "14268:14268"
-      - "6831:6831/udp"
-    environment:
-      COLLECTOR_OTLP_ENABLED: "true"
-    networks:
-      - microservices-network
-
-  # ==========================================
-  # Database & Cache Management UIs
-  # ==========================================
-
-  redis-commander:
-    image: rediscommander/redis-commander:latest
-    container_name: microservices-redis-commander
-    environment:
-      REDIS_HOSTS: local:redis:6379
-    ports:
-      - "8081:8081"
-    depends_on:
-      - redis
-    networks:
-      - microservices-network
 
 # ==========================================
 # Volumes
@@ -268,8 +223,6 @@ volumes:
   redis_data:
   kafka_data:
   kong_db_data:
-  prometheus_data:
-  grafana_data:
 
 # ==========================================
 # Networks

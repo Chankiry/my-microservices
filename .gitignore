@@ -31,6 +31,12 @@ frontend/public-web/.next/
 node_modules/
 **/node_modules/
 
+# deployment docker
+deployment-docker/
+
+# libs
+libs/
+
 # Build outputs
 dist/
 **/dist/

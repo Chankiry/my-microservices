@@ -1,12 +1,14 @@
-// ================================================================>> Core Library
+// ===========================================================================>> Core Library
 import { Global, Module } from '@nestjs/common';
 import { MulterModule } from '@nestjs/platform-express';
 import { SequelizeModule } from '@nestjs/sequelize';
-// ================================================================>> Third Party Library
+// ===========================================================================>> Third Party Library
 import * as multer from 'multer';
-// ================================================================>> Costom Library
+// ===========================================================================>> Costom Library
 import sequelizeConfig from './sequelize.config';
 import { HttpModule } from '@nestjs/axios';
+import { ClientsModule, Transport } from '@nestjs/microservices';
+import kafkaConfig from './kafka.config';
 
 /** @noded We use Global that allow all module can access and use all models */
 @Global()
@@ -22,9 +24,13 @@ import { HttpModule } from '@nestjs/axios';
             timeout: 5000,
             maxRedirects: 5,
         }),
+
+        // Kafka Client
+        ClientsModule.registerAsync([
+            kafkaConfig,
+        ]),
     ],
-    providers: [
-    ],
+    providers: [],
     exports: [
         HttpModule.register({
             timeout: 5000,
@@ -32,4 +38,5 @@ import { HttpModule } from '@nestjs/axios';
         }),
     ]
 })
-export class ConfigModule { }
+
+export class ConfigModule {}

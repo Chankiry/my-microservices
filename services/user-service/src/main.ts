@@ -1,74 +1,59 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
 import { Transport, MicroserviceOptions } from '@nestjs/microservices';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { AppModule } from 'src/app/app.module';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import { join } from 'path';
-import { AppModule } from './app.module';
 
 async function bootstrap() {
-    // Create HTTP server
-    const app = await NestFactory.create(AppModule);
-    
-    // Enable validation
-    app.useGlobalPipes(new ValidationPipe({
-        whitelist: true,
-        transform: true,
-        forbidNonWhitelisted: true,
-    }));
+  const logger = new Logger('Bootstrap');
 
-    // Enable CORS
-    app.enableCors({
-        origin: ['http://localhost:3000', 'http://localhost:4200'],
-        credentials: true,
-    });
+  // Create HTTP application
+  const app = await NestFactory.create(AppModule);
 
-    // Swagger documentation
-    const config = new DocumentBuilder()
-        .setTitle('User Service API')
-        .setDescription('User Service for Microservices Architecture')
-        .setVersion('1.0')
-        .addBearerAuth()
-        .build();
-    const document = SwaggerModule.createDocument(app, config);
-    SwaggerModule.setup('api/docs', app, document);
+  // Enable CORS
+  app.enableCors({
+    origin: process.env.CORS_ORIGINS?.split(',') || ['http://localhost:3000'],
+    credentials: true,
+  });
 
-    // Create gRPC microservice
-    const grpcPort = process.env.GRPC_PORT || '50052';
-    app.connectMicroservice<MicroserviceOptions>({
-        transport: Transport.GRPC,
-        options: {
-            package: 'user',
-            protoPath: join(__dirname, '../../proto/user.proto'),
-            url: `0.0.0.0:${grpcPort}`,
-        },
-    });
+  // Global validation pipe
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
+    }),
+  );
 
-    // Create Kafka microservice
-    const kafkaBrokers = process.env.KAFKA_BROKERS || 'localhost:9092';
-    app.connectMicroservice<MicroserviceOptions>({
-        transport: Transport.KAFKA,
-        options: {
-            client: {
-                clientId: 'user-service',
-                brokers: kafkaBrokers.split(','),
-            },
-            consumer: {
-                groupId: 'user-service-consumer',
-            },
-        },
-    });
+  // Set global prefix
+  app.setGlobalPrefix('api');
 
-    // Start microservices
-    await app.startAllMicroservices();
+  // Connect gRPC microservice
+  app.connectMicroservice<MicroserviceOptions>({
+    transport: Transport.GRPC,
+    options: {
+      package: 'user',
+      protoPath: join(__dirname, 'proto/user.proto'),
+      url: process.env.GRPC_URL || '0.0.0.0:5001',
+      loader: {
+        keepCase: true,
+        longs: String,
+        enums: String,
+        defaults: true,
+        oneofs: true,
+      },
+    },
+  });
 
-    // Start HTTP server
-    const httpPort = process.env.HTTP_PORT || 3002;
-    await app.listen(httpPort);
-    
-    console.log(`User Service is running on:`);
-    console.log(`  HTTP: http://localhost:${httpPort}`);
-    console.log(`  gRPC: localhost:${grpcPort}`);
-    console.log(`  Swagger: http://localhost:${httpPort}/api/docs`);
+  // Start both HTTP and gRPC
+  await app.startAllMicroservices();
+
+  const httpPort = process.env.PORT || 3001;
+  logger.log(`User Service HTTP server running on port ${httpPort}`);
+  logger.log(`User Service gRPC server running on port 5001`);
 }
 
 bootstrap();

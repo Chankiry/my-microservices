@@ -2,72 +2,57 @@ syntax = "proto3";
 
 package notification;
 
-import "common.proto";
+option go_package = "./proto;notificationpb";
 
-option go_package = "./proto";
+// ============================================
+// Message Definitions
+// ============================================
 
-// Notification Service
-service NotificationService {
-    rpc SendEmail (SendEmailRequest) returns (NotificationResponse);
-    rpc SendNotification (SendNotificationRequest) returns (NotificationResponse);
-    rpc GetNotifications (GetNotificationsRequest) returns (NotificationListResponse);
-    rpc MarkAsRead (common.UUID) returns (NotificationResponse);
-    rpc HealthCheck (common.Empty) returns (HealthCheckResponse);
-}
-
-// Email messages
 message SendEmailRequest {
-    string to = 1;
-    string from = 2;
-    string subject = 3;
-    string body = 4;
-    string template = 5;
-    map<string, string> templateData = 6;
+  string to = 1;
+  string subject = 2;
+  string template = 3;
+  map<string, string> context = 4;
 }
 
-// Notification messages
+message SendEmailResponse {
+  bool success = 1;
+  string message_id = 2;
+  string error = 3;
+}
+
 message SendNotificationRequest {
-    string userId = 1;
-    string type = 2;  // email, sms, push
-    string title = 3;
-    string message = 4;
-    map<string, string> data = 5;
+  string user_id = 1;
+  string type = 2;  // email, push, sms
+  string title = 3;
+  string body = 4;
+  map<string, string> data = 5;
 }
 
-message NotificationResponse {
-    string id = 1;
-    string userId = 2;
-    string type = 3;
-    string title = 4;
-    string message = 5;
-    bool isRead = 6;
-    string createdAt = 7;
+message SendNotificationResponse {
+  bool success = 1;
+  string notification_id = 2;
+  string error = 3;
 }
 
-message GetNotificationsRequest {
-    string userId = 1;
-    bool unreadOnly = 2;
-    common.PaginationRequest pagination = 3;
+message GetNotificationStatusRequest {
+  string notification_id = 1;
 }
 
-message NotificationListResponse {
-    repeated NotificationResponse notifications = 1;
-    common.PaginationResponse pagination = 2;
+message NotificationStatus {
+  string id = 1;
+  string status = 2;  // pending, sent, delivered, failed
+  string created_at = 3;
+  string sent_at = 4;
+  string error = 5;
 }
 
-// Email log messages
-message EmailLogResponse {
-    string id = 1;
-    string to = 2;
-    string from = 3;
-    string subject = 4;
-    string status = 5;
-    string sentAt = 6;
-    string createdAt = 7;
-}
+// ============================================
+// Service Definition
+// ============================================
 
-message HealthCheckResponse {
-    string status = 1;
-    string timestamp = 2;
-    string service = 3;
+service NotificationService {
+  rpc SendEmail(SendEmailRequest) returns (SendEmailResponse);
+  rpc SendNotification(SendNotificationRequest) returns (SendNotificationResponse);
+  rpc GetNotificationStatus(GetNotificationStatusRequest) returns (NotificationStatus);
 }
