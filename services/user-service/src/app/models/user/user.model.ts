@@ -6,6 +6,8 @@ import {
     Index,
     BeforeCreate,
     BeforeUpdate,
+    CreatedAt,
+    UpdatedAt,
 } from 'sequelize-typescript';
 import * as bcrypt from 'bcryptjs';
 
@@ -15,7 +17,7 @@ import * as bcrypt from 'bcryptjs';
     updatedAt: 'updated_at',
     // deletedAt: false,     // add if you later want soft deletes
 })
-export default class User extends Model<User> {
+class User extends Model<User> {
     @Column({
         primaryKey: true,
         type: DataType.UUID,
@@ -51,6 +53,12 @@ export default class User extends Model<User> {
 
     @Column({ type: DataType.ARRAY(DataType.STRING), allowNull: true })
     declare roles: string[] | null;
+
+    @CreatedAt
+    declare createdAt: Date;
+
+    @UpdatedAt
+    declare updatedAt: Date;
 
     @Column({ type: DataType.JSONB, allowNull: true })
     declare profile:
@@ -96,3 +104,4 @@ export default class User extends Model<User> {
         return `${this.firstName || ''} ${this.lastName || ''}`.trim();
     }
 }
+export default User;

@@ -14,7 +14,7 @@ import {
     createdAt: 'created_at',
     updatedAt: 'updated_at',
 })
-export class OutboxMessage extends Model<OutboxMessage> {
+class OutboxMessage extends Model<OutboxMessage> {
     @Column({
         primaryKey: true,
         type: DataType.UUID,
@@ -55,3 +55,5 @@ export class OutboxMessage extends Model<OutboxMessage> {
     @UpdatedAt
     declare updatedAt: Date;
 }
+
+export default OutboxMessage;

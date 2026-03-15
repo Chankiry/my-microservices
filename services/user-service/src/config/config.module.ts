@@ -9,11 +9,16 @@ import sequelizeConfig from './sequelize.config';
 import { HttpModule } from '@nestjs/axios';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import kafkaConfig from './kafka.config';
+import { ConfigModule as NestConfigModule, ConfigService } from '@nestjs/config';
 
 /** @noded We use Global that allow all module can access and use all models */
 @Global()
 @Module({
     imports: [
+        NestConfigModule.forRoot({
+            isGlobal: true,
+        }),
+
         MulterModule.register({
             storage: multer.memoryStorage(),
         }),
@@ -32,10 +37,8 @@ import kafkaConfig from './kafka.config';
     ],
     providers: [],
     exports: [
-        HttpModule.register({
-            timeout: 5000,
-            maxRedirects: 5,
-        }),
+        HttpModule,
+        ClientsModule,
     ]
 })
 

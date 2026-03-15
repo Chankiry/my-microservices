@@ -1,16 +1,15 @@
-// src/modules/users/services/keycloak-sync.service.ts
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { UsersService } from 'src/app/resources/r3-user/service';
 import { KeycloakAdminService } from './keycloak-admin.service';
 import { KafkaProducerService } from '../kafka/kafka-producer.service';
+import { UserService } from '../../resources/r2-user/service';
 
 @Injectable()
 export class KeycloakSyncService {
     private readonly logger = new Logger(KeycloakSyncService.name);
 
     constructor(
-        private readonly usersService: UsersService,
+        private readonly usersService: UserService,
         private readonly keycloakAdmin: KeycloakAdminService,
         private readonly kafkaProducer: KafkaProducerService,
     ) {}
@@ -29,23 +28,23 @@ export class KeycloakSyncService {
         if (user.keycloakId) {
             // Update existing Keycloak user
             await this.keycloakAdmin.updateUser(user.keycloakId, {
-            firstName: user.firstName,
-            lastName: user.lastName,
-            email: user.email,
-            enabled: user.isActive,
+                firstName: user.firstName ?? undefined,
+                lastName: user.lastName ?? undefined,
+                email: user.email,
+                enabled: user.isActive,
             });
 
             this.logger.log(`Updated Keycloak user for ${user.email}`);
         } else {
             // Create new Keycloak user
             const keycloakId = await this.keycloakAdmin.createUser({
-            username: user.username,
-            email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            enabled: user.isActive,
-            attributes: { localUserId: [user.id] },
-            roles: user.roles,
+                username: user.username,
+                email: user.email,
+                firstName: user.firstName ?? undefined,
+                lastName: user.lastName ?? undefined,
+                enabled: user.isActive,
+                attributes: { localUserId: [user.id] },
+                roles: user.roles ?? undefined,
             });
 
             // Update local user with Keycloak ID
@@ -59,7 +58,7 @@ export class KeycloakSyncService {
             syncDirection: 'to-keycloak',
             syncedAt: new Date().toISOString(),
         });
-        } catch (error) {
+        } catch (error: any) {
         this.logger.error(`Sync to Keycloak failed for ${userId}: ${error.message}`);
         throw error;
         }
@@ -75,12 +74,12 @@ export class KeycloakSyncService {
         case 'REGISTER':
             await this.handleKeycloakRegistration(event);
             break;
-        case 'UPDATE_PROFILE':
-            await this.handleKeycloakProfileUpdate(event);
-            break;
-        case 'DELETE_ACCOUNT':
-            await this.handleKeycloakDeletion(event);
-            break;
+        // case 'UPDATE_PROFILE':
+        //     await this.handleKeycloakProfileUpdate(event);
+        //     break;
+        // case 'DELETE_ACCOUNT':
+        //     await this.handleKeycloakDeletion(event);
+        //     break;
         default:
             this.logger.debug(`Unhandled Keycloak event type: ${event.type}`);
         }
@@ -127,7 +126,7 @@ export class KeycloakSyncService {
         this.logger.log(
             `Full sync completed: ${result.created} created, ${result.updated} updated, ${result.errors} errors`,
         );
-        } catch (error) {
+        } catch (error: any) {
         this.logger.error(`Full sync failed: ${error.message}`);
         }
     }

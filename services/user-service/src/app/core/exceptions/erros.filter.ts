@@ -1,10 +1,10 @@
-import { ERROR_MESSAGE } from 'src/app/enums/message.enum';
 import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { TelegramService } from 'src/app/services/telegram.service';
-import { DateUtil } from 'src/app/utils/date.util';
-import { ErrorBaseResponse } from 'src/app/interface/base.interface';
-import { BaseTranslate } from 'src/app/enums/translate.enum';
+import { TelegramService } from '../../services/telegram.service';
+import { BaseTranslate } from '../../enums/translate.enum';
+import { ERROR_MESSAGE } from '../../enums/message.enum';
+import { ErrorBaseResponse } from '../../interface/base.interface';
+import { DateUtil } from '../../utils/date.util';
 
 @Catch()
 export class ExceptionErrorsFilter implements ExceptionFilter {

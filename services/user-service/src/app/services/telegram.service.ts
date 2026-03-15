@@ -1,5 +1,3 @@
-import { DateUtil } from 'src/app/utils/date.util';
-import { appConfig } from 'src/config/app.config';
 import { Injectable, Logger } from '@nestjs/common';
 import TelegramBot from 'node-telegram-bot-api';
 import axios, { AxiosRequestConfig } from 'axios';
@@ -7,6 +5,8 @@ import * as fs from 'fs';
 import FormData from 'form-data';
 import * as https from 'https';
 import { RouteExcludePayloadEnum } from '../enums/route.enum';
+import { appConfig } from '../../config/app.config';
+import { DateUtil } from '../utils/date.util';
 
 @Injectable()
 export class TelegramService {
@@ -200,10 +200,10 @@ export class TelegramService {
     async sendStackTrace(stackTrace) {
         function escapeHtml(str: string) {
             return str
-              .replace(/&/g, '&amp;')
-              .replace(/</g, '&lt;')
-              .replace(/>/g, '&gt;');
-          }
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+            }
         const template = `
 <pre>
 ${escapeHtml(stackTrace)}

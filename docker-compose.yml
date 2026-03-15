@@ -201,6 +201,11 @@ services:
       KC_METRICS_ENABLED: "true"
       KC_HOSTNAME_STRICT: "false"
       KC_HTTP_ENABLED: "true"
+      # 👇 Add this — tells Keycloak where Kafka is
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+    volumes:
+      # 👇 Add this — mounts your built JAR into Keycloak
+      - ./keycloak-extensions/kafka-event-listener/target/keycloak-kafka-event-listener-1.0.0.jar:/opt/keycloak/providers/keycloak-kafka-event-listener-1.0.0.jar
     command: start-dev
     depends_on:
       postgres:

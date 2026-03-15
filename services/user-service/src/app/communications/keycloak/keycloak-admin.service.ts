@@ -6,15 +6,20 @@ import { RequiredActionAlias } from '@keycloak/keycloak-admin-client/lib/defs/re
 @Injectable()
 export class KeycloakAdminService implements OnModuleInit {
     private readonly logger = new Logger(KeycloakAdminService.name);
-    private adminClient: KeycloakAdminClient;
+    private adminClient!: KeycloakAdminClient;
     private realm: string;
 
     constructor(private readonly configService: ConfigService) {
-        this.realm = this.configService.get('KEYCLOAK_REALM', 'microservices-realm');
+        this.realm = this.configService.get('KEYCLOAK_REALM', 'microservices-platform');
     }
 
     async onModuleInit() {
-        await this.initializeClient();
+        try {
+            await this.initializeClient();
+        } catch (error: any) {
+            // Log but don't crash — Keycloak may not be available yet
+            console.warn('[KeycloakAdminService] Failed to initialize:', error.message);
+        }
     }
 
     private async initializeClient(): Promise<void> {
@@ -26,7 +31,7 @@ export class KeycloakAdminService implements OnModuleInit {
         // Authenticate with admin credentials
         await this.adminClient.auth({
             username: this.configService.get('KEYCLOAK_ADMIN_USERNAME', 'admin'),
-            password: this.configService.get('KEYCLOAK_ADMIN_PASSWORD', 'admin'),
+            password: this.configService.get('KEYCLOAK_ADMIN_PASSWORD', 'admin123'),
             grantType: 'password',
             clientId: 'admin-cli',
         });

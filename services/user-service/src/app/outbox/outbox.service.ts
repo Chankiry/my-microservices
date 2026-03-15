@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { Sequelize, Transaction } from 'sequelize';
-import { OutboxMessage } from '../models/outbox/outbox-message.model';
+import { CreationAttributes, Sequelize, Transaction } from 'sequelize';
+import OutboxMessage from '../models/outbox/outbox-message.model';
 
 @Injectable()
 export class OutboxService {
@@ -24,17 +24,15 @@ export class OutboxService {
         payload: any,
     ): Promise<void> {
         await this.outboxModel.create(
-        {
-            eventType,
-            aggregateType,
-            aggregateId,
-            payload: JSON.stringify(payload), // or use JSONB column directly if defined
-            status: 'PENDING',
-            createdAt: new Date(),
-            // retryCount: 0,          // if default is 0 in model
-            // lastError: null,
-        },
-        { transaction },
+            {
+                eventType,
+                aggregateType,
+                aggregateId,
+                payload: JSON.stringify(payload),
+                status: 'PENDING',
+                createdAt: new Date(),
+            } as any,
+            { transaction },
         );
     }
 
@@ -77,7 +75,7 @@ export class OutboxService {
             message.status = 'PROCESSED';
             message.processedAt = new Date();
             await message.save({ transaction });
-            } catch (error) {
+            } catch (error: any) {
             this.logger.error(
                 `Failed to process outbox message ${message.id}: ${error.message}`,
                 error.stack,

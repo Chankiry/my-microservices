@@ -2,7 +2,7 @@ import { Op } from "sequelize";
 import dayjs from "dayjs";
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
-import { DateFormatEnum, TimezoneEnum } from "src/app/enums/datetime.enum";
+import { DateFormatEnum, TimezoneEnum } from "../enums/datetime.enum";
 dayjs.extend(utc);
 dayjs.extend(timezone);
 

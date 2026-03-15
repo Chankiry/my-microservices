@@ -125,7 +125,7 @@ export class KafkaProducerService implements OnModuleInit {
     private async emit(topic: string, message: any): Promise<void> {
         try {
         await this.kafkaClient.emit(topic, message).toPromise();
-        } catch (error) {
+        } catch (error: any) {
             this.logger.error(`Failed to emit to topic ${topic}: ${error.message}`);
             throw error;
         }

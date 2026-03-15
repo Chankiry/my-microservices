@@ -1,8 +1,8 @@
-import { MESSAGE } from "src/app/enums/message.enum";
 import { HttpStatus } from "@nestjs/common";
 import { Response } from "express";
 import { ITranslate } from "./data.interface";
-import { TelegramService } from "src/app/services/telegram.service";
+import { MESSAGE } from "../enums/message.enum";
+import { TelegramService } from "../services/telegram.service";
 
 export interface BaseResponse<T = any> {
     status_code  : number;

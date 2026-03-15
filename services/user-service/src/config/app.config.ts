@@ -6,6 +6,7 @@ export const appConfig = {
     // STATIC & SETTING
     PORT                : process.env.PORT  || 3000,
     ENV                 : process.env.ENV   || 'PROD',
+    API_PREFIX          : process.env.API_PREFIX || 'api/v1',
     SYSTEM              : 'USER SERVICE',
     
     // DATABASE CONNECTION

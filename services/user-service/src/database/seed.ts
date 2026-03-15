@@ -2,11 +2,11 @@
 import "colors";
 import * as readlineSync from 'readline-sync';
 import { Sequelize } from 'sequelize-typescript';
-import { SchemaEnum } from "src/app/enums/schema.enum";
-import { appConfig } from "src/config/app.config";
 
 // ================================================================>> Custom Library
-import sequelizeConfig from "src/config/sequelize.config";
+import { SchemaEnum } from "../app/enums/schema.enum";
+import sequelizeConfig from "../config/sequelize.config";
+import { appConfig } from "../config/app.config";
 
 class SeederInitializer {
     // private readonly logger = new LoggerService(SeederInitializer.name);

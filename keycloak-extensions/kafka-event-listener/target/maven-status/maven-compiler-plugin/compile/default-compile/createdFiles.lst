@@ -1,0 +1,4 @@
+com\microservices\keycloak\KafkaProducerService.class
+com\microservices\keycloak\KafkaEventListenerProviderFactory.class
+com\microservices\keycloak\KafkaEventListenerProvider$1.class
+com\microservices\keycloak\KafkaEventListenerProvider.class

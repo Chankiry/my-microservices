@@ -6,27 +6,27 @@ import { KafkaProducerService } from './kafka-producer.service';
 @Module({
     imports: [
         ClientsModule.registerAsync([
-        {
-            name: 'KAFKA_CLIENT',
-            imports: [ConfigModule],
-            useFactory: (configService: ConfigService) => ({
-            transport: Transport.KAFKA,
-            options: {
-                client: {
-                brokers: configService.get<string>('KAFKA_BROKERS').split(','),
-                clientId: configService.get<string>('KAFKA_CLIENT_ID', 'user-service'),
+            {
+                name: 'KAFKA_CLIENT',
+                imports: [ConfigModule],
+                useFactory: (configService: ConfigService) => ({
+                transport: Transport.KAFKA,
+                options: {
+                    client: {
+                        brokers: (configService.get<string>('KAFKA_BROKERS') ?? 'localhost:9092').split(','),
+                        clientId: configService.get<string>('KAFKA_CLIENT_ID', 'user-service'),
+                    },
+                    producer: {
+                    allowAutoTopicCreation: true,
+                    idempotent: true,
+                    },
+                        consumer: {
+                        groupId: configService.get<string>('KAFKA_GROUP_ID', 'user-service-group'),
+                    },
                 },
-                producer: {
-                allowAutoTopicCreation: true,
-                idempotent: true,
-                },
-                consumer: {
-                groupId: configService.get<string>('KAFKA_GROUP_ID', 'user-service-group'),
-                },
+                }),
+                inject: [ConfigService],
             },
-            }),
-            inject: [ConfigService],
-        },
         ]),
     ],
     providers: [KafkaProducerService],

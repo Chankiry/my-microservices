@@ -1,11 +1,8 @@
 import { Routes } from "@nestjs/core";
-import { appConfig } from "src/config/app.config";
-import { UserRoutes } from "./resources/user/user.route";
-import { OrgAdminRoutes } from "./resources/org_admin/org_admin.route";
-import { SuperAdminRoutes } from "./resources/super_admin/super_admin.route";
-import { AccountRoutes } from "./resources/account/account.route";
-import { SharedDataModule } from "./resources/shared/shared.module";
-import { PublicModule } from "./resources/public/public.module";
+import { accountRoutes } from "./resources/r1-account/account.routes";
+import { UserModule } from "./resources/r2-user/module";
+import { PublicModule } from "./resources/r3-public/module";
+import { appConfig } from "../config/app.config";
 
 export const appRoutes: Routes = [
     {
@@ -13,23 +10,11 @@ export const appRoutes: Routes = [
         children: [
             {
                 path: 'account',
-                children: AccountRoutes
+                children: accountRoutes
             },
             {
-                path: 'user',
-                children: UserRoutes
-            },
-            {
-                path: 'org/:org_id',
-                children: OrgAdminRoutes
-            },
-            {
-                path: 'sup',
-                children: SuperAdminRoutes
-            },
-            {
-                path: 'shared',
-                module: SharedDataModule
+                path: 'users',
+                module: UserModule
             },
             {
                 path: 'public',
