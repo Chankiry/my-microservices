@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto, UpdateUserDto } from './dto';
 import { Op } from 'sequelize';
 import { KafkaProducerService } from '../../communications/kafka/kafka-producer.service';
-import { RedisService } from '../../cache/redis.service';
+import { RedisService } from '@app/infra/cache/redis.service';
 import User from '../../models/user/user.model';
 
 @Injectable()

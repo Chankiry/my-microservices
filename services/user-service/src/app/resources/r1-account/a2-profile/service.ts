@@ -1,6 +1,6 @@
 import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { UpdateUserDto } from '../../r2-user/dto';
-import { RedisService } from '../../../cache/redis.service';
+import { RedisService } from '@app/infra/cache/redis.service';
 import { KafkaProducerService } from '../../../communications/kafka/kafka-producer.service';
 import User from '../../../models/user/user.model';
 

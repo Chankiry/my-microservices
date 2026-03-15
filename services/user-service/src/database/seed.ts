@@ -4,7 +4,7 @@ import * as readlineSync from 'readline-sync';
 import { Sequelize } from 'sequelize-typescript';
 
 // ================================================================>> Custom Library
-import { SchemaEnum } from "../app/enums/schema.enum";
+import { SchemaEnum } from "../app/shared/enums/schema.enum";
 import sequelizeConfig from "../config/sequelize.config";
 import { appConfig } from "../config/app.config";
 

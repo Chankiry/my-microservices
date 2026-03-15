@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { PublicController } from './controller';
 import { PublicService } from './service';
-import { CacheModule } from '../../cache/cache.module';
+import { CacheModule } from '@app/infra/cache/cache.module';
 import { KafkaModule } from '../../communications/kafka/kafka.module';
 
 @Module({

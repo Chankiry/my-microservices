@@ -4,7 +4,7 @@ import { UserController } from './controller';
 import { UserService } from './service';
 import User from '../../models/user/user.model';
 import { KafkaModule } from '../../communications/kafka/kafka.module';
-import { CacheModule } from '../../cache/cache.module';
+import { CacheModule } from '@app/infra/cache/cache.module';
 import { KafkaProducerService } from '../../communications/kafka/kafka-producer.service';
 
 @Module({

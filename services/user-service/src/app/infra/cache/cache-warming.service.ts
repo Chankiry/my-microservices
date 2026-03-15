@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
-import { UserService } from '../resources/r2-user/service';
 import { RedisService } from './redis.service';
+import { UserService } from '@app/resources/r2-user/service';
 
 @Injectable()
 export class CacheWarmingService implements OnModuleInit {

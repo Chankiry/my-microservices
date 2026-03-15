@@ -1,7 +1,7 @@
+import { RedisService } from '@app/infra/cache/redis.service';
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as jwt from 'jsonwebtoken';
-import { RedisService } from '../../../cache/redis.service';
 
 
 export interface JwtPayload {

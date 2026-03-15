@@ -4,9 +4,9 @@ import axios, { AxiosRequestConfig } from 'axios';
 import * as fs from 'fs';
 import FormData from 'form-data';
 import * as https from 'https';
-import { RouteExcludePayloadEnum } from '../enums/route.enum';
+import { RouteExcludePayloadEnum } from '../shared/enums/route.enum';
 import { appConfig } from '../../config/app.config';
-import { DateUtil } from '../utils/date.util';
+import { DateUtil } from '@app/shared/utils/date.util';
 
 @Injectable()
 export class TelegramService {

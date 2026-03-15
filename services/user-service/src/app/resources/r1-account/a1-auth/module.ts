@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { AuthService } from './service';
 import { ConfigModule } from '@nestjs/config';
-import { CacheModule } from '../../../cache/cache.module';
 import { JwtStrategy } from '@app/core/strategies/jwt.strategy';
+import { CacheModule } from '@app/infra/cache/cache.module';
 
 @Module({
     imports: [CacheModule, ConfigModule],

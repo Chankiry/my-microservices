@@ -27,6 +27,9 @@ Thumbs.db
 frontend/admin-web/.angular/
 frontend/public-web/.next/
 
+# Angular Cache
+keycloak-extensions/kafka-event-listener/target/
+
 # Node modules
 node_modules/
 **/node_modules/

@@ -6,7 +6,7 @@
     "deleteOutDir": true,
     "assets": [
       {
-        "include": "app/proto/**/*.proto",
+        "include": "app/communications/grpc/proto/**/*.proto",
         "watchAssets": true
       }
     ]

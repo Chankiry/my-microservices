@@ -3,8 +3,8 @@ import { SequelizeModule } from '@nestjs/sequelize';
 import { ProfileController } from './controller';
 import { ProfileService } from './service';
 import User from '../../../models/user/user.model';
-import { CacheModule } from '../../../cache/cache.module';
 import { KafkaModule } from '../../../communications/kafka/kafka.module';
+import { CacheModule } from '@app/infra/cache/cache.module';
 
 @Module({
     imports: [

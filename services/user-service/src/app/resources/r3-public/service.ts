@@ -1,6 +1,6 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import * as crypto from 'crypto';
-import { RedisService } from '../../cache/redis.service';
+import { RedisService } from '@app/infra/cache/redis.service';
 import { KafkaProducerService } from '../../communications/kafka/kafka-producer.service';
 import User from '../../models/user/user.model';
 

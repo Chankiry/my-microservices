@@ -2,7 +2,7 @@ import { HttpStatus } from "@nestjs/common";
 import { Response } from "express";
 import { ITranslate } from "./data.interface";
 import { MESSAGE } from "../enums/message.enum";
-import { TelegramService } from "../services/telegram.service";
+import { TelegramService } from "@app/services/telegram.service";
 
 export interface BaseResponse<T = any> {
     status_code  : number;

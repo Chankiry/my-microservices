@@ -52,7 +52,7 @@ async function bootstrap() {
     transport: Transport.GRPC,
     options: {
       package: 'user',
-      protoPath: join(__dirname, 'app/proto/user.proto'),
+      protoPath: join(__dirname, 'app/communications/grpc/proto/user.proto'),
       url: gRPC_url,
       loader: {
         keepCase: true,
