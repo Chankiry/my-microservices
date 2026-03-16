@@ -3,7 +3,7 @@ import { Request, Response } from 'express';
 import { TelegramService } from '../../services/telegram.service';
 import { BaseTranslate } from '../../shared/enums/translate.enum';
 import { ERROR_MESSAGE } from '../../shared/enums/message.enum';
-import { ErrorBaseResponse } from '@app/shared/interface/base.interface';
+import { ErrorBaseResponse } from '@app/shared/interfaces/base.interface';
 import { DateUtil } from '@app/shared/utils/date.util';
 
 @Catch()

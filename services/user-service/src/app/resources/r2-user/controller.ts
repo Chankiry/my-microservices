@@ -1,8 +1,6 @@
-// src/modules/users/users.controller.ts
 import {
     Controller,
     Get,
-    Post,
     Put,
     Delete,
     Body,
@@ -13,26 +11,21 @@ import {
     HttpCode,
     HttpStatus,
     ForbiddenException,
+    Patch,
 } from '@nestjs/common';
 import { UserService } from './service';
-import { CreateUserDto, UpdateUserDto } from './dto';
+import { AdminUpdateUserDto, UpdateUserDto } from './dto';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { RolesGuard } from '../../core/guards/roles.guard';
-import { Public } from '../../core/decorators/public.decorator';
 import { Roles } from '../../core/decorators/roles.decorator';
-
 
 @Controller()
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class UserController {
+
     constructor(private readonly usersService: UserService) {}
 
-    @Post()
-    @Public()
-    async create(@Body() createUserDto: CreateUserDto) {
-    const user = await this.usersService.create(createUserDto);
-        return { id: user.id, username: user.username, email: user.email };
-    }
+    // ── Admin endpoints ───────────────────────────────────────
 
     @Get()
     @Roles('admin')
@@ -40,30 +33,31 @@ export class UserController {
         return this.usersService.findAll(query);
     }
 
-    @Get('me')
-    async getCurrentUser(@Request() req) {
-        return this.usersService.findById(req.user.sub);
-    }
-
     @Get(':id')
-    async findOne(@Param('id') id: string, @Request() req) {
-    // Allow users to view their own profile, admins can view any
-        if (req.user.sub !== id && !req.user.roles?.includes('admin')) {
-            throw new ForbiddenException('Access denied');
-        }
+    @Roles('admin')
+    async findOne(@Param('id') id: string) {
         return this.usersService.findById(id);
     }
 
     @Put(':id')
-    async update(
-    @Param('id') id: string,
-    @Body() updateUserDto: UpdateUserDto,
-    @Request() req,
+    @Roles('admin')
+    async adminUpdate(
+        @Param('id') id: string,
+        @Body() dto: AdminUpdateUserDto,
     ) {
-        if (req.user.sub !== id && !req.user.roles?.includes('admin')) {
-            throw new ForbiddenException('Cannot update other users');
-        }
-        return this.usersService.update(id, updateUserDto);
+        return this.usersService.update(id, dto);
+    }
+
+    @Patch(':id/activate')
+    @Roles('admin')
+    async activate(@Param('id') id: string) {
+        return this.usersService.updateStatus(id, true);
+    }
+
+    @Patch(':id/deactivate')
+    @Roles('admin')
+    async deactivate(@Param('id') id: string) {
+        return this.usersService.updateStatus(id, false);
     }
 
     @Delete(':id')
@@ -71,17 +65,5 @@ export class UserController {
     @HttpCode(HttpStatus.NO_CONTENT)
     async remove(@Param('id') id: string) {
         await this.usersService.remove(id);
-    }
-
-    @Post(':id/activate')
-    @Roles('admin')
-    async activate(@Param('id') id: string) {
-        return this.usersService.updateStatus(id, true);
-    }
-
-    @Post(':id/deactivate')
-    @Roles('admin')
-    async deactivate(@Param('id') id: string) {
-        return this.usersService.updateStatus(id, false);
     }
 }

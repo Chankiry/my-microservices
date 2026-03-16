@@ -8,6 +8,7 @@ import {
     BeforeUpdate,
     CreatedAt,
     UpdatedAt,
+    DeletedAt,
 } from 'sequelize-typescript';
 import * as bcrypt from 'bcryptjs';
 
@@ -15,9 +16,11 @@ import * as bcrypt from 'bcryptjs';
     tableName: 'users',
     createdAt: 'created_at',
     updatedAt: 'updated_at',
-    // deletedAt: false,     // add if you later want soft deletes
+    deletedAt: 'deleted_at',
+    paranoid: true,
 })
 class User extends Model<User> {
+
     @Column({
         primaryKey: true,
         type: DataType.UUID,
@@ -42,6 +45,7 @@ class User extends Model<User> {
     @Column({ type: DataType.STRING(255), allowNull: true, field: 'password_hash' })
     declare passwordHash: string | null;
 
+    @Index({ unique: true })
     @Column({ type: DataType.STRING, allowNull: true, field: 'keycloak_id' })
     declare keycloakId: string | null;
 
@@ -54,54 +58,59 @@ class User extends Model<User> {
     @Column({ type: DataType.ARRAY(DataType.STRING), allowNull: true })
     declare roles: string[] | null;
 
+    @Column({ type: DataType.DATE, allowNull: true, field: 'last_login_at' })
+    declare lastLoginAt: Date | null;
+
+    @Column({
+        type: DataType.JSONB,
+        allowNull: true,
+    })
+    declare profile: {
+        avatar?: string;
+        phone?: string;
+        timezone?: string;
+        language?: string;
+        address?: {
+            street?: string;
+            city?: string;
+            country?: string;
+            postalCode?: string;
+        };
+    } | null;
+
     @CreatedAt
     declare createdAt: Date;
 
     @UpdatedAt
     declare updatedAt: Date;
 
-    @Column({ type: DataType.JSONB, allowNull: true })
-    declare profile:
-        | {
-            avatar?: string;
-            phone?: string;
-            timezone?: string;
-            language?: string;
-            address?: {
-            street?: string;
-            city?: string;
-            country?: string;
-            postalCode?: string;
-            };
-        }
-        | null;
+    @DeletedAt
+    declare deletedAt: Date | null;
 
-    @Column({ type: DataType.DATE, allowNull: true, field: 'last_login_at' })
-    declare lastLoginAt: Date | null;
+    // ─────────────────────────────────────────
+    //  Hooks
+    // ─────────────────────────────────────────
 
-    // ────────────────────────────────────────────────
-    //  Hooks – password hashing (only when needed)
-    // ────────────────────────────────────────────────
     @BeforeCreate
     @BeforeUpdate
-    static async hashPassword(instance: User) {
-        // Only hash if passwordHash exists and isn't already hashed
+    static async hashPassword(instance: User): Promise<void> {
         if (instance.passwordHash && !instance.passwordHash.startsWith('$2')) {
-        instance.passwordHash = await bcrypt.hash(instance.passwordHash, 12);
+            instance.passwordHash = await bcrypt.hash(instance.passwordHash, 12);
         }
     }
 
-    // ────────────────────────────────────────────────
+    // ─────────────────────────────────────────
     //  Instance methods
-    // ────────────────────────────────────────────────
+    // ─────────────────────────────────────────
+
     async validatePassword(password: string): Promise<boolean> {
         if (!this.passwordHash) return false;
         return bcrypt.compare(password, this.passwordHash);
     }
 
-    // Optional helper – computed full name (getter style)
-    public get fullName(): string {
+    get fullName(): string {
         return `${this.firstName || ''} ${this.lastName || ''}`.trim();
     }
 }
+
 export default User;

@@ -12,11 +12,11 @@ const kafkaConfig: ClientsProviderAsyncOptions  = {
         transport: Transport.KAFKA,
         options: {
             client: {
-            brokers: configService.get('KAFKA_BROKERS', 'kafka:9092').split(','),
-            clientId: 'user-service',
+                brokers : configService.get<string>('KAFKA_BROKERS', 'localhost:9092').split(',').map(b => b.trim()),
+                clientId: configService.get<string>('KAFKA_CLIENT_ID', 'user-service'),
             },
             consumer: {
-            groupId: 'user-service-consumer-group',
+                groupId: configService.get<string>('KAFKA_GROUP_ID', 'user-service-group'),
             },
         },
     }),

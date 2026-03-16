@@ -3,21 +3,14 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { passportJwtSecret } from 'jwks-rsa';
-
-export interface JwtPayload {
-    sub: string;
-    username: string;
-    email: string;
-    roles: string[];
-    iat?: number;
-    exp?: number;
-}
+import { JwtPayload } from '@app/shared/interfaces/jwt-payload.interface';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-    constructor(private configService: ConfigService) {
+
+    constructor(private readonly configService: ConfigService) {
         const keycloakUrl = configService.getOrThrow<string>('KEYCLOAK_URL');
-        const realm = configService.getOrThrow<string>('KEYCLOAK_REALM');
+        const realm       = configService.getOrThrow<string>('KEYCLOAK_REALM');
 
         super({
             jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -32,31 +25,26 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         });
     }
 
-    async validate(payload: any): Promise<any> {
+    async validate(payload: any): Promise<JwtPayload> {
         if (!payload.sub) {
             throw new UnauthorizedException('Invalid token payload');
         }
 
-        // Extract realm roles
-        const realmRoles = payload.realm_access?.roles || [];
-        
-        // Extract client roles (if needed)
-        const clientId = this.configService.get('KEYCLOAK_CLIENT_ID');
+        const realmRoles  = payload.realm_access?.roles || [];
+        const clientId    = this.configService.get<string>('KEYCLOAK_CLIENT_ID', '');
         const clientRoles = payload.resource_access?.[clientId]?.roles || [];
 
-        // Combine both, filter out Keycloak internal roles
+        const internalRoles = ['default-roles', 'offline_access', 'uma_authorization'];
         const roles = [...new Set([...realmRoles, ...clientRoles])]
-            .filter(role => !role.startsWith('default-roles') && 
-                            !role.startsWith('offline_access') && 
-                            !role.startsWith('uma_authorization'));
+            .filter(role => !internalRoles.some(prefix => role.startsWith(prefix)));
 
         return {
-            sub: payload.sub,
-            username: payload.preferred_username,  // ← Keycloak uses preferred_username
-            email: payload.email,
+            sub:          payload.sub,
+            username:     payload.preferred_username,
+            email:        payload.email,
             roles,
-            realmRoles: realmRoles,    // ['admin', 'user']
-            clientRoles: clientRoles,  // ['read', 'write']
+            realmRoles,
+            clientRoles,
         };
     }
 }

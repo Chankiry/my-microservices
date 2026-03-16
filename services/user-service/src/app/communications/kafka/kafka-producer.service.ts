@@ -22,10 +22,8 @@ export class KafkaProducerService implements OnModuleInit {
     ) {}
 
     async onModuleInit() {
-        // Subscribe to reply topics for request-response patterns
-        this.kafkaClient.subscribeToResponseOf('user.registration.v1');
         await this.kafkaClient.connect();
-        this.logger.log('✓ Kafka producer connected successfully');
+        this.logger.log('Kafka producer connected');
     }
 
     /**

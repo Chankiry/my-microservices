@@ -1,167 +1,99 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import KeycloakAdminClient from '@keycloak/keycloak-admin-client';
-import { RequiredActionAlias } from '@keycloak/keycloak-admin-client/lib/defs/requiredActionProviderRepresentation';
 
 @Injectable()
 export class KeycloakAdminService implements OnModuleInit {
     private readonly logger = new Logger(KeycloakAdminService.name);
-    private adminClient!: KeycloakAdminClient;
-    private realm: string;
+    private client!: KeycloakAdminClient;
+    private readonly realm: string;
 
     constructor(private readonly configService: ConfigService) {
         this.realm = this.configService.get('KEYCLOAK_REALM', 'microservices-platform');
     }
 
-    async onModuleInit() {
+    async onModuleInit(): Promise<void> {
         try {
-            await this.initializeClient();
-        } catch (error: any) {
-            // Log but don't crash — Keycloak may not be available yet
-            console.warn('[KeycloakAdminService] Failed to initialize:', error.message);
-        }
-    }
-
-    private async initializeClient(): Promise<void> {
-        this.adminClient = new KeycloakAdminClient({
-            baseUrl: this.configService.get('KEYCLOAK_URL', 'http://localhost:8080'),
-            realmName: 'master',
-        });
-
-        // Authenticate with admin credentials
-        await this.adminClient.auth({
-            username: this.configService.get('KEYCLOAK_ADMIN_USERNAME', 'admin'),
-            password: this.configService.get('KEYCLOAK_ADMIN_PASSWORD', 'admin123'),
-            grantType: 'password',
-            clientId: 'admin-cli',
-        });
-
-        this.logger.log('✓ Keycloak admin client initialized');
-    }
-
-    /**
-     * Create user in Keycloak
-     */
-    async createUser(userData: {
-        username: string;
-        email: string;
-        firstName?: string;
-        lastName?: string;
-        enabled?: boolean;
-        attributes?: Record<string, string[]>;
-        roles?: string[];
-    }): Promise<string> {
-        try {
-            const response = await this.adminClient.users.create({
-                realm: this.realm,
-                username: userData.username,
-                email: userData.email,
-                firstName: userData.firstName,
-                lastName: userData.lastName,
-                enabled: userData.enabled ?? true,
-                emailVerified: false,
-                attributes: {
-                localUserId: [userData.attributes?.localUserId || ''],
-                },
-                requiredActions: [RequiredActionAlias.VERIFY_EMAIL],
+            this.client = new KeycloakAdminClient({
+                baseUrl:    this.configService.get('KEYCLOAK_URL', 'http://keycloak:8080'),
+                realmName: 'master',
             });
 
-            this.logger.log(`Created Keycloak user: ${response.id}`);
-
-            // Assign roles if provided
-            if (userData.roles && userData.roles.length > 0) {
-                await this.assignRoles(response.id, userData.roles);
-            }
-
-            return response.id;
-        } catch (error: any) {
-            this.logger.error(`Failed to create Keycloak user: ${error.message}`);
-            throw error;
-        }
-    }
-
-    /**
-     * Update user in Keycloak
-     */
-    async updateUser(
-        keycloakId: string,
-        userData: {
-        firstName?: string;
-        lastName?: string;
-        email?: string;
-        enabled?: boolean;
-        },
-    ): Promise<void> {
-        try {
-        await this.adminClient.users.update(
-            { realm: this.realm, id: keycloakId },
-            {
-                firstName: userData.firstName,
-                lastName: userData.lastName,
-                email: userData.email,
-                enabled: userData.enabled,
-            },
-        );
-
-            this.logger.log(`Updated Keycloak user: ${keycloakId}`);
-        } catch (error: any) {
-            this.logger.error(`Failed to update Keycloak user: ${error.message}`);
-            throw error;
-        }
-    }
-
-    /**
-     * Delete user from Keycloak
-     */
-    async deleteUser(keycloakId: string): Promise<void> {
-        try {
-            await this.adminClient.users.del({
-                realm: this.realm,
-                id: keycloakId,
+            await this.client.auth({
+                grantType: 'client_credentials',
+                clientId:     this.configService.getOrThrow('KEYCLOAK_ADMIN_CLIENT_ID'),
+                clientSecret: this.configService.getOrThrow('KEYCLOAK_ADMIN_CLIENT_SECRET'),
             });
 
-            this.logger.log(`Deleted Keycloak user: ${keycloakId}`);
+            this.logger.log('Keycloak admin client ready');
         } catch (error: any) {
-            this.logger.error(`Failed to delete Keycloak user: ${error.message}`);
-            throw error;
+            // Do not crash on startup — Keycloak may not be up yet.
+            // Each method re-authenticates if the token has expired.
+            this.logger.warn(`Keycloak admin init skipped: ${error.message}`);
         }
     }
 
     /**
-     * Get user by email
+     * Set a user's password in Keycloak.
+     * Called by the profile password-change endpoint — user-service never stores the hash.
      */
-    async getUserByEmail(email: string): Promise<any | null> {
-        try {
-            const users = await this.adminClient.users.find({
-                realm: this.realm,
-                email,
-                exact: true,
-            });
-
-            return users.length > 0 ? users[0] : null;
-        } catch (error: any) {
-            this.logger.error(`Failed to find user by email: ${error.message}`);
-            return null;
-        }
-    }
-
-    /**
-     * Assign roles to user
-     */
-    private async assignRoles(userId: string, roleNames: string[]): Promise<void> {
-        const roles = await this.adminClient.roles.find({ realm: this.realm });
-
-        const rolesToAssign = roles
-            .filter(role => role.id && role.name && roleNames.includes(role.name))
-            .map(role => ({
-                id: role.id!,
-                name: role.name!,
-            }));
-
-        await this.adminClient.users.addRealmRoleMappings({
+    async setPassword(keycloakId: string, newPassword: string): Promise<void> {
+        await this.ensureAuth();
+        await this.client.users.resetPassword({
             realm: this.realm,
-            id: userId,
-            roles: rolesToAssign,
+            id:    keycloakId,
+            credential: {
+                type:      'password',
+                value:     newPassword,
+                temporary: false,
+            },
         });
+        this.logger.log(`Password updated in Keycloak for ${keycloakId}`);
+    }
+
+    /**
+     * Update the email address in Keycloak.
+     * Called by the profile email-change endpoint.
+     * The USER_UPDATED Kafka event that Keycloak fires afterwards
+     * will sync the new email back into user-service's mirror column.
+     */
+    async setEmail(keycloakId: string, newEmail: string): Promise<void> {
+        await this.ensureAuth();
+        await this.client.users.update(
+            { realm: this.realm, id: keycloakId },
+            { email: newEmail, emailVerified: false },
+        );
+        this.logger.log(`Email updated in Keycloak for ${keycloakId}`);
+    }
+
+    /**
+     * Enable or disable a user in Keycloak.
+     * Called by admin activate/deactivate endpoints.
+     * The USER_DISABLED/USER_ENABLED Kafka event will sync isActive back.
+     */
+    async setEnabled(keycloakId: string, enabled: boolean): Promise<void> {
+        await this.ensureAuth();
+        await this.client.users.update(
+            { realm: this.realm, id: keycloakId },
+            { enabled },
+        );
+        this.logger.log(`User ${keycloakId} enabled=${enabled} in Keycloak`);
+    }
+
+    // ─────────────────────────────────────────
+    //  Private
+    // ─────────────────────────────────────────
+
+    private async ensureAuth(): Promise<void> {
+        try {
+            await this.client.auth({
+                grantType:    'client_credentials',
+                clientId:     this.configService.getOrThrow('KEYCLOAK_ADMIN_CLIENT_ID'),
+                clientSecret: this.configService.getOrThrow('KEYCLOAK_ADMIN_CLIENT_SECRET'),
+            });
+        } catch (error: any) {
+            this.logger.error(`Keycloak re-auth failed: ${error.message}`);
+            throw error;
+        }
     }
 }

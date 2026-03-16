@@ -1,37 +1,70 @@
-import { Controller, Get, Put, Body, Request, UseGuards, Post } from '@nestjs/common';
+import {
+    Controller,
+    Get,
+    Patch,
+    Post,
+    Body,
+    Request,
+    Headers,
+    UseGuards,
+    HttpCode,
+    HttpStatus,
+} from '@nestjs/common';
 import { ProfileService } from './service';
-import { UpdateUserDto } from '../../r2-user/dto';
+import { UpdateProfileDto, ChangePasswordDto, ChangeEmailDto } from './dto';
 import { JwtAuthGuard } from '../../../core/guards/jwt-auth.guard';
 
 @Controller()
 @UseGuards(JwtAuthGuard)
 export class ProfileController {
-    constructor(private readonly accountService: ProfileService) {}
+
+    constructor(private readonly profileService: ProfileService) {}
 
     @Get()
     async getProfile(@Request() req: any) {
-        return this.accountService.getProfile(req.user.sub);
+        return this.profileService.getProfile(req.user.sub);
     }
 
-    @Put()
-    async updateProfile(@Request() req: any, @Body() updateDto: UpdateUserDto) {
-        return this.accountService.updateProfile(req.user.sub, updateDto);
+    // Update business profile fields — avatar, phone, timezone, language, address.
+    // Does NOT update firstName / lastName / email — those are identity fields
+    // owned by Keycloak and synced back via Kafka events.
+    @Patch()
+    async updateProfile(
+        @Request() req: any,
+        @Body() dto: UpdateProfileDto,
+    ) {
+        return this.profileService.updateProfile(req.user.sub, dto);
     }
 
-    @Post('change-password')
+    // Change password — proxied to Keycloak Admin API.
+    // User-service never stores or touches the password hash.
+    @Patch('password')
     async changePassword(
         @Request() req: any,
-        @Body() body: { currentPassword: string; newPassword: string },
+        @Body() dto: ChangePasswordDto,
     ) {
-        return this.accountService.changePassword(
-            req.user.sub,
-            body.currentPassword,
-            body.newPassword,
-        );
+        return this.profileService.changePassword(req.user.sub, dto);
+    }
+
+    // Change email — proxied to Keycloak Admin API.
+    // The mirror column in user-service is updated asynchronously
+    // when the USER_UPDATED Kafka event arrives from Keycloak.
+    @Patch('email')
+    async changeEmail(
+        @Request() req: any,
+        @Body() dto: ChangeEmailDto,
+    ) {
+        return this.profileService.changeEmail(req.user.sub, dto);
     }
 
     @Post('logout')
-    async logout(@Request() req: any) {
-        return this.accountService.logout(req.user.sub);
+    @HttpCode(HttpStatus.OK)
+    async logout(
+        @Request() req: any,
+        @Headers('authorization') authHeader: string,
+    ) {
+        // Extract the raw token so AuthService can hash and blacklist it
+        const token = authHeader?.replace(/^Bearer\s+/i, '').trim();
+        return this.profileService.logout(req.user.sub, token);
     }
 }
