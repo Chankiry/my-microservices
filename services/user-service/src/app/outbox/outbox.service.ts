@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { InjectModel } from '@nestjs/sequelize';
-import { CreationAttributes, Sequelize, Transaction } from 'sequelize';
-import OutboxMessage from '../models/outbox/outbox-message.model';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
+import { CreationAttributes, literal, Sequelize, Transaction } from 'sequelize';
+import OutboxMessage from '../../models/outbox/outbox-message.model';
 
 @Injectable()
 export class OutboxService {
@@ -10,7 +10,8 @@ export class OutboxService {
     constructor(
         @InjectModel(OutboxMessage)
         private readonly outboxModel: typeof OutboxMessage,
-        private readonly sequelize: Sequelize, // ← inject the root Sequelize instance
+        @InjectConnection()
+        private readonly sequelize: Sequelize,
     ) {}
 
     /**
@@ -53,7 +54,7 @@ export class OutboxService {
         const messages = await this.outboxModel.findAll({
             where: { status: 'PENDING' },
             limit: 100,
-            order: [['createdAt', 'ASC']],
+            order: [literal('"created_at" ASC')],
             transaction,
             lock: true,                // ← crucial: pessimistic lock (SELECT ... FOR UPDATE)
             skipLocked: true,          // ← PostgreSQL/MySQL 8+ : skip already locked rows

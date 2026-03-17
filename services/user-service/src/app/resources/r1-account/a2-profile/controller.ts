@@ -38,7 +38,7 @@ export class ProfileController {
 
     // Change password — proxied to Keycloak Admin API.
     // User-service never stores or touches the password hash.
-    @Patch('password')
+    @Patch('change-password')
     async changePassword(
         @Request() req: any,
         @Body() dto: ChangePasswordDto,
@@ -49,7 +49,7 @@ export class ProfileController {
     // Change email — proxied to Keycloak Admin API.
     // The mirror column in user-service is updated asynchronously
     // when the USER_UPDATED Kafka event arrives from Keycloak.
-    @Patch('email')
+    @Patch('change-email')
     async changeEmail(
         @Request() req: any,
         @Body() dto: ChangeEmailDto,

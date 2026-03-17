@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { OutboxService } from './outbox.service';
 import { KafkaProducerService } from '../communications/kafka/kafka-producer.service';
-import OutboxMessage from '../models/outbox/outbox-message.model';
+import OutboxMessage from '../../models/outbox/outbox-message.model';
 import { Transaction } from 'sequelize';
 
 @Injectable()

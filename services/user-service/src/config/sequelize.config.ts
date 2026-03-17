@@ -14,7 +14,7 @@ const sequelizeConfig: SequelizeModuleOptions = {
     password    : appConfig.DB_PASSWORD,
     database    : appConfig.DB_DATABASE,
     timezone    : appConfig.DB_TIMEZONE || 'UTC',
-    models      : [__dirname + '/../app/models/**/*.model.{ts,js}'],
+    models      : [__dirname + '/../models/**/*.model.{ts,js}'],
     logging     : false
 };
 

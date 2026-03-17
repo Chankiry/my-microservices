@@ -3,7 +3,7 @@ import { GrpcMethod, RpcException } from '@nestjs/microservices';
 import { status } from '@grpc/grpc-js';
 import { UserService } from '../../resources/r2-user/service';
 import { AuthService } from '../../resources/r1-account/a1-auth/service';
-import User from '../../models/user/user.model';
+import User from '../../../models/user/user.model';
 
 @Controller()
 export class UserGrpcService {

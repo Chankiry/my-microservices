@@ -12,9 +12,10 @@ import {
     HttpStatus,
     ForbiddenException,
     Patch,
+    Post,
 } from '@nestjs/common';
 import { UserService } from './service';
-import { AdminUpdateUserDto, UpdateUserDto } from './dto';
+import { AdminUpdateUserDto, CreateUserDto, UpdateUserDto } from './dto';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { RolesGuard } from '../../core/guards/roles.guard';
 import { Roles } from '../../core/decorators/roles.decorator';
@@ -31,6 +32,14 @@ export class UserController {
     @Roles('admin')
     async findAll(@Query() query: any) {
         return this.usersService.findAll(query);
+    }
+    
+    @Post()
+    @Roles('admin')
+    async create(
+        @Body() dto: CreateUserDto,
+    ) {
+        return this.usersService.create(dto);
     }
 
     @Get(':id')

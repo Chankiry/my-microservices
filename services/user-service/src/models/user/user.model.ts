@@ -61,21 +61,11 @@ class User extends Model<User> {
     @Column({ type: DataType.DATE, allowNull: true, field: 'last_login_at' })
     declare lastLoginAt: Date | null;
 
-    @Column({
-        type: DataType.JSONB,
-        allowNull: true,
-    })
+    @Column({ type: DataType.JSONB, allowNull: true })
     declare profile: {
-        avatar?: string;
-        phone?: string;
-        timezone?: string;
-        language?: string;
-        address?: {
-            street?: string;
-            city?: string;
-            country?: string;
-            postalCode?: string;
-        };
+        avatar? : string;
+        phone?  : string;
+        gender? : string;
     } | null;
 
     @CreatedAt

@@ -1,10 +1,10 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/sequelize';
+import { InjectConnection, InjectModel } from '@nestjs/sequelize';
 import { Op, Sequelize, literal } from 'sequelize';
 import { CreateUserDto, UpdateUserDto } from './dto';
 import { KafkaProducerService } from '../../communications/kafka/kafka-producer.service';
 import { RedisService } from '@app/infra/cache/redis.service';
-import User from '../../models/user/user.model';
+import User from '../../../models/user/user.model';
 import { KeycloakAdminService } from '@app/communications/keycloak/keycloak-admin.service';
 import { OutboxService } from '@app/outbox/outbox.service';
 import { ConfigService } from '@nestjs/config';
@@ -21,6 +21,7 @@ export class UserService {
         private readonly keycloakAdmin  : KeycloakAdminService,
         private readonly outboxService  : OutboxService,
         private readonly redisService   : RedisService,
+        @InjectConnection()
         private readonly sequelize      : Sequelize,
         private readonly configService  : ConfigService,
     ) {
@@ -134,7 +135,7 @@ export class UserService {
             where: whereClause,
             limit,
             offset,
-            order: [['createdAt', 'DESC']],
+            order: [literal('"created_at" DESC')],
         });
 
         return { data: rows, total: count, page, limit };
@@ -284,11 +285,9 @@ export class UserService {
     async updateBusinessProfile(
         id: string,
         fields: Partial<{
-            avatar   : string;
-            phone    : string;
-            timezone : string;
-            language : string;
-            address  : { street?: string; city?: string; country?: string; postalCode?: string };
+            avatar: string;
+            phone : string;
+            gender: string;
         }>,
     ): Promise<User> {
         const user = await this.userModel.findOne({ where: { id } });

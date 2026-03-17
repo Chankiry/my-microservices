@@ -1,4 +1,4 @@
-import ProcessedEvent from '@app/models/sync/processed-event.model';
+import ProcessedEvent from '@models/sync/processed-event.model';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { UniqueConstraintError } from 'sequelize';

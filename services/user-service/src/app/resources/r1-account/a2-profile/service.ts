@@ -4,7 +4,7 @@ import { UserService } from '../../r2-user/service';
 import { KeycloakAdminService } from '../../../communications/keycloak/keycloak-admin.service';
 import { AuthService } from '../a1-auth/service';
 import { RedisService } from '@app/infra/cache/redis.service';
-import User from '../../../models/user/user.model';
+import User from '../../../../models/user/user.model';
 
 @Injectable()
 export class ProfileService {
@@ -39,7 +39,45 @@ export class ProfileService {
 
     async updateProfile(keycloakId: string, dto: UpdateProfileDto): Promise<User> {
         const user = await this.getProfile(keycloakId);
-        return this.userService.updateBusinessProfile(user.id, dto);
+
+        // ── Step 1: proxy name changes to Keycloak ───────────────────────────
+        const newFirst = dto.firstName ?? user.firstName ?? '';
+        const newLast  = dto.lastName  ?? user.lastName  ?? '';
+
+        const nameChanged = (dto.firstName !== undefined && dto.firstName !== user.firstName)
+                        || (dto.lastName  !== undefined && dto.lastName  !== user.lastName);
+
+        if (nameChanged && user.keycloakId) {
+            await this.keycloakAdmin.updateName(user.keycloakId, newFirst, newLast);
+            this.logger.log(`Name change proxied to Keycloak for user ${user.id}`);
+
+            // Optimistically update the mirror column immediately so the response
+            // reflects the change without waiting for the Kafka event to arrive.
+            // When the Kafka USER_UPDATED event arrives it will write the same
+            // value again — idempotent, no harm done.
+            await this.userService.updateMirrorFields(user.id, {
+                firstName: dto.firstName ?? user.firstName ?? null,
+                lastName:  dto.lastName  ?? user.lastName  ?? null,
+            });
+        }
+
+        // ── Step 2: update extended profile fields ───────────────────────────
+        const { firstName, lastName, ...profileFields } = dto;
+
+        if (Object.keys(profileFields).length > 0) {
+            // updateBusinessProfile invalidates the cache and returns fresh DB data.
+            // Since we already updated mirror fields above, this fresh fetch
+            // will include the updated firstName/lastName too.
+            return this.userService.updateBusinessProfile(user.id, profileFields);
+        }
+
+        // Only name changed — fetch fresh from DB (cache was invalidated by
+        // updateMirrorFields above) so the response reflects the new name.
+        if (nameChanged) {
+            return this.userService.findByKeycloakId(keycloakId);
+        }
+
+        return user;
     }
 
     // ─────────────────────────────────────────

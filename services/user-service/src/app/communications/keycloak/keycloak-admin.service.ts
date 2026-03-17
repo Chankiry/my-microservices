@@ -15,20 +15,18 @@ export class KeycloakAdminService implements OnModuleInit {
     async onModuleInit(): Promise<void> {
         try {
             this.client = new KeycloakAdminClient({
-                baseUrl:    this.configService.get('KEYCLOAK_URL', 'http://keycloak:8080'),
-                realmName: 'master',
+                baseUrl   : this.configService.get('KEYCLOAK_URL', 'http://keycloak:8080'),
+                realmName : this.realm,  // ← was 'master', now reads KEYCLOAK_REALM from env
             });
 
             await this.client.auth({
-                grantType: 'client_credentials',
-                clientId:     this.configService.getOrThrow('KEYCLOAK_ADMIN_CLIENT_ID'),
-                clientSecret: this.configService.getOrThrow('KEYCLOAK_ADMIN_CLIENT_SECRET'),
+                grantType    : 'client_credentials',
+                clientId     : this.configService.getOrThrow('KEYCLOAK_ADMIN_CLIENT_ID'),
+                clientSecret : this.configService.getOrThrow('KEYCLOAK_ADMIN_CLIENT_SECRET'),
             });
 
             this.logger.log('Keycloak admin client ready');
         } catch (error: any) {
-            // Do not crash on startup — Keycloak may not be up yet.
-            // Each method re-authenticates if the token has expired.
             this.logger.warn(`Keycloak admin init skipped: ${error.message}`);
         }
     }
@@ -80,6 +78,20 @@ export class KeycloakAdminService implements OnModuleInit {
         this.logger.log(`User ${keycloakId} enabled=${enabled} in Keycloak`);
     }
 
+    /**
+     * Update first and last name in Keycloak.
+     * Called when user changes their name via the profile endpoint.
+     * Keycloak fires USER_UPDATED event → Kafka → mirror columns updated.
+     */
+    async updateName(keycloakId: string, firstName: string, lastName: string): Promise<void> {
+        await this.ensureAuth();
+        await this.client.users.update(
+            { realm: this.realm, id: keycloakId },
+            { firstName, lastName },
+        );
+        this.logger.log(`Name updated in Keycloak for ${keycloakId}`);
+    }
+
     // ─────────────────────────────────────────
     //  Private
     // ─────────────────────────────────────────
@@ -87,9 +99,9 @@ export class KeycloakAdminService implements OnModuleInit {
     private async ensureAuth(): Promise<void> {
         try {
             await this.client.auth({
-                grantType:    'client_credentials',
-                clientId:     this.configService.getOrThrow('KEYCLOAK_ADMIN_CLIENT_ID'),
-                clientSecret: this.configService.getOrThrow('KEYCLOAK_ADMIN_CLIENT_SECRET'),
+                grantType    : 'client_credentials',
+                clientId     : this.configService.getOrThrow('KEYCLOAK_ADMIN_CLIENT_ID'),
+                clientSecret : this.configService.getOrThrow('KEYCLOAK_ADMIN_CLIENT_SECRET'),
             });
         } catch (error: any) {
             this.logger.error(`Keycloak re-auth failed: ${error.message}`);
