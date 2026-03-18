@@ -1,105 +1,69 @@
 import {
-    Table,
-    Model,
-    Column,
-    DataType,
-    Index,
-    BeforeCreate,
-    BeforeUpdate,
-    CreatedAt,
-    UpdatedAt,
-    DeletedAt,
+    Table, Model, Column, DataType,
+    CreatedAt, UpdatedAt, DeletedAt,
+    ForeignKey,
 } from 'sequelize-typescript';
-import * as bcrypt from 'bcryptjs';
 
 @Table({
-    tableName: 'users',
-    createdAt: 'created_at',
-    updatedAt: 'updated_at',
-    deletedAt: 'deleted_at',
-    paranoid: true,
+    tableName : 'users',
+    createdAt : 'created_at',
+    updatedAt : 'updated_at',
+    deletedAt : 'deleted_at',
+    paranoid  : true,
 })
 class User extends Model<User> {
 
-    @Column({
-        primaryKey: true,
-        type: DataType.UUID,
-        defaultValue: DataType.UUIDV4,
-    })
+    @Column({ primaryKey: true, type: DataType.UUID, defaultValue: DataType.UUIDV4 })
     declare id: string;
 
-    @Index({ unique: true })
-    @Column({ type: DataType.STRING(50) })
-    declare username: string;
+    @Column({ type: DataType.STRING(30), allowNull: false })
+    declare phone: string;
 
-    @Index({ unique: true })
-    @Column({ type: DataType.STRING(255) })
-    declare email: string;
+    @Column({ type: DataType.STRING(255), allowNull: true })
+    declare email: string | null;
 
     @Column({ type: DataType.STRING(100), allowNull: true })
-    declare firstName: string | null;
+    declare first_name: string | null;
 
     @Column({ type: DataType.STRING(100), allowNull: true })
-    declare lastName: string | null;
+    declare last_name: string | null;
 
-    @Column({ type: DataType.STRING(255), allowNull: true, field: 'password_hash' })
-    declare passwordHash: string | null;
+    @Column({ type: DataType.STRING, allowNull: true })
+    declare keycloak_id: string | null;
 
-    @Index({ unique: true })
-    @Column({ type: DataType.STRING, allowNull: true, field: 'keycloak_id' })
-    declare keycloakId: string | null;
+    @Column({ type: DataType.BOOLEAN, defaultValue: true })
+    declare is_active: boolean;
 
-    @Column({ type: DataType.BOOLEAN, defaultValue: true, field: 'is_active' })
-    declare isActive: boolean;
-
-    @Column({ type: DataType.BOOLEAN, defaultValue: false, field: 'email_verified' })
-    declare emailVerified: boolean;
-
-    @Column({ type: DataType.ARRAY(DataType.STRING), allowNull: true })
-    declare roles: string[] | null;
-
-    @Column({ type: DataType.DATE, allowNull: true, field: 'last_login_at' })
-    declare lastLoginAt: Date | null;
+    @Column({ type: DataType.BOOLEAN, defaultValue: false })
+    declare email_verified: boolean;
 
     @Column({ type: DataType.JSONB, allowNull: true })
     declare profile: {
         avatar? : string;
-        phone?  : string;
         gender? : string;
     } | null;
 
-    @CreatedAt
-    declare createdAt: Date;
+    @Column({ type: DataType.DATE, allowNull: true })
+    declare last_login_at: Date | null;
 
-    @UpdatedAt
-    declare updatedAt: Date;
+    @ForeignKey(() => User)
+    @Column({ type: DataType.UUID, allowNull: true })
+    declare creator_id: string | null;
 
-    @DeletedAt
-    declare deletedAt: Date | null;
+    @ForeignKey(() => User)
+    @Column({ type: DataType.UUID, allowNull: true })
+    declare updater_id: string | null;
 
-    // ─────────────────────────────────────────
-    //  Hooks
-    // ─────────────────────────────────────────
+    @ForeignKey(() => User)
+    @Column({ type: DataType.UUID, allowNull: true })
+    declare deleter_id: string | null;
 
-    @BeforeCreate
-    @BeforeUpdate
-    static async hashPassword(instance: User): Promise<void> {
-        if (instance.passwordHash && !instance.passwordHash.startsWith('$2')) {
-            instance.passwordHash = await bcrypt.hash(instance.passwordHash, 12);
-        }
-    }
+    @CreatedAt declare created_at: Date;
+    @UpdatedAt declare updated_at: Date;
+    @DeletedAt declare deleted_at: Date | null;
 
-    // ─────────────────────────────────────────
-    //  Instance methods
-    // ─────────────────────────────────────────
-
-    async validatePassword(password: string): Promise<boolean> {
-        if (!this.passwordHash) return false;
-        return bcrypt.compare(password, this.passwordHash);
-    }
-
-    get fullName(): string {
-        return `${this.firstName || ''} ${this.lastName || ''}`.trim();
+    get full_name(): string {
+        return `${this.first_name || ''} ${this.last_name || ''}`.trim();
     }
 }
 

@@ -56,59 +56,59 @@ export class PublicService {
         return { success: true };
     }
 
-    async resetPassword(token: string, newPassword: string): Promise<{ success: boolean }> {
-        const tokenKey = `password-reset:${token}`;
-        const tokenData = await this.redisService.get<{ userId: string; email: string }>(tokenKey);
+    // async resetPassword(token: string, newPassword: string): Promise<{ success: boolean }> {
+    //     const tokenKey = `password-reset:${token}`;
+    //     const tokenData = await this.redisService.get<{ userId: string; email: string }>(tokenKey);
 
-        if (!tokenData) {
-            throw new BadRequestException('Invalid or expired reset token');
-        }
+    //     if (!tokenData) {
+    //         throw new BadRequestException('Invalid or expired reset token');
+    //     }
 
-        const user = await User.findByPk(tokenData.userId);
-        if (!user) {
-            throw new BadRequestException('User not found');
-        }
+    //     const user = await User.findByPk(tokenData.userId);
+    //     if (!user) {
+    //         throw new BadRequestException('User not found');
+    //     }
 
-        // Update password
-        user.passwordHash = newPassword;
-        await user.save();
+    //     // Update password
+    //     user.passwordHash = newPassword;
+    //     await user.save();
 
-        // Delete the reset token
-        await this.redisService.del(tokenKey);
+    //     // Delete the reset token
+    //     await this.redisService.del(tokenKey);
 
-        // Invalidate all user sessions
-        await this.redisService.delPattern(`session:${user.id}:*`);
+    //     // Invalidate all user sessions
+    //     await this.redisService.delPattern(`session:${user.id}:*`);
 
-        this.logger.log(`Password reset completed for ${tokenData.email}`);
-        return { success: true };
-    }
+    //     this.logger.log(`Password reset completed for ${tokenData.email}`);
+    //     return { success: true };
+    // }
 
-    async verifyEmail(token: string): Promise<{ success: boolean }> {
-        const tokenKey = `email-verify:${token}`;
-        const tokenData = await this.redisService.get<{ userId: string; email: string }>(tokenKey);
+    // async verifyEmail(token: string): Promise<{ success: boolean }> {
+    //     const tokenKey = `email-verify:${token}`;
+    //     const tokenData = await this.redisService.get<{ userId: string; email: string }>(tokenKey);
 
-        if (!tokenData) {
-            throw new BadRequestException('Invalid or expired verification token');
-        }
+    //     if (!tokenData) {
+    //         throw new BadRequestException('Invalid or expired verification token');
+    //     }
 
-        const user = await User.findByPk(tokenData.userId);
-        if (!user) {
-            throw new BadRequestException('User not found');
-        }
+    //     const user = await User.findByPk(tokenData.userId);
+    //     if (!user) {
+    //         throw new BadRequestException('User not found');
+    //     }
 
-        // Mark email as verified
-        user.emailVerified = true;
-        await user.save();
+    //     // Mark email as verified
+    //     user.emailVerified = true;
+    //     await user.save();
 
-        // Delete the verification token
-        await this.redisService.del(tokenKey);
+    //     // Delete the verification token
+    //     await this.redisService.del(tokenKey);
 
-        // Update cache
-        await this.redisService.del(`user:profile:${user.id}`);
+    //     // Update cache
+    //     await this.redisService.del(`user:profile:${user.id}`);
 
-        this.logger.log(`Email verified for ${tokenData.email}`);
-        return { success: true };
-    }
+    //     this.logger.log(`Email verified for ${tokenData.email}`);
+    //     return { success: true };
+    // }
 
     private generateResetToken(): string {
         return crypto.randomBytes(32).toString('hex');

@@ -186,61 +186,64 @@ export class UserSyncConsumer implements OnModuleInit, OnModuleDestroy {
     private async handleUserCreated(event: KeycloakUserEvent): Promise<void> {
         const existing = await this.usersService.findByKeycloakId(event.userId);
         if (existing) {
-            this.logger.warn(`User already exists for keycloakId: ${event.userId}`);
+            this.logger.warn(`User already exists for keycloak_id: ${event.userId}`);
             return;
         }
 
         if (event.email) {
             const byEmail = await this.usersService.findByEmail(event.email);
             if (byEmail) {
-                this.logger.log(`Linking existing user ${byEmail.id} → keycloakId ${event.userId}`);
+                this.logger.log(`Linking user ${byEmail.id} → keycloak_id ${event.userId}`);
                 await this.usersService.updateKeycloakId(byEmail.id, event.userId);
                 return;
             }
         }
 
+        // username = phone in our system
+        const phone = event.username;
+        if (!phone) {
+            this.logger.warn(`No phone (username) in event for ${event.userId}, skipping`);
+            return;
+        }
+
         await this.usersService.create({
-            username:      event.username || event.email?.split('@')[0] || event.userId,
-            email:         event.email!,
-            firstName:     event.firstName  || null,
-            lastName:      event.lastName   || null,
-            keycloakId:    event.keycloakId || event.userId,
-            isActive:      event.enabled    ?? true,
-            emailVerified: event.emailVerified ?? false,
-            passwordHash:  null, // Keycloak owns credentials
-            roles:         ['user'],
+            phone,
+            email          : event.email          || null,
+            first_name     : event.firstName       || null,
+            last_name      : event.lastName        || null,
+            keycloak_id    : event.keycloakId      || event.userId,
+            is_active      : event.enabled         ?? true,
+            email_verified : event.emailVerified   ?? false,
         });
 
-        this.logger.log(`Profile created from Keycloak event: ${event.userId}`);
+        this.logger.log(`User created from Keycloak event: ${event.userId}`);
     }
 
     private async handleUserUpdated(event: KeycloakUserEvent): Promise<void> {
         const user = await this.usersService.findByKeycloakId(event.userId);
 
         if (!user) {
-            this.logger.warn(`No local user for keycloakId ${event.userId} — creating instead`);
+            this.logger.warn(`No local user for ${event.userId} — creating`);
             await this.handleUserCreated(event);
             return;
         }
 
-        // Only update identity mirror fields that actually changed.
-        // We use updateMirrorFields() — which does NOT emit a Kafka event —
-        // to avoid re-broadcasting what was already a Keycloak-originated event.
         const mirror: Record<string, any> = {};
-
+        if (event.username         !== undefined && event.username         !== user.phone)
+            mirror.phone          = event.username;
         if (event.email         !== undefined && event.email         !== user.email)
-            mirror.email         = event.email;
-        if (event.firstName     !== undefined && event.firstName     !== user.firstName)
-            mirror.firstName     = event.firstName;
-        if (event.lastName      !== undefined && event.lastName      !== user.lastName)
-            mirror.lastName      = event.lastName;
-        if (event.enabled       !== undefined && event.enabled       !== user.isActive)
-            mirror.isActive      = event.enabled;
+            mirror.email          = event.email;
+        if (event.firstName     !== undefined && event.firstName     !== user.first_name)
+            mirror.first_name     = event.firstName;
+        if (event.lastName      !== undefined && event.lastName      !== user.last_name)
+            mirror.last_name      = event.lastName;
+        if (event.enabled       !== undefined && event.enabled       !== user.is_active)
+            mirror.is_active      = event.enabled;
         if (event.emailVerified !== undefined)
-            mirror.emailVerified = event.emailVerified;
+            mirror.email_verified = event.emailVerified;
 
         if (Object.keys(mirror).length === 0) {
-            this.logger.debug(`No mirror changes for user ${event.userId}`);
+            this.logger.debug(`No mirror changes for ${event.userId}`);
             return;
         }
 
@@ -254,20 +257,17 @@ export class UserSyncConsumer implements OnModuleInit, OnModuleDestroy {
             this.logger.warn(`No local user for deletion: ${event.userId}`);
             return;
         }
-
         await this.usersService.remove(user.id);
-        this.logger.log(`User soft-deleted from Keycloak event: ${event.userId}`);
+        this.logger.log(`User soft-deleted: ${event.userId}`);
     }
 
     private async handleUserLogin(event: KeycloakUserEvent): Promise<void> {
         try {
             const user = await this.usersService.findByKeycloakId(event.userId);
             if (!user) return;
-
             await this.usersService.updateLastLogin(user.id);
-        } catch (error: any) {
-            // Non-critical — don't fail the whole message for a login timestamp
-            this.logger.warn(`Could not update lastLoginAt for ${event.userId}: ${error.message}`);
+        } catch (err: any) {
+            this.logger.warn(`Could not update last_login_at for ${event.userId}: ${err.message}`);
         }
     }
 }

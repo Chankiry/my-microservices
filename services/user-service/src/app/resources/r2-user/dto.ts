@@ -1,102 +1,71 @@
 import {
-    IsString,
-    IsEmail,
-    IsOptional,
-    MinLength,
-    MaxLength,
-    IsArray,
-    IsBoolean,
+    IsString, IsEmail, IsOptional,
+    MinLength, MaxLength, IsArray, IsBoolean,
+    IsNotEmpty,
+    Matches,
 } from 'class-validator';
+
+const CAMBODIA_PHONE_REGEX = /^(?:0|\+?855|855)?[1-9]\d{7,8}$/;
 
 export class CreateUserDto {
 
-    @IsString()
-    @MinLength(3)
-    @MaxLength(50)
-    username!: string;
+    @IsString({ message: 'Phone must be a string' })
+    @IsNotEmpty({ message: 'Phone number is required' })
+    @MinLength(7, { message: 'Phone number is too short (min 7 characters)' })
+    @MaxLength(20, { message: 'Phone number is too long (max 20 characters)' })
+    // Optional but strongly recommended for Cambodia:
+    @Matches(CAMBODIA_PHONE_REGEX, {
+        message:
+        'Invalid Cambodian phone number format. Use formats like: 0961234567, +855961234567, 012345678',
+    })
+    phone!: string;
 
-    @IsEmail()
-    email!: string;
+    @IsString({ message: 'Email must be a string' })
+    @IsEmail({}, { message: 'Invalid email format' })
+    @MinLength(5, { message: 'Email is too short' })
+    @MaxLength(100, { message: 'Email is too long' })
+    @IsOptional()  // ← Key point: make it truly optional
+    email?: string | null = null;
 
-    @IsString()
-    @IsOptional()
-    @MinLength(8)
-    @MaxLength(100)
-    password?: string;
+    @IsString() @IsOptional() @MaxLength(100)
+    first_name?: string;
 
-    @IsString()
-    @IsOptional()
-    @MaxLength(100)
-    firstName?: string;
+    @IsString() @IsOptional() @MaxLength(100)
+    last_name?: string;
 
-    @IsString()
-    @IsOptional()
-    @MaxLength(100)
-    lastName?: string;
+    @IsString() @IsOptional()
+    keycloak_id?: string;
 
-    @IsString()
-    @IsOptional()
-    keycloakId?: string;
+    @IsBoolean() @IsOptional()
+    is_active?: boolean;
 
-    // Allowed when sync consumer creates a user from Keycloak event.
-    // The ValidationPipe whitelist would strip this if omitted — keeping
-    // it here means the field passes through instead of being silently dropped.
-    @IsString()
-    @IsOptional()
-    passwordHash?: string | null;
+    @IsBoolean() @IsOptional()
+    email_verified?: boolean;
 
-    @IsBoolean()
-    @IsOptional()
-    isActive?: boolean;
-
-    @IsBoolean()
-    @IsOptional()
-    emailVerified?: boolean;
-
-    @IsArray()
-    @IsString({ each: true })
-    @IsOptional()
-    roles?: string[];
+    @IsString() @IsOptional()
+    creator_id?: string | null;
 }
 
-// Used by regular users updating their own profile.
-// Does NOT include roles — role assignment is admin-only via AdminUpdateUserDto.
+// Used by regular users updating their own profile — no roles, no status.
 export class UpdateUserDto {
+    @IsEmail() @IsOptional()
+    email?: string | null;
 
-    @IsString()
-    @IsOptional()
-    @MinLength(3)
-    @MaxLength(50)
-    username?: string;
+    @IsString() @IsOptional() @MaxLength(100)
+    first_name?: string;
 
-    @IsEmail()
-    @IsOptional()
-    email?: string;
+    @IsString() @IsOptional() @MaxLength(100)
+    last_name?: string;
 
-    @IsString()
-    @IsOptional()
-    @MaxLength(100)
-    firstName?: string;
+    @IsBoolean() @IsOptional()
+    is_active?: boolean;
 
-    @IsString()
-    @IsOptional()
-    @MaxLength(100)
-    lastName?: string;
-
-    @IsBoolean()
-    @IsOptional()
-    isActive?: boolean;
-
-    @IsBoolean()
-    @IsOptional()
-    emailVerified?: boolean;
+    @IsBoolean() @IsOptional()
+    email_verified?: boolean;
 }
 
-// Used only by admin endpoints — extends UpdateUserDto with role management.
+// Admin only — adds role management on top of UpdateUserDto
 export class AdminUpdateUserDto extends UpdateUserDto {
-
-    @IsArray()
-    @IsString({ each: true })
-    @IsOptional()
-    roles?: string[];
+    @IsArray() @IsString({ each: true }) @IsOptional()
+    app_roles?: string[];
 }

@@ -44,15 +44,15 @@ export class PublicController {
         return this.publicService.initiatePasswordReset(body.email);
     }
 
-    @Post('reset-password')
-    @Public()
-    async resetPassword(@Body() body: ResetPasswordDto) {
-        return this.publicService.resetPassword(body.token, body.newPassword);
-    }
+    // @Post('reset-password')
+    // @Public()
+    // async resetPassword(@Body() body: ResetPasswordDto) {
+    //     return this.publicService.resetPassword(body.token, body.newPassword);
+    // }
 
-    @Post('verify-email')
-    @Public()
-    async verifyEmail(@Body() body: VerifyEmailDto) {
-        return this.publicService.verifyEmail(body.token);
-    }
+    // @Post('verify-email')
+    // @Public()
+    // async verifyEmail(@Body() body: VerifyEmailDto) {
+    //     return this.publicService.verifyEmail(body.token);
+    // }
 }

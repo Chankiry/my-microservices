@@ -45,14 +45,14 @@ export class UserGrpcService {
         return this.toProto(user);
     }
 
-    @GrpcMethod('UserService', 'GetUserByUsername')
-    async getUserByUsername(data: { username: string }) {
-        this.logger.log(`gRPC GetUserByUsername: ${data.username}`);
-        const user = await this.usersService.findByUsername(data.username);
+    @GrpcMethod('UserService', 'GetUserByPhone')
+    async getUserByPhone(data: { phone: string }) {
+        this.logger.log(`gRPC GetUserByPhone: ${data.phone}`);
+        const user = await this.usersService.findByPhone(data.phone);
         if (!user) {
             throw new RpcException({
                 code:    status.NOT_FOUND,
-                message: `No user with username ${data.username}`,
+                message: `No user with phone ${data.phone}`,
             });
         }
         return this.toProto(user);
@@ -60,41 +60,24 @@ export class UserGrpcService {
 
     @GrpcMethod('UserService', 'CreateUser')
     async createUser(data: any) {
-        this.logger.log(`gRPC CreateUser: ${data.username}`);
-        try {
-            const user = await this.usersService.create({
-                username:  data.username,
-                email:     data.email,
-                firstName: data.first_name,
-                lastName:  data.last_name,
-                roles:     data.roles || [],
-            });
-            return this.toProto(user);
-        } catch (error: any) {
-            throw new RpcException({
-                code:    status.INTERNAL,
-                message: error.message ?? 'Failed to create user',
-            });
-        }
+        const user = await this.usersService.create({
+            phone      : data.phone,
+            email      : data.email      || null,
+            first_name : data.first_name || null,
+            last_name  : data.last_name  || null,
+        });
+        return this.toProto(user);
     }
 
     @GrpcMethod('UserService', 'UpdateUser')
     async updateUser(data: any) {
-        this.logger.log(`gRPC UpdateUser: ${data.id}`);
-        try {
-            const user = await this.usersService.update(data.id, {
-                firstName: data.first_name,
-                lastName:  data.last_name,
-                email:     data.email,
-                isActive:  data.is_active,
-            });
-            return this.toProto(user);
-        } catch (error: any) {
-            throw new RpcException({
-                code:    status.NOT_FOUND,
-                message: error.message ?? 'User not found',
-            });
-        }
+        const user = await this.usersService.update(data.id, {
+            first_name : data.first_name,
+            last_name  : data.last_name,
+            email      : data.email,
+            is_active  : data.is_active,
+        });
+        return this.toProto(user);
     }
 
     @GrpcMethod('UserService', 'DeleteUser')
@@ -119,7 +102,7 @@ export class UserGrpcService {
                 page:     data.page  || 1,
                 limit:    data.limit || 10,
                 search:   data.search   || undefined,
-                isActive: data.is_active !== undefined ? data.is_active : undefined,
+                is_active: data.is_active !== undefined ? data.is_active : undefined,
             });
             return {
                 users: result.data.map(u => this.toProto(u)),
@@ -162,7 +145,7 @@ export class UserGrpcService {
 
             if (data.id)       user = await this.usersService.findById(data.id).catch(() => null);
             else if (data.email)    user = await this.usersService.findByEmail(data.email);
-            else if (data.username) user = await this.usersService.findByUsername(data.username);
+            else if (data.phone) user = await this.usersService.findByPhone(data.phone);
 
             return { exists: !!user, user_id: user?.id ?? '' };
         } catch {
@@ -177,16 +160,15 @@ export class UserGrpcService {
     private toProto(user: User | null | any) {
         if (!user) return null;
         return {
-            id:          user.id          ?? '',
-            username:    user.username    ?? '',
-            email:       user.email       ?? '',
-            first_name:  user.firstName   ?? '',
-            last_name:   user.lastName    ?? '',
-            is_active:   user.isActive    ?? false,
-            roles:       user.roles       ?? [],
-            created_at:  user.createdAt?.toISOString()  ?? '',
-            updated_at:  user.updatedAt?.toISOString()  ?? '',
-            keycloak_id: user.keycloakId  ?? '',
+            id          : user.id            ?? '',
+            phone       : user.phone         ?? '',
+            email       : user.email         ?? '',
+            first_name  : user.first_name    ?? '',
+            last_name   : user.last_name     ?? '',
+            is_active   : user.is_active     ?? false,
+            created_at  : user.created_at?.toISOString() ?? '',
+            updated_at  : user.updated_at?.toISOString() ?? '',
+            keycloak_id : user.keycloak_id   ?? '',
         };
     }
 }

@@ -1,138 +1,101 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-import { InjectConnection, InjectModel } from '@nestjs/sequelize';
-import { Op, Sequelize, literal } from 'sequelize';
+import { InjectModel, InjectConnection } from '@nestjs/sequelize';
+import { ConfigService } from '@nestjs/config';
+import { Op, literal, Sequelize } from 'sequelize';
 import { CreateUserDto, UpdateUserDto } from './dto';
 import { KafkaProducerService } from '../../communications/kafka/kafka-producer.service';
+import { KeycloakAdminService } from '../../communications/keycloak/keycloak-admin.service';
+import { OutboxService } from '../../outbox/outbox.service';
 import { RedisService } from '@app/infra/cache/redis.service';
 import User from '../../../models/user/user.model';
-import { KeycloakAdminService } from '@app/communications/keycloak/keycloak-admin.service';
-import { OutboxService } from '@app/outbox/outbox.service';
-import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class UserService {
-    private readonly logger = new Logger(UserService.name);
-    private readonly CACHE_TTL: number;
+    private readonly logger    = new Logger(UserService.name);
+    private readonly CACHE_TTL : number;
 
     constructor(
         @InjectModel(User)
-        private readonly userModel      : typeof User,
-        private readonly kafkaProducer  : KafkaProducerService,
-        private readonly keycloakAdmin  : KeycloakAdminService,
-        private readonly outboxService  : OutboxService,
-        private readonly redisService   : RedisService,
+        private readonly userModel     : typeof User,
+        private readonly kafkaProducer : KafkaProducerService,
+        private readonly keycloakAdmin : KeycloakAdminService,
+        private readonly outboxService : OutboxService,
+        private readonly redisService  : RedisService,
         @InjectConnection()
-        private readonly sequelize      : Sequelize,
-        private readonly configService  : ConfigService,
+        private readonly sequelize     : Sequelize,
+        private readonly configService : ConfigService,
     ) {
         this.CACHE_TTL = this.configService.get<number>('CACHE_TTL', 1800);
     }
 
-    // ─────────────────────────────────────────
-    //  Read methods
-    // ─────────────────────────────────────────
+    // ─── Read ─────────────────────────────────────────────────────────────────
 
     async findById(id: string): Promise<User> {
-        const cacheKey = `user:profile:${id}`;
-
-        const cachedUser = await this.redisService.get<User>(cacheKey);
-        if (cachedUser) {
-            return cachedUser;
-        }
+        const key    = `user:profile:${id}`;
+        const cached = await this.redisService.get<User>(key);
+        if (cached) return cached;
 
         const user = await this.userModel.findOne({ where: { id } });
-        if (!user) {
-            throw new NotFoundException(`User with ID ${id} not found`);
-        }
+        if (!user) throw new NotFoundException(`User ${id} not found`);
 
-        await this.redisService.set(cacheKey, user, this.CACHE_TTL);
+        await this.redisService.set(key, user, this.CACHE_TTL);
+        return user;
+    }
+
+    async findByKeycloakId(keycloak_id: string): Promise<User | null> {
+        const key    = `user:keycloak:${keycloak_id}`;
+        const cached = await this.redisService.get<User>(key);
+        if (cached) return cached;
+
+        const user = await this.userModel.findOne({ where: { keycloak_id } });
+        if (user) await this.redisService.set(key, user, this.CACHE_TTL);
         return user;
     }
 
     async findByEmail(email: string): Promise<User | null> {
-        const cacheKey = `user:email:${email}`;
-
-        const cachedId = await this.redisService.get<string>(cacheKey);
-        if (cachedId) {
-            return this.findById(cachedId);
-        }
+        const key    = `user:email:${email}`;
+        const cached = await this.redisService.get<User>(key);
+        if (cached) return cached;
 
         const user = await this.userModel.findOne({ where: { email } });
-        if (!user) return null;
-
-        await Promise.all([
-            this.redisService.set(cacheKey, user.id, this.CACHE_TTL),
-            this.redisService.set(`user:profile:${user.id}`, user, this.CACHE_TTL),
-        ]);
-
+        if (user) await this.redisService.set(key, user, this.CACHE_TTL);
         return user;
     }
 
-    async findByUsername(username: string): Promise<User | null> {
-        const cacheKey = `user:username:${username}`;
+    async findByPhone(phone: string): Promise<User | null> {
+        const key    = `user:phone:${phone}`;
+        const cached = await this.redisService.get<User>(key);
+        if (cached) return cached;
 
-        const cachedId = await this.redisService.get<string>(cacheKey);
-        if (cachedId) {
-            return this.findById(cachedId);
-        }
-
-        const user = await this.userModel.findOne({ where: { username } });
-        if (!user) return null;
-
-        await Promise.all([
-            this.redisService.set(cacheKey, user.id, this.CACHE_TTL),
-            this.redisService.set(`user:profile:${user.id}`, user, this.CACHE_TTL),
-        ]);
-
-        return user;
-    }
-
-    async findByKeycloakId(keycloakId: string): Promise<User | null> {
-        const cacheKey = `user:keycloak:${keycloakId}`;
-
-        const cachedId = await this.redisService.get<string>(cacheKey);
-        if (cachedId) {
-            return this.findById(cachedId);
-        }
-
-        const user = await this.userModel.findOne({ where: { keycloakId } });
-        if (!user) return null;
-
-        await Promise.all([
-            this.redisService.set(cacheKey, user.id, this.CACHE_TTL),
-            this.redisService.set(`user:profile:${user.id}`, user, this.CACHE_TTL),
-        ]);
-
+        const user = await this.userModel.findOne({ where: { phone } });
+        if (user) await this.redisService.set(key, user, this.CACHE_TTL);
         return user;
     }
 
     async findAll(query: {
-        page?: number;
-        limit?: number;
-        search?: string;
-        isActive?: boolean;
+        page?     : number;
+        limit?    : number;
+        search?   : string;
+        is_active?: boolean;
     }): Promise<{ data: User[]; total: number; page: number; limit: number }> {
-        const page  = query.page  || 1;
-        const limit = query.limit || 10;
+        const page   = query.page  || 1;
+        const limit  = query.limit || 10;
         const offset = (page - 1) * limit;
-
-        const whereClause: any = {};
+        const where: any = {};
 
         if (query.search) {
-            whereClause[Op.or] = [
-                { username:  { [Op.iLike]: `%${query.search}%` } },
-                { email:     { [Op.iLike]: `%${query.search}%` } },
-                { firstName: { [Op.iLike]: `%${query.search}%` } },
-                { lastName:  { [Op.iLike]: `%${query.search}%` } },
+            where[Op.or] = [
+                { phone      : { [Op.iLike]: `%${query.search}%` } },
+                { email      : { [Op.iLike]: `%${query.search}%` } },
+                { first_name : { [Op.iLike]: `%${query.search}%` } },
+                { last_name  : { [Op.iLike]: `%${query.search}%` } },
             ];
         }
 
-        if (query.isActive !== undefined) {
-            whereClause.isActive = query.isActive;
-        }
+        if (query.is_active !== undefined) where.is_active = query.is_active;
 
         const { count, rows } = await this.userModel.findAndCountAll({
-            where: whereClause,
+            where,
             limit,
             offset,
             order: [literal('"created_at" DESC')],
@@ -143,155 +106,176 @@ export class UserService {
 
     async findActiveUsers(limit = 100): Promise<User[]> {
         return this.userModel.findAll({
-            where: { isActive: true },
+            where : { is_active: true },
             limit,
-            order: [literal('"last_login_at" DESC NULLS LAST')],
+            order : [literal('"last_login_at" DESC NULLS LAST')],
         });
     }
 
-    async findAllWithoutKeycloakId(): Promise<User[]> {
-        return this.userModel.findAll({
-            where: { keycloakId: null },
-        });
-    }
+    // ─── Write ────────────────────────────────────────────────────────────────
 
-    async getUserRoles(userId: string): Promise<string[]> {
-        const cacheKey = `user:roles:${userId}`;
-
-        const cachedRoles = await this.redisService.get<string[]>(cacheKey);
-        if (cachedRoles) return cachedRoles;
-
-        const user = await this.findById(userId);
-        const roles = user.roles || [];
-
-        await this.redisService.set(cacheKey, roles, this.CACHE_TTL);
-        return roles;
-    }
-
-    // ─────────────────────────────────────────
-    //  Write methods
-    // ─────────────────────────────────────────
-
-    async create(createUserDto: CreateUserDto): Promise<User> {
-        const transaction = await this.sequelize.transaction();
+    async create(dto: CreateUserDto): Promise<User> {
+        const tx = await this.sequelize.transaction();
         try {
-            const user = await this.userModel.create(
-                createUserDto as any,
-                { transaction },
-            );
+            let keycloak_id = dto.keycloak_id || null;
 
-            await this.outboxService.saveToOutbox(
-                transaction,
-                'USER_CREATED',
-                'user',
-                user.id,
-                {
-                    userId:    user.id,
-                    email:     user.email,
-                    username:  user.username,
-                    firstName: user.firstName,
-                    lastName:  user.lastName,
-                    roles:     user.roles || [],
-                },
-            );
-
-            await transaction.commit();
-            this.logger.log(`User created: ${user.id}`);
-            return user;
-        } catch (error) {
-            await transaction.rollback();
-            throw error;
-        }
-    }
-
-    async update(id: string, updateUserDto: UpdateUserDto): Promise<User> {
-        const transaction = await this.sequelize.transaction();
-        try {
-            const user = await this.userModel.findOne({
-                where: { id },
-                transaction,
-            });
-            if (!user) throw new NotFoundException(`User with ID ${id} not found`);
-
-            const changes = this.getChanges(user, updateUserDto);
-            Object.assign(user, updateUserDto);
-            await user.save({ transaction });
-
-            if (Object.keys(changes).length > 0) {
-                await this.outboxService.saveToOutbox(
-                    transaction,
-                    'USER_UPDATED',
-                    'user',
-                    id,
-                    { changes },
-                );
+            if (!keycloak_id) {
+                try {
+                    keycloak_id = await this.keycloakAdmin.createUser({
+                        username   : dto.phone,          // phone = Keycloak username
+                        email      : dto.email || undefined,
+                        first_name : dto.first_name,
+                        last_name  : dto.last_name,
+                        is_active  : dto.is_active ?? true,
+                    });
+                    this.logger.log(`Keycloak user created: ${keycloak_id}`);
+                } catch (err: any) {
+                    this.logger.warn(`Keycloak create failed, proceeding without keycloak_id: ${err.message}`);
+                    // Don't block local creation — admin can link later
+                }
             }
 
-            await transaction.commit();
+            // ── Step 2: create local profile row ─────────────────────────────────
+            const user = await this.userModel.create({
+                ...dto,
+                keycloak_id,
+                creator_id: dto.creator_id || null,
+            } as any, { transaction: tx });
 
-            await this.invalidateUserCache(id, user);
-            this.logger.log(`User updated: ${id}`);
+            await this.outboxService.saveToOutbox(tx, 'USER_CREATED', 'user', user.id, {
+                user_id    : user.id,
+                phone      : user.phone,
+                email      : user.email,
+                first_name : user.first_name,
+                last_name  : user.last_name,
+            });
+
+            await tx.commit();
+            this.logger.log(`User created: ${user.id} keycloak_id: ${keycloak_id}`);
             return user;
-        } catch (error) {
-            await transaction.rollback();
-            throw error;
+        } catch (err) {
+            await tx.rollback();
+            throw err;
         }
     }
 
-    async updateStatus(id: string, isActive: boolean): Promise<User> {
-        const user = await this.userModel.findOne({ where: { id } });
-        if (!user) throw new NotFoundException(`User with ID ${id} not found`);
+    async update(id: string, dto: UpdateUserDto, updater_id?: string): Promise<any> {
+        const tx = await this.sequelize.transaction();
+        try {
+            const user = await this.userModel.findOne({ where: { id }, transaction: tx });
+            if (!user) throw new NotFoundException(`User ${id} not found`);
 
-        // Call Keycloak first — if Keycloak rejects, DB stays unchanged.
-        // user-service and Keycloak must stay in sync on isActive/enabled.
-        if (user.keycloakId) {
-            await this.keycloakAdmin.setEnabled(user.keycloakId, isActive);
+            const changes = this.getChanges(user, dto);
+            Object.assign(user, dto);
+            if (updater_id) user.updater_id = updater_id;
+            await user.save({ transaction: tx });
+
+            if (Object.keys(changes).length > 0) {
+                await this.outboxService.saveToOutbox(tx, 'USER_UPDATED', 'user', id, { changes });
+            }
+
+            await tx.commit();
+            await this.invalidateUserCache(id, user);
+            this.logger.log(`User updated: ${id}`);
+            return {
+                data: user
+            };
+        } catch (err) {
+            await tx.rollback();
+            throw err;
+        }
+    }
+
+    async remove(id: string, deleter_id?: string): Promise<any> {
+        const tx = await this.sequelize.transaction();
+        try {
+            const user = await this.userModel.findOne({ where: { id }, transaction: tx });
+            if (!user) throw new NotFoundException(`User ${id} not found`);
+
+            await this.outboxService.saveToOutbox(tx, 'USER_DELETED', 'user', id, {
+                user_id    : id,
+                deleted_at : new Date().toISOString(),
+            });
+
+            if (deleter_id) {
+                user.deleter_id = deleter_id;
+                await user.save({ transaction: tx });
+            }
+            await user.destroy({ transaction: tx });
+
+            await tx.commit();
+            await this.invalidateUserCache(id, user);
+            this.logger.log(`User soft-deleted: ${id}`);
+            return {
+                success: true,
+            }
+        } catch (err) {
+            await tx.rollback();
+            throw err;
+        }
+    }
+
+    // ─── Targeted updates ─────────────────────────────────────────────────────
+
+    async updateStatus(id: string, is_active: boolean, updater_id?: string): Promise<User> {
+        const user = await this.userModel.findOne({ where: { id } });
+        if (!user) throw new NotFoundException(`User ${id} not found`);
+
+        if (user.keycloak_id) {
+            await this.keycloakAdmin.setEnabled(user.keycloak_id, is_active);
         }
 
-        user.isActive = isActive;
+        user.is_active = is_active;
+        if (updater_id) user.updater_id = updater_id;
         await user.save();
 
         await this.invalidateUserCache(id, user);
-        await this.kafkaProducer.emitUserUpdated(id, { isActive });
-
-        this.logger.log(`User ${id} status set to isActive=${isActive}`);
+        this.logger.log(`User ${id} is_active=${is_active}`);
         return user;
     }
 
-    async updateKeycloakId(userId: string, keycloakId: string): Promise<User> {
-        const user = await this.userModel.findOne({ where: { id: userId } });
-        if (!user) throw new NotFoundException(`User with ID ${userId} not found`);
+    async updateKeycloakId(id: string, keycloak_id: string): Promise<User> {
+        const user = await this.userModel.findOne({ where: { id } });
+        if (!user) throw new NotFoundException(`User ${id} not found`);
 
-        user.keycloakId = keycloakId;
+        user.keycloak_id = keycloak_id;
         await user.save();
 
-        await this.invalidateUserCache(userId, user);
-        this.logger.log(`User ${userId} linked to keycloakId ${keycloakId}`);
+        await this.invalidateUserCache(id, user);
         return user;
     }
 
-    async updateLastLogin(userId: string): Promise<void> {
-        await this.userModel.update(
-            { lastLoginAt: new Date() },
-            { where: { id: userId } },
-        );
-        await this.redisService.del(`user:profile:${userId}`);
+    async updateLastLogin(id: string): Promise<void> {
+        await this.userModel.update({ last_login_at: new Date() }, { where: { id } });
+        await this.redisService.del(`user:profile:${id}`);
     }
 
+    async updatePhone(id: string, phone: string): Promise<void> {
+        const user = await this.userModel.findOne({ where: { id } });
+        if (!user) throw new NotFoundException(`User ${id} not found`);
 
-    // Updates only the JSONB profile column — business/personal data.
-    // Does NOT touch identity mirror columns (email, firstName, lastName etc.)
-    // and does NOT emit a Kafka event because this change is user-service internal.
+        const old_phone = user.phone;
+        await this.userModel.update({ phone }, { where: { id } });
+
+        await this.redisService.del(`user:phone:${old_phone}`);
+        await this.redisService.del(`user:phone:${phone}`);
+        await this.redisService.del(`user:profile:${id}`);
+    }
+
+    async updateMirrorFields(id: string, fields: Partial<Pick<User,
+        'email' | 'first_name' | 'last_name' | 'is_active' | 'email_verified'
+    >>): Promise<void> {
+        await this.userModel.update(fields, { where: { id } });
+        await this.redisService.del(`user:profile:${id}`);
+        this.logger.log(`Mirror fields updated for user ${id}`);
+    }
+
     async updateBusinessProfile(
         id: string,
-        fields: Partial<{
-            avatar: string;
-            phone : string;
-            gender: string;
-        }>,
+        fields: Partial<{ avatar: string; gender: string }>,
     ): Promise<User> {
         const user = await this.userModel.findOne({ where: { id } });
-        if (!user) throw new NotFoundException(`User with ID ${id} not found`);
+        if (!user) throw new NotFoundException(`User ${id} not found`);
 
         user.profile = { ...(user.profile || {}), ...fields };
         await user.save();
@@ -301,79 +285,27 @@ export class UserService {
         return user;
     }
 
-    async remove(id: string): Promise<void> {
-        const transaction = await this.sequelize.transaction();
-        try {
-            const user = await this.userModel.findOne({
-                where: { id },
-                transaction,
-            });
-            if (!user) throw new NotFoundException(`User with ID ${id} not found`);
-
-            await this.outboxService.saveToOutbox(
-                transaction,
-                'USER_DELETED',
-                'user',
-                id,
-                { userId: id, deletedAt: new Date().toISOString() },
-            );
-
-            // paranoid: true — sets deleted_at, does NOT hard-delete
-            await user.destroy({ transaction });
-
-            await transaction.commit();
-
-            await this.invalidateUserCache(id, user);
-            this.logger.log(`User soft-deleted: ${id}`);
-        } catch (error) {
-            await transaction.rollback();
-            throw error;
-        }
-    }
-
-    /**
-     * Update identity mirror columns that come from Keycloak events.
-     * Does NOT emit a Kafka event — the change originated from Keycloak,
-     * re-broadcasting would be noise for downstream consumers.
-     */
-    async updateMirrorFields(id: string, fields: Partial<Pick<User,
-        'email' | 'firstName' | 'lastName' | 'isActive' | 'emailVerified'
-    >>): Promise<void> {
-        await this.userModel.update(fields, { where: { id } });
-        await this.redisService.del(`user:profile:${id}`);
-        this.logger.log(`Mirror fields updated for user ${id}`);
-    }
-
-    // ─────────────────────────────────────────
-    //  Private helpers
-    // ─────────────────────────────────────────
+    // ─── Private helpers ──────────────────────────────────────────────────────
 
     private getChanges(user: User, dto: UpdateUserDto): Record<string, any> {
         const changes: Record<string, any> = {};
-
-        if (dto.firstName !== undefined && user.firstName !== dto.firstName)
-            changes.firstName = { old: user.firstName, new: dto.firstName };
-
-        if (dto.lastName !== undefined && user.lastName !== dto.lastName)
-            changes.lastName = { old: user.lastName, new: dto.lastName };
-
-        if (dto.email !== undefined && user.email !== dto.email)
+        if (dto.first_name !== undefined && dto.first_name !== user.first_name)
+            changes.first_name = { old: user.first_name, new: dto.first_name };
+        if (dto.last_name !== undefined && dto.last_name !== user.last_name)
+            changes.last_name = { old: user.last_name, new: dto.last_name };
+        if (dto.email !== undefined && dto.email !== user.email)
             changes.email = { old: user.email, new: dto.email };
-
-        if (dto.isActive !== undefined && user.isActive !== dto.isActive)
-            changes.isActive = { old: user.isActive, new: dto.isActive };
-
+        if (dto.is_active !== undefined && dto.is_active !== user.is_active)
+            changes.is_active = { old: user.is_active, new: dto.is_active };
         return changes;
     }
 
-    private async invalidateUserCache(userId: string, user: User): Promise<void> {
+    private async invalidateUserCache(id: string, user: User): Promise<void> {
         await Promise.all([
-            this.redisService.del(`user:profile:${userId}`),
+            this.redisService.del(`user:profile:${id}`),
             this.redisService.del(`user:email:${user.email}`),
-            this.redisService.del(`user:username:${user.username}`),
-            this.redisService.del(`user:roles:${userId}`),
-            this.redisService.del(`user:keycloak:${user.keycloakId}`),
-            this.redisService.del(`user:settings:${userId}`),
+            this.redisService.del(`user:phone:${user.phone}`),
+            this.redisService.del(`user:keycloak:${user.keycloak_id}`),
         ]);
     }
 }

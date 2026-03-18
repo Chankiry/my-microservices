@@ -9,26 +9,18 @@ export class CacheInvalidationListener {
     constructor(private readonly redisService: RedisService) {}
 
     @OnEvent('user.updated')
-    async handleUserUpdatedEvent(payload: { userId: string; email?: string }) {
-        this.logger.log(`Received user.updated event for ${payload.userId}`);
-        
-        await this.redisService.del(`user:profile:${payload.userId}`);
-        
-        if (payload.email) {
-        await this.redisService.delPattern(`user:email:*`);
-        }
+    async handleUserUpdated(payload: { user_id: string; email?: string; phone?: string }) {
+        this.logger.log(`Cache invalidation for user.updated: ${payload.user_id}`);
+
+        await this.redisService.del(`user:profile:${payload.user_id}`);
+
+        if (payload.email) await this.redisService.del(`user:email:${payload.email}`);
+        if (payload.phone) await this.redisService.del(`user:phone:${payload.phone}`);
     }
 
     @OnEvent('user.deleted')
-    async handleUserDeletedEvent(payload: { userId: string }) {
-        this.logger.log(`Received user.deleted event for ${payload.userId}`);
-        await this.redisService.delPattern(`user:*:${payload.userId}`);
-    }
-
-    @OnEvent('role.changed')
-    async handleRoleChangedEvent(payload: { userId: string }) {
-        this.logger.log(`Received role.changed event for ${payload.userId}`);
-        await this.redisService.del(`user:roles:${payload.userId}`);
-        await this.redisService.del(`user:profile:${payload.userId}`);
+    async handleUserDeleted(payload: { user_id: string }) {
+        this.logger.log(`Cache invalidation for user.deleted: ${payload.user_id}`);
+        await this.redisService.delPattern(`user:*:${payload.user_id}`);
     }
 }

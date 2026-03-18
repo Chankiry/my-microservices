@@ -31,7 +31,12 @@ export class UserController {
     @Get()
     @Roles('admin')
     async findAll(@Query() query: any) {
-        return this.usersService.findAll(query);
+        return this.usersService.findAll({
+            page     : query.page,
+            limit    : query.limit,
+            search   : query.search,
+            is_active: query.is_active,
+        });
     }
     
     @Post()
