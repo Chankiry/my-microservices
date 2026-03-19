@@ -5,20 +5,19 @@ import {
 
 export class GrantAccessDto {
     @IsString()
-    app_id!: string;
+    system_id!: string;
 
     @IsString()
     @IsIn(['public', 'managed', 'internal'])
     account_type!: 'public' | 'managed' | 'internal';
 
-    // Roles to assign in this app — must match Keycloak client roles
     @IsArray() @IsString({ each: true }) @IsOptional()
-    app_roles?: string[];
+    system_roles?: string[];
 }
 
 export class UpdateAccessDto {
     @IsArray() @IsString({ each: true }) @IsOptional()
-    app_roles?: string[];
+    system_roles?: string[];
 
     @IsString() @IsOptional()
     @IsIn(['active', 'suspended'])
@@ -28,4 +27,15 @@ export class UpdateAccessDto {
 export class RejectAccessDto {
     @IsString() @IsOptional() @MaxLength(500)
     reason?: string;
+}
+
+// Called by external systems to notify user-service that a
+// user's platform role changed inside their own system.
+// The user is identified by their external_id (the calling system's own PK).
+export class ExternalRoleChangeDto {
+    @IsString()
+    external_id!: string;          // the user's ID in the calling system
+
+    @IsArray() @IsString({ each: true })
+    system_roles!: string[];       // the new full set of roles (replaces old)
 }

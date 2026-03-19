@@ -227,6 +227,77 @@ export class KeycloakAdminService implements OnModuleInit {
         this.logger.log(`User ${keycloak_id} removed from group '${group_path}'`);
     }
 
+    // ─── Client (System) management ───────────────────────────────────────────────
+
+    // Syncs system name and description to the Keycloak client display name.
+    // Called when SystemService.update() changes name or description.
+    async updateClientInfo(
+        keycloak_client_id: string,
+        data: { name?: string; description?: string },
+    ): Promise<void> {
+        await this.ensureAuth();
+
+        const client_uuid = await this.getClientUUID(keycloak_client_id);
+        if (!client_uuid) {
+            this.logger.warn(`Keycloak client '${keycloak_client_id}' not found — skipping name sync`);
+            return;
+        }
+
+        await this.client.clients.update(
+            { realm: this.realm, id: client_uuid },
+            {
+                ...(data.name        !== undefined && { name       : data.name        }),
+                ...(data.description !== undefined && { description: data.description }),
+            },
+        );
+        this.logger.log(`Keycloak client '${keycloak_client_id}' info updated`);
+    }
+
+    // Creates a role on the Keycloak client.
+    // Called when SystemService creates a new system_role.
+    async createClientRole(
+        keycloak_client_id: string,
+        role_name         : string,
+        description?      : string,
+    ): Promise<void> {
+        await this.ensureAuth();
+
+        const client_uuid = await this.getClientUUID(keycloak_client_id);
+        if (!client_uuid) throw new Error(`Keycloak client '${keycloak_client_id}' not found`);
+
+        await this.client.clients.createRole({
+            realm      : this.realm,
+            id         : client_uuid,
+            name       : role_name,
+            description: description || '',
+        });
+        this.logger.log(`Created Keycloak client role '${role_name}' in '${keycloak_client_id}'`);
+    }
+
+    // Deletes a role from the Keycloak client.
+    // Called when SystemService removes a system_role.
+    async deleteClientRole(
+        keycloak_client_id: string,
+        role_name         : string,
+    ): Promise<void> {
+        await this.ensureAuth();
+
+        const client_uuid = await this.getClientUUID(keycloak_client_id);
+        if (!client_uuid) return; // client gone — nothing to delete
+
+        try {
+            await this.client.clients.delRole({
+                realm   : this.realm,
+                id      : client_uuid,
+                roleName: role_name,
+            });
+            this.logger.log(`Deleted Keycloak client role '${role_name}' from '${keycloak_client_id}'`);
+        } catch (err: any) {
+            // Role may already be gone — not a fatal error
+            this.logger.warn(`Could not delete role '${role_name}': ${err.message}`);
+        }
+    }
+
     // ─── Private helpers ──────────────────────────────────────────────────────
 
     private async getClientUUID(client_id: string): Promise<string | null> {

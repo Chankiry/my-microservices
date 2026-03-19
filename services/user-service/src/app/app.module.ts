@@ -17,7 +17,7 @@ import { CacheMetricsService } from './infra/cache/cache-metrics.service';
 import { CacheInvalidationListener } from './infra/cache/cache-invalidation.listener';
 import { KeycloakModule } from './communications/keycloak/keycloak.module';
 import { OutboxModule } from './outbox/outbox.module';
-import { AppsModule } from './resources/r4-apps/module';
+import { SystemsModule } from './resources/r4-systems/module';
 import { ManagementModule } from './resources/r5-management/module';
 
 @Module({
@@ -49,7 +49,7 @@ import { ManagementModule } from './resources/r5-management/module';
         , ProfileModule
         , UserModule
         , PublicModule
-        , AppsModule
+        , SystemsModule
         , ManagementModule
 
 

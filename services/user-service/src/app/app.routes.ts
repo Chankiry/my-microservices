@@ -3,7 +3,7 @@ import { accountRoutes } from "./resources/r1-account/account.routes";
 import { UserModule } from "./resources/r2-user/module";
 import { PublicModule } from "./resources/r3-public/module";
 import { appConfig } from "../config/app.config";
-import { AppsModule } from "./resources/r4-apps/module";
+import { SystemsModule } from "./resources/r4-systems/module";
 import { ManagementModule } from "./resources/r5-management/module";
 
 export const appRoutes: Routes = [
@@ -23,8 +23,8 @@ export const appRoutes: Routes = [
                 module: PublicModule
             },
             {
-                path: 'apps',
-                module: AppsModule
+                path: 'systems',
+                module: SystemsModule
             },
             {
                 path: 'management',
