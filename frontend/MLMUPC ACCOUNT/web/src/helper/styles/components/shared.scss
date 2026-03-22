@@ -1,0 +1,99 @@
+.shared-header-section {
+    @apply flex min-h-14 max-h-14 border-b items-center justify-between pl-4 pr-2 #{'!important'};
+
+    .custom-icon-button {
+        height: 32px !important;
+        min-height: 32px !important;
+        max-height: 32px !important;
+        width: 32px !important;
+        min-width: 32px !important;
+        max-width: 32px !important;
+    }
+}
+
+.shared-input-filter {
+    @apply flex items-center h-10 border border-slate-300 rounded-[0.65rem] overflow-hidden #{'!important'};
+}
+
+.custom-mat-dialog-as-mat-drawer,
+.custom-mat-dialog-full,
+.mat-dialog-switch-role {
+    .mat-mdc-dialog-surface.mdc-dialog__surface {
+        border-radius: 0 !important;
+        padding: 0 !important;
+    }
+
+    .mat-mdc-dialog-content.mdc-dialog__content {
+        padding: 0 !important;
+    }
+}
+.custom-mat-dialog-for-download {
+    .mat-mdc-dialog-surface.mdc-dialog__surface {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 5px !important;
+        padding: 10px !important;
+    }
+
+}
+
+.custom-mat-dialog-full .mat-mdc-dialog-surface {
+    background-color: rgba(0, 0, 0, 0.8) !important;
+}
+
+.mat-tab-flex-grow {
+    .mat-mdc-tab {
+        flex-grow: 1 !important;
+
+        .mdc-tab__text-label {
+            font-size: 17px !important;
+        }
+
+    }
+
+    .mat-mdc-tab-header {
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .mat-mdc-tab-body-wrapper {
+        height: 100%;
+        overflow-y: auto;
+    }
+}
+
+.sm-avatar{
+    @apply rounded-full border min-w-[36px] max-w-[36px] min-h-[36px] max-h-[36px] object-cover #{'!important'};
+}
+
+.side-dialog {
+    animation: SlideInRight 200ms cubic-bezier(0.2, 0, 0, 1);
+
+    .mdc-dialog__surface {
+        box-shadow: none;
+    }
+
+    .mat-mdc-dialog-surface.mdc-dialog__surface {
+        border-radius: 0 !important;
+        padding: 0px;
+
+        .mat-mdc-dialog-component-host {
+            .mat-mdc-dialog-title {
+                padding-right: 8px;
+            }
+        }
+    }
+}
+
+
+@keyframes SlideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(600px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+

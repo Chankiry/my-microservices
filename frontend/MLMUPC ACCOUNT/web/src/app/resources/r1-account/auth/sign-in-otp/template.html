@@ -1,0 +1,57 @@
+<div class="h-full flex flex-col">
+
+    <!-- Action -->
+    <div class="h-12 flex justify-between items-center">
+        <!-- Language -->
+        <button mat-icon-button (click)="return()">
+            <mat-icon svgIcon="mdi:arrow-left" />
+        </button>
+        <languages></languages>
+    </div>
+
+    <!-- Header -->
+    <div class="flex flex-col justify-center items-center gap-2">
+        <div class="flex items-center justify-center w-24 h-24 rounded-full bg-[#f3f4f5]">
+            <mat-icon class="icon-size-14 text-black" svgIcon="mat_solid:password"></mat-icon>
+        </div>
+        <span class="text-3xl leading-8 font-medium"> {{ 'Auth.Sign-In-OTP.Title' | transloco }} </span>
+        <div class="flex flex-col">
+            <p class="text-slate-500"> {{ 'Auth.Sign-In-OTP.Sub-Title' | transloco }} </p>
+            <p class="text-primary text-center"> {{ username }} </p>
+        </div>
+        <div class="flex gap-1.5">
+            <p class="text-slate-500"> {{ 'Auth.Sign-In-OTP.Timer' | transloco }} </p>
+            <p class="text-primary"> {{ formatTime(remainingTime) }} </p>
+        </div>
+    </div>
+
+    <!-- OTP -->
+    <div class="w-full flex flex-col justify-center my-auto">
+
+        <div class="w-full flex justify-normal md:justify-between gap-4 md:gap-0" (paste)="onPaste($event)">
+            <input class="custom-input" [ngClass]="{'has-value': numStr1}" #input1 [(ngModel)]="numStr1" (keydown)="keyDownHandler1($event)" [maxlength]="1" [disabled]="otpFailed" />
+            <input class="custom-input" [ngClass]="{'has-value': numStr2}" #input2 [(ngModel)]="numStr2" (keydown)="keyDownHandler2($event)" [maxlength]="1" [disabled]="otpFailed" />
+            <input class="custom-input" [ngClass]="{'has-value': numStr3}" #input3 [(ngModel)]="numStr3" (keydown)="keyDownHandler3($event)" [maxlength]="1" [disabled]="otpFailed" />
+            <input class="custom-input" [ngClass]="{'has-value': numStr4}" #input4 [(ngModel)]="numStr4" (keydown)="keyDownHandler4($event)" [maxlength]="1" [disabled]="otpFailed" />
+            <input class="custom-input" [ngClass]="{'has-value': numStr5}" #input5 [(ngModel)]="numStr5" (keydown)="keyDownHandler5($event)" [maxlength]="1" [disabled]="otpFailed" />
+            <input class="custom-input" [ngClass]="{'has-value': numStr6}" #input6 [(ngModel)]="numStr6" (keydown)="keyDownHandler6($event)" [maxlength]="1" [disabled]="otpFailed" />
+        </div>
+
+        <div *ngIf="otpFailed" class="text-red-500 text-sm font-semibold mt-2">
+            {{ 'Auth.Sign-In-OTP.Error' | transloco }}
+        </div>
+
+    </div>
+
+    <!-- Submit Button -->
+    <button mat-flat-button class="w-full" [color]="'primary'"
+            [disabled]="!canSubmit || isLoading || otpFailed" (click)="verify()">
+        <span *ngIf="!isLoading"> {{ 'Auth.Sign-In-OTP.Action' | transloco }} </span>
+        <mat-progress-spinner *ngIf="isLoading" [diameter]="24" [mode]="'indeterminate'" />
+    </button>
+
+    <p *ngIf="reSendOtp || otpFailed" class="text-base text-center text-primary mt-2 underline cursor-pointer" (click)="resendOtp()" >
+        {{ 'Auth.Sign-In-OTP.Resend-OTP' | transloco }}
+    </p>
+
+</div>

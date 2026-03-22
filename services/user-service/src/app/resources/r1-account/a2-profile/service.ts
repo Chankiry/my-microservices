@@ -1,10 +1,14 @@
-import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
-import { UpdateProfileDto, ChangePasswordDto, ChangeEmailDto, ChangePhoneDto } from './dto';
-import { UserService } from '../../r2-user/service';
+import {
+    Injectable, Logger, UnauthorizedException, NotFoundException,
+} from '@nestjs/common';
 import { KeycloakAdminService } from '../../../communications/keycloak/keycloak-admin.service';
 import { AuthService } from '../a1-auth/service';
 import { RedisService } from '@app/infra/cache/redis.service';
-import User from '../../../../models/user/user.model';
+import {
+    UpdateProfileDto, ChangePasswordDto, ChangeEmailDto,
+    ChangePhoneDto,
+} from './dto';
+import { UserService } from '@app/resources/r2-user/service';
 
 @Injectable()
 export class ProfileService {
@@ -17,13 +21,11 @@ export class ProfileService {
         private readonly redisService  : RedisService,
     ) {}
 
-    async getProfile(keycloak_id: string): Promise<User> {
-        const user = await this.userService.findByKeycloakId(keycloak_id);
-        if (!user) throw new UnauthorizedException('User profile not found');
-        return user;
+    async getProfile(keycloak_id: string) {
+        return this.userService.findByKeycloakId(keycloak_id);
     }
 
-    async updateProfile(keycloak_id: string, dto: UpdateProfileDto): Promise<User> {
+    async updateProfile(keycloak_id: string, dto: UpdateProfileDto) {
         const user = await this.getProfile(keycloak_id);
 
         const nameChanged =
@@ -37,7 +39,6 @@ export class ProfileService {
             await this.keycloakAdmin.updateName(user.keycloak_id, new_first, new_last);
             this.logger.log(`Name proxied to Keycloak for user ${user.id}`);
 
-            // Optimistic mirror update — Kafka event will write the same values again
             await this.userService.updateMirrorFields(user.id, {
                 first_name : dto.first_name ?? user.first_name ?? null,
                 last_name  : dto.last_name  ?? user.last_name  ?? null,

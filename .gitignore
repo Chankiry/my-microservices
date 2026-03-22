@@ -3,6 +3,7 @@ node_modules
 dist
 .env
 
+
 # Logs
 npm-debug.log*
 yarn-debug.log*
@@ -21,13 +22,12 @@ Thumbs.db
 .vscode
 .idea
 
-.frontent/admin-web/.angular
 
 # Angular Cache
-frontend/admin-web/.angular/
-frontend/public-web/.next/
+.angular
+.next
 
-# Angular Cache
+# keycloak
 keycloak-extensions/kafka-event-listener/target/
 
 # Node modules

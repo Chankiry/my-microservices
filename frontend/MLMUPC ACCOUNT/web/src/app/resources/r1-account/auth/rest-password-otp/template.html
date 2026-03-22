@@ -1,0 +1,47 @@
+<ng-container>
+    <!-- Header -->
+    <div class="flex flex-col justify-center items-center">
+        <div class="flex items-center justify-center w-24 h-24 rounded-full bg-[#f3f4f5]">
+            <mat-icon class="icon-size-[50px] text-black" [svgIcon]="'mat_solid:password'"></mat-icon>
+        </div>
+        <span class="text-3xl text-center leading-6 font-semibold">
+            <h1 class="leading-10">{{ 'OTP' | transloco }}</h1>
+            <span class="font-normal">
+                <p> {{ 'Check-OTP' | transloco }} </p>
+                <p> {{ email }} </p>
+            </span>
+        </span>
+        <div class="text-center font-medium text-wrap text-sm sm:text-lg">
+
+        </div>
+    </div>
+
+    <!-- OTP -->
+    <div class="w-full min-h-[160px] flex flex-grow flex-col justify-center">
+        <div class="w-full flex justify-between">
+            <input class="custom-input" #input1 [(ngModel)]="numStr1" (keydown)="keyDownHandler1($event)" [maxlength]="1" />
+            <input class="custom-input" #input2 [(ngModel)]="numStr2" (keydown)="keyDownHandler2($event)" [maxlength]="1" />
+            <input class="custom-input" #input3 [(ngModel)]="numStr3" (keydown)="keyDownHandler3($event)" [maxlength]="1" />
+            <input class="custom-input" #input4 [(ngModel)]="numStr4" (keydown)="keyDownHandler4($event)" [maxlength]="1" />
+            <input class="custom-input" #input5 [(ngModel)]="numStr5" (keydown)="keyDownHandler5($event)" [maxlength]="1" />
+            <input class="custom-input" #input6 [(ngModel)]="numStr6" (keydown)="keyDownHandler6($event)" [maxlength]="1" />
+        </div>
+    </div>
+
+    <!-- Action -->
+    <div class="w-full flex flex-col gap-2 ">
+        <div class="flex justify-between font-medium">
+            <p class="text-base text-blue-500"> {{ 'OTP-Timer' | transloco }} {{ formatTime(remainingTime) }} </p>
+            <p class="text-base underline cursor-pointer" (click)="resendOtp()">
+                {{ 'Resend-OTP' | transloco }}
+            </p>
+        </div>
+
+        <!-- Submit Button -->
+        <button class="helper-mat-button-md w-full"
+            mat-flat-button [color]="'primary'" [disabled]="!canSubmit || isLoading" (click)="verify()">
+            <span *ngIf=" !isLoading "> {{ 'Verify' | transloco }} </span>
+            <mat-progress-spinner *ngIf=" isLoading " [diameter]="24" [mode]="'indeterminate'"></mat-progress-spinner>
+        </button>
+    </div>
+</ng-container>

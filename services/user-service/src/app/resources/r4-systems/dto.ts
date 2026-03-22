@@ -1,6 +1,6 @@
 import {
     IsString, IsOptional, IsBoolean,
-    MinLength, MaxLength,
+    IsUrl, MinLength, MaxLength,
 } from 'class-validator';
 
 export class CreateSystemDto {
@@ -18,6 +18,10 @@ export class CreateSystemDto {
 
     @IsString() @IsOptional() @MaxLength(100)
     keycloak_client_id?: string;
+
+    // Internal callback URL for system-local credential validation
+    @IsString() @IsOptional() @MaxLength(500)
+    auth_callback_url?: string;
 
     @IsBoolean() @IsOptional()
     allow_self_register?: boolean;
@@ -41,6 +45,9 @@ export class UpdateSystemDto {
 
     @IsString() @IsOptional() @MaxLength(100)
     keycloak_client_id?: string;
+
+    @IsString() @IsOptional() @MaxLength(500)
+    auth_callback_url?: string;
 
     @IsBoolean() @IsOptional()
     allow_self_register?: boolean;

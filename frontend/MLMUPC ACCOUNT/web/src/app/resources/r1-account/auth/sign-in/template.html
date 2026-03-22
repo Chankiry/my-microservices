@@ -1,0 +1,133 @@
+<div class="h-full flex flex-col">
+
+    <!-- Action -->
+    <div class="h-12 flex justify-end items-center">
+        <languages></languages>
+    </div>
+
+    <!-- Header -->
+    <div class="flex flex-col justify-center items-center gap-2">
+        <div class="flex items-center justify-center w-24 h-24 rounded-full bg-[#f3f4f5]">
+            <mat-icon class="icon-size-14 text-black" svgIcon="mat_outline:login"></mat-icon>
+        </div>
+        <span class="text-3xl leading-8 font-medium"> {{ 'Auth.Sign-In.Title' | transloco }} </span>
+        <span class="text-slate-500 text-center px-6"> {{ 'Auth.Sign-In.Sub-Title' | transloco }} </span>
+    </div>
+
+    <!-- Tab switcher -->
+    <div class="flex gap-2 mt-4 mb-2">
+        <button
+            mat-stroked-button
+            class="flex-1"
+            [color]="activeTab === 'plt' ? 'primary' : ''"
+            [class.mat-flat-button]="activeTab === 'plt'"
+            (click)="switchTab('plt')">
+            <mat-icon class="mr-1" svgIcon="mdi:lock"></mat-icon>
+            គណនី PLT
+        </button>
+        <button
+            mat-stroked-button
+            class="flex-1"
+            [color]="activeTab === 'platform' ? 'primary' : ''"
+            [class.mat-flat-button]="activeTab === 'platform'"
+            (click)="switchTab('platform')">
+            <mat-icon class="mr-1" svgIcon="mdi:shield-account"></mat-icon>
+            គណនីវេទិកា
+        </button>
+    </div>
+
+    <!-- ─── PLT Login Form ─────────────────────────────────────────────────── -->
+
+    <form *ngIf="activeTab === 'plt'"
+          [formGroup]="form"
+          (keydown.enter)="onEnterKeyPress($event)"
+          class="md-form-field-appearance-outline my-auto">
+
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>{{ 'Auth.Sign-In.Username' | transloco }}</mat-label>
+            <mat-icon matPrefix class="mat-icon-6" [svgIcon]="'mdi:account'"></mat-icon>
+            <input matInput [formControlName]="'username'">
+            <mat-error *ngIf="form.get('username')?.hasError('required')">
+                {{ 'Auth.Sign-In.Username-Require' | transloco }}
+            </mat-error>
+            <mat-error *ngIf="form.get('username')?.hasError('pattern')">
+                {{ 'Auth.Sign-In.Username-Pattern' | transloco }}
+            </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>{{ 'Auth.Sign-In.Password' | transloco }}</mat-label>
+            <mat-icon matPrefix class="mat-icon-6" [svgIcon]="'mdi:lock'"></mat-icon>
+            <input matInput type="password" [formControlName]="'password'" #pltPasswordField>
+            <button matSuffix mat-icon-button type="button"
+                    (click)="pltPasswordField.type === 'password' ? (pltPasswordField.type = 'text') : (pltPasswordField.type = 'password')">
+                <mat-icon class="mat-icon-6" [svgIcon]="pltPasswordField.type === 'password' ? 'mdi:eye' : 'mdi:eye-off'"></mat-icon>
+            </button>
+            <mat-error *ngIf="form.get('password')?.hasError('required')">
+                {{ 'Auth.Sign-In.Password-Require' | transloco }}
+            </mat-error>
+        </mat-form-field>
+
+    </form>
+
+    <!-- ─── Platform Login Form ───────────────────────────────────────────── -->
+
+    <form *ngIf="activeTab === 'platform'"
+          [formGroup]="platformForm"
+          (keydown.enter)="onEnterKeyPress($event)"
+          class="md-form-field-appearance-outline my-auto">
+
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>លេខទូរស័ព្ទ</mat-label>
+            <mat-icon matPrefix class="mat-icon-6" [svgIcon]="'mdi:phone'"></mat-icon>
+            <input matInput [formControlName]="'phone'" type="tel">
+            <mat-error *ngIf="platformForm.get('phone')?.hasError('required')">
+                សូមបញ្ចូលលេខទូរស័ព្ទ
+            </mat-error>
+            <mat-error *ngIf="platformForm.get('phone')?.hasError('minlength')">
+                លេខទូរស័ព្ទមិនត្រឹមត្រូវ
+            </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>ពាក្យសម្ងាត់វេទិកា</mat-label>
+            <mat-icon matPrefix class="mat-icon-6" [svgIcon]="'mdi:lock'"></mat-icon>
+            <input matInput type="password" [formControlName]="'password'" #platformPasswordField>
+            <button matSuffix mat-icon-button type="button"
+                    (click)="platformPasswordField.type === 'password' ? (platformPasswordField.type = 'text') : (platformPasswordField.type = 'password')">
+                <mat-icon class="mat-icon-6" [svgIcon]="platformPasswordField.type === 'password' ? 'mdi:eye' : 'mdi:eye-off'"></mat-icon>
+            </button>
+            <mat-error *ngIf="platformForm.get('password')?.hasError('required')">
+                សូមបញ្ចូលពាក្យសម្ងាត់
+            </mat-error>
+        </mat-form-field>
+
+    </form>
+
+    <!-- Divider -->
+    <div class="flex items-center gap-2 my-2">
+        <div class="flex-1 h-px bg-gray-200"></div>
+        <span class="text-gray-400 text-sm">ឬ</span>
+        <div class="flex-1 h-px bg-gray-200"></div>
+    </div>
+
+    <!-- Keycloak Login Button -->
+    <button mat-stroked-button class="w-full" (click)="loginWithKeycloak()">
+        <mat-icon class="mr-1" svgIcon="mdi:shield-key"></mat-icon>
+        ចូលតាមគណនីវេទិកា (Keycloak)
+    </button>
+
+    <!-- Submit Button — shows correct action based on active tab -->
+    <button mat-flat-button class="w-full" [color]="'primary'"
+            [disabled]="activeTab === 'plt' ? (form.disabled || form.invalid) : (platformForm.disabled || platformForm.invalid)"
+            (click)="activeTab === 'plt' ? signIn() : platformSignIn()">
+        <span *ngIf="activeTab === 'plt' ? !form.disabled : !platformForm.disabled">
+            {{ 'Auth.Sign-In.Action' | transloco }}
+        </span>
+        <mat-progress-spinner
+            *ngIf="activeTab === 'plt' ? form.disabled : platformForm.disabled"
+            [diameter]="24"
+            [mode]="'indeterminate'" />
+    </button>
+
+</div>

@@ -1,0 +1,7 @@
+<button *ngIf="isDark" mat-icon-button (click)="setScheme('dark')">
+    <mat-icon [svgIcon]="'heroicons_solid:moon'"></mat-icon>
+</button>
+
+<button *ngIf="!isDark" mat-icon-button (click)="setScheme('light')">
+    <mat-icon [svgIcon]="'heroicons_solid:sun'"></mat-icon>
+</button>

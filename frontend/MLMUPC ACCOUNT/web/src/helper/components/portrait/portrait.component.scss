@@ -1,0 +1,51 @@
+.picture {
+    min-height: 256px !important;
+    min-width: 256px !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.picture .portrait {
+    max-height: 256px !important;
+}
+
+.picture img {
+    width: 100%;
+    min-width: 256px;
+    min-height: 256px;
+    height: 100%;
+    object-fit: cover;
+}
+
+.portrait-file {
+    display: none;
+}
+
+.mat-dialog-actions {
+    justify-content: flex-end;
+}
+
+.upload {
+    margin-top: 1.25rem;
+    padding: 0.5rem 1rem;
+    border-radius: 12px;
+    color: #fff;
+    background-color: #ff2828;
+    cursor: pointer;
+    width: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.upload.disabled {
+    background-color: rgb(226 232 240);
+    cursor: not-allowed;
+    color: rgb(163, 162, 162);
+}
+
+.custom-icon-button {
+    background-color: #ff2828 !important;
+    box-shadow: 0 1px 10px rgba(0, 0, 0, 0.05) !important;
+}

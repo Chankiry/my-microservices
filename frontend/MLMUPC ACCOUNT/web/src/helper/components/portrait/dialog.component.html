@@ -1,0 +1,18 @@
+<div mat-dialog-title class="custom-dialog-title">
+    <span class="text-xl">Crop your image.</span>
+</div>
+
+<mat-dialog-content class="custom-dialog-content">
+    <image-cropper [imageChangedEvent]="imageChangedEvent" [maintainAspectRatio]="true" [aspectRatio]="data.aspect || 4 / 3"
+        format="png"  [resizeToWidth]="1600" (imageCropped)="imageCropped($event)" (imageLoaded)="imageLoaded()" (cropperReady)="cropperReady()"
+        (loadImageFailed)="loadImageFailed()"></image-cropper>
+</mat-dialog-content>
+
+<mat-dialog-actions align="center" class="custom-dialog-actions">
+    <button class="helpers-mat-button-md bg-green-500" mat-flat-button [mat-dialog-close]=" result ">
+        <span class="text-white">រួចរាល់</span>
+    </button>
+    <button class="helpers-mat-button-md bg-red-600" mat-stroked-button (click)="close()">
+        <span class="text-white">បោះបង់</span>
+    </button>
+</mat-dialog-actions>

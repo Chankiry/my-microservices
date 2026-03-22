@@ -12,30 +12,23 @@ import System from '../system/system.model';
 })
 class UserLoginLog extends Model<UserLoginLog> {
 
-    @Column({ primaryKey: true, type: DataType.UUID, defaultValue: DataType.UUIDV4 })
-    declare id: string;
+    // ============================================================================================ Primary Key
+    @Column({ primaryKey: true, type: DataType.UUID,defaultValue: DataType.UUIDV4})                 declare id: string;
 
-    @ForeignKey(() => User)
-    @Column({ type: DataType.UUID, allowNull: false })
-    declare user_id: string;
+    // ============================================================================================ Foreign Keys
+    @ForeignKey(() => System) @Column({ type: DataType.STRING(50), allowNull: false })              declare system_id: string;
+    @ForeignKey(() => User) @Column({ type: DataType.UUID, allowNull: false })                      declare user_id: string;
 
-    @ForeignKey(() => System)
-    @Column({ type: DataType.STRING(50), allowNull: false })
-    declare system_id: string;
+    @CreatedAt                                                                                      declare created_at: Date;
 
-    @Column({ type: DataType.STRING(45), allowNull: true })
-    declare ip: string | null;
+    // ============================================================================================ Field
+    @Column({ type: DataType.STRING(45), allowNull: true })                                         declare ip: string | null;
+    @Column({ type: DataType.TEXT, allowNull: true })                                               declare user_agent: string | null;
 
-    @Column({ type: DataType.TEXT, allowNull: true })
-    declare user_agent: string | null;
+    // ============================================================================================ Many to One
+    @BelongsTo(() => User,   { foreignKey: 'user_id',    as: 'user'    })                           declare user: User;
+    @BelongsTo(() => System, { foreignKey: 'system_id',  as: 'system'  })                           declare system: System;
 
-    @BelongsTo(() => User,   { foreignKey: 'user_id',   as: 'user'   })
-    declare user: User;
-
-    @BelongsTo(() => System, { foreignKey: 'system_id', as: 'system' })
-    declare system: System;
-
-    @CreatedAt declare created_at: Date;
 }
 
 export default UserLoginLog;

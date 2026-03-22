@@ -1,0 +1,14 @@
+<div class="picture">
+    <img style="width: 100%" class="portrait img-center rounded-full border" [src]="src" />
+    <a [disabled]="disabled" (click)="!disabled && remove()" *ngIf="delete"
+        class="absolute right-5 top-5 custom-icon-button" mat-icon-button>
+        <mat-icon class="text-white icon-size-5" svgIcon="mat_outline:delete_outline"></mat-icon>
+    </a>
+    <a [disabled]="disabled" *ngIf="mode !== 'READONLY'" [ngClass]="{'disabled': disabled}" class="upload"
+        (click)="!disabled && selectFile()">
+        <span class="text-xl mr-2"> {{ title }} </span>
+        <mat-icon class="text-white" [svgIcon]="'mat_outline:backup'"></mat-icon>
+    </a>
+</div>
+
+<input [id]="'portraitFile-'+index" class="portrait-file" type="file" (change)="fileChangeEvent($event)" />

@@ -1,0 +1,124 @@
+{
+    "Auth": {
+        "Sign-In": {
+            "Title": "ចូលគណនីរបស់អ្នក",
+            "Sub-Title": "សូមបញ្ចូលលេខទូរស័ព្ទ ឬអ៊ីមែលនិងពាក្យសម្ងាត់របស់លោកអ្នក",
+            "Username": "ទូរស័ព្ទ ឬអ៊ីមែល",
+            "Username-Require": "សូមបញ្ចូលលេខទូរស័ព្ទ ឬអ៊ីមែល",
+            "Username-Pattern": "សូមបញ្ចូលលេខទូរស័ព្ទ ឬអ៊ីមែលត្រឹមត្រូវ",
+            "Password": "ពាក្យសម្ងាត់",
+            "Password-Require": "សូមបញ្ចូលពាក្យសម្ងាត់",
+            "Action": "បន្ទាប់"
+        },
+        "Sign-In-OTP": {
+            "Title": "លេខ​កូដ",
+            "Sub-Title": "សូម​បញ្ចូល​លេខ​កូដ​ដែល​ផ្ញើ​ទៅ​អ៊ីមែល",
+            "Timer": "ពេលវេលានៅសល់ ៖ ",
+            "Error": "OTP បានផុតកំណត់ ឬមិនត្រឹមត្រូវ។ សូមស្នើសុំយក OTP ថ្មី។",
+            "Action": "ផ្ទៀងផ្ទាត់",
+            "Resend-OTP": "ផ្ញើ OTP ម្តងទៀត"
+        }
+    },
+
+    "Role": {
+        "Admin": "អភិបាលប្រព័ន្ធ"
+    },
+
+    "Navigation": {
+        "Home": "ទំព័រដើម",
+        "Operation": "ប្រតិបត្តិការ",
+        "Invoice": "វិក័យប័ត្រ",
+        "Sale": "បញ្ជីលក់",
+        "Price": "តម្លៃលេខ",
+        "Price.Indicator": "សូចនាករ",
+        "Price.Setting": "ការកំណត់",
+        "Price.English": "ភាសារអង់គ្លេស",
+        "User": "អ្នកប្រើប្រាស់"
+    },
+
+    "Version": "ជំនាន់",
+
+    "Dashboard": {
+        "Welcome": "សូមស្វាគមន៍",
+        "Card-1": {
+            "Title": "ប្រចាំថ្ងៃ",
+            "Income": "ចំណូល",
+            "Invoice": "វិក័យប័ត្រ",
+            "Special-Number": "លេខពិសេស"
+        },
+        "Card-2": {
+            "Title": "ប្រចាំខែ"
+        },
+        "Card-3": {
+            "Title": "ស្ថានភាពលេខ"
+        },
+        "Card-4": {
+            "Title": "ស្ថានភាពលេខ"
+        }
+    },
+
+    "Side-Dialog": {
+        "Search-Number": {
+            "Title": "ពិនិត្យលេខ",
+            "Placeholder": "ស្វែងរកលេខ...",
+            "Character": "តួ",
+            "Base-Price": "តម្លៃមូលដ្ឋាន (X)",
+            "Total-Price": "តម្លៃសរុប (T)"
+        }
+    },
+
+    "Table-Header": {
+        "Indicator": "សូចនាករ",
+        "Rate": "អត្រារូបមន្ត (%)",
+        "Method": "វិធីគណនា",
+        "Indicator-Price": "តម្លៃសូចនាករ (I)",
+        "Price": "តម្លៃ (រៀល)",
+        "Min-Price": "តម្លៃអប្បបរិមា​ (រៀល)",
+        "Max-Price": "តម្លៃអតិបរិមា (រៀល)",
+        "No": "ល.រ",
+        "Code": "កូដ",
+        "User": "អ្នកប្រើប្រាស់",
+        "Special-Number": "លេខពិសេស",
+        "Status": "ស្ថានភាព",
+        "User-Can": "អ្នកប្រើប្រាស់អាច",
+        "Last-Active":"សកម្មភាពចុងក្រោយ",
+        "Name": "ឈ្មោះ",
+        "Formula": "រូបមន្ត",
+        "Character": "តួ",
+        "Word": "ពាក្យ",
+        "Frequency": "ភាពញឹកញាប់"
+    },
+
+    "Placeholder": {
+        "Search": "ស្វែងរក..."
+    },
+
+    "Button": {
+        "Inspect-Number": "ពិនិត្យលេខ",
+        "Comment": "មតិយោបល់",
+        "Report": "របាយការណ៍",
+
+        "Date": "កាលបរិច្ឆេទ",
+        "Last-Active": "សកម្មភាពចុងក្រោយ",
+        "Price": "តម្លៃ (រៀល)"
+    },
+
+    "Menu-Option": {
+        "Profile": "គណនី់",
+        "Switch-Role": "ផ្លាស់ប្តូរតួនាទី",
+        "Sign-Out": "ចាកចេញ",
+
+        "View": "មើល",
+        "Download": "ទាញយក",
+        "Password": "ពាក្យសម្ងាត់",
+        "Delete": "លុប",
+
+        "Reset-Price": "កំណត់តម្លៃឡើងវិញ",
+
+        "New-To-Old": "ថ្មីទៅចាស់",
+        "Old-To-New": "ចាស់ទៅថ្មី",
+
+        "Large-To-Small": "ធំទៅតូច",
+        "Small-To-Large": "តូចទៅធំ"
+    }
+}

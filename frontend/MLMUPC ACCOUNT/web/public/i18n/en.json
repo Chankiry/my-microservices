@@ -1,0 +1,124 @@
+{
+    "Auth": {
+        "Sign-In": {
+            "Title": "Sign in to account",
+            "Sub-Title": "Please enter your phone number or email and password",
+            "Username": "Phone number or email",
+            "Username-Require": "Please input a phone number or email",
+            "Username-Pattern": "Please input a valid phone number or email",
+            "Password": "Password",
+            "Password-Require": "Please input a password",
+            "Action": "Next"
+        },
+        "Sign-In-OTP": {
+            "Title": "OTP Code",
+            "Sub-Title": "Please enter the code sent to your email",
+            "Timer": "Remaining time: ",
+            "Error": "The OTP has expired or is invalid. Please request a new OTP.",
+            "Action": "Verify",
+            "Resend-OTP": "Resend OTP"
+        }
+    },
+
+    "Role": {
+        "Admin": "Admin"
+    },
+
+    "Navigation": {
+        "Home": "Home",
+        "Operation": "Operation",
+        "Invoice": "Invoice",
+        "Sale": "Sale List",
+        "Price": "Price",
+        "Price.Indicator": "Indicator",
+        "Price.Setting": "Setting",
+        "Price.English": "English",
+        "User": "User"
+    },
+
+    "Version": "Version",
+
+    "Dashboard": {
+        "Welcome": "Welcome",
+        "Card-1": {
+            "Title": "Daily",
+            "Income": "Income",
+            "Invoice": "Invoice",
+            "Special-Number": "Special Number"
+        },
+        "Card-2": {
+            "Title": "Monthly"
+        },
+        "Card-3": {
+            "Title": "Special Number"
+        },
+        "Card-4": {
+            "Title": "Special Number"
+        }
+    },
+
+    "Side-Dialog": {
+        "Search-Number": {
+            "Title": "Inspect Number",
+            "Placeholder": "Search Number...",
+            "Character": "Character(s)",
+            "Base-Price": "Base Price (X)",
+            "Total-Price": "Total Price (T)"
+        }
+    },
+
+    "Placeholder": {
+        "Search": "Search..."
+    },
+
+    "Table-Header": {
+        "Indicator": "Indicator",
+        "Rate": "Rate (%)",
+        "Method": "Method",
+        "Indicator-Price": "Indicator Price (I)",
+        "Price": "Price (KHR)",
+        "Min-Price": "Minimum Price (KHR)",
+        "Max-Price": "Maximum Price (KHR)",
+        "No": "No.",
+        "Code": "Code",
+        "User": "User",
+        "Special-Number": "Special Number",
+        "Status": "Status",
+        "User-Can": "User Can",
+        "Last-Active": "Last Active",
+        "Name": "Name",
+        "Formula": "Formula",
+        "Character": "Character",
+        "Word": "Word",
+        "Frequency": "Frequency"
+    },
+
+    "Button": {
+        "Inspect-Number": "Inspect Number",
+        "Comment": "Comment",
+        "Report": "Report",
+
+        "Date": "Date",
+        "Last-Active": "Last Active",
+        "Price": "Price (KHR)"
+    },
+
+    "Menu-Option": {
+        "Profile": "Profile",
+        "Switch-Role": "Switch role",
+        "Sign-Out": "Sign out",
+
+        "View": "View",
+        "Download": "Download",
+        "Password": "Password",
+        "Delete": "Delete",
+
+        "Reset-Price": "Reset Price",
+
+        "New-To-Old": "New to Old",
+        "Old-To-New": "Old to New",
+
+        "Large-To-Small": "Large to Small",
+        "Small-To-Large": "Small to Large"
+    }
+}

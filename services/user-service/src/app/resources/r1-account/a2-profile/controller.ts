@@ -4,7 +4,10 @@ import {
     UseGuards, HttpCode, HttpStatus,
 } from '@nestjs/common';
 import { ProfileService } from './service';
-import { UpdateProfileDto, ChangePasswordDto, ChangeEmailDto, ChangePhoneDto } from './dto';
+import {
+    UpdateProfileDto, ChangePasswordDto,
+    ChangeEmailDto, ChangePhoneDto,
+} from './dto';
 import { JwtAuthGuard } from '../../../core/guards/jwt-auth.guard';
 
 @Controller()

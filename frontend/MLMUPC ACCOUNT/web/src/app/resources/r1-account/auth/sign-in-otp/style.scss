@@ -1,0 +1,34 @@
+.custom-input {
+    --tw-bg-opacity: 1 !important;
+    background-color: #f3f4f5 !important;
+    border-radius: 0.5rem;
+    max-width: 3.3rem;
+    height: 3.3rem;
+    max-height: 3.3rem;
+    text-align: center;
+    font-size: 1.5rem;
+    border: 2px solid transparent;
+    transition: border 0.2s ease-in-out;
+    @apply text-primary;
+}
+
+.custom-input:focus {
+    outline: none;
+    @apply border-primary;
+}
+
+.custom-input.has-value {
+    @apply border-primary border-2;
+}
+
+.custom-input:disabled {
+    opacity: 0.5;
+}
+
+@media (max-width: 960px) {
+    .custom-input {
+        max-width: 2.5rem;
+        height: 2.5rem;
+        max-height: 2.5rem;
+    }
+}

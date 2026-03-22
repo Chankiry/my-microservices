@@ -56,14 +56,31 @@ export class KeycloakAdminService implements OnModuleInit {
 
     // ─── Identity ─────────────────────────────────────────────────────────────
 
-    async setPassword(keycloak_id: string, new_password: string): Promise<void> {
+    async setPassword(keycloak_id: string, password: string): Promise<void> {
         await this.ensureAuth();
         await this.client.users.resetPassword({
-            realm      : this.realm,
-            id         : keycloak_id,
-            credential : { type: 'password', value: new_password, temporary: false },
+            realm    : this.realm,
+            id       : keycloak_id,
+            credential: {
+                temporary: false,
+                type     : 'password',
+                value    : password,
+            },
         });
-        this.logger.log(`Password updated in Keycloak for ${keycloak_id}`);
+        this.logger.log(`Password reset for ${keycloak_id}`);
+    }
+
+    async clearRequiredActions(keycloak_id: string): Promise<void> {
+        await this.ensureAuth();
+        try {
+            await this.client.users.update(
+                { realm: this.realm, id: keycloak_id },
+                { requiredActions: [] },
+            );
+            this.logger.log(`Required actions cleared for ${keycloak_id}`);
+        } catch (err: any) {
+            this.logger.warn(`Could not clear required actions for ${keycloak_id}: ${err.message}`);
+        }
     }
 
     async setEmail(keycloak_id: string, new_email: string): Promise<void> {
@@ -262,6 +279,7 @@ export class KeycloakAdminService implements OnModuleInit {
     ): Promise<void> {
         await this.ensureAuth();
 
+        console.log(keycloak_client_id)
         const client_uuid = await this.getClientUUID(keycloak_client_id);
         if (!client_uuid) throw new Error(`Keycloak client '${keycloak_client_id}' not found`);
 

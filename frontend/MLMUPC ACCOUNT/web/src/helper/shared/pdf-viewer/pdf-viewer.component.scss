@@ -1,0 +1,44 @@
+.container-section {
+    position: relative;
+    width: 100%;
+    height: 100dvh !important;
+    overflow: hidden;
+
+    .header-pdf-view {
+        width: 100%;
+        position: absolute !important;
+        top: 0;
+        z-index: 20 !important;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+    }
+}
+
+::ng-deep .container-section .pdfViewer {
+    padding-top: 56px !important;
+}
+
+.bg-custom {
+    background-color: rgba(0, 0, 0, 0.75);
+}
+
+.bg-custom-gray {
+    background-color: rgba(12, 12, 12, 0.7);
+}
+
+.toolbar {
+    padding: 10px;
+    text-align: center;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.footer-absolute {
+    @apply flex absolute left-1/2 transform -translate-x-1/2 z-10 bottom-3 h-11 bg-custom-gray rounded-full;
+}

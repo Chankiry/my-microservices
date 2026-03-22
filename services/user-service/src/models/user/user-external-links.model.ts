@@ -13,45 +13,29 @@ import System from '../system/system.model';
 })
 class UserExternalLinks extends Model<UserExternalLinks> {
 
-    @Column({ primaryKey: true, type: DataType.UUID, defaultValue: DataType.UUIDV4 })
-    declare id: string;
+    // ============================================================================================ Primary Key
+    @Column({ primaryKey: true, type: DataType.UUID,defaultValue: DataType.UUIDV4})                 declare id: string;
 
-    @ForeignKey(() => User)
-    @Column({ type: DataType.UUID, allowNull: false })
-    declare user_id: string;
+    // ============================================================================================ Foreign Keys
+    @ForeignKey(() => System) @Column({ type: DataType.STRING(50), allowNull: false })              declare system_id: string;
+    @ForeignKey(() => User) @Column({ type: DataType.UUID, allowNull: false })                      declare user_id: string;
+    @ForeignKey(() => User) @Column({ type: DataType.UUID, allowNull: true })                       declare creator_id: string | null;
+    @ForeignKey(() => User) @Column({ type: DataType.UUID, allowNull: true })                       declare updater_id: string | null;
 
-    @ForeignKey(() => System)
-    @Column({ type: DataType.STRING(50), allowNull: false })
-    declare system_id: string;
+    // ============================================================================================ Field
+    @Column({ type: DataType.STRING(100), allowNull: false })                                       declare external_id: string;
+    @Column({ type: DataType.STRING(30), allowNull: true })                                         declare external_type: string | null;
 
-    @Column({ type: DataType.STRING(100), allowNull: false })
-    declare external_id: string;
+    @CreatedAt                                                                                      declare created_at: Date;
+    @UpdatedAt                                                                                      declare updated_at: Date;
 
-    @Column({ type: DataType.STRING(30), allowNull: true })
-    declare external_type: string | null;
+    // ============================================================================================ Many to One
+    @BelongsTo(() => User,   { foreignKey: 'user_id',    as: 'user'    })                           declare user: User;
+    @BelongsTo(() => System, { foreignKey: 'system_id',  as: 'system'  })                           declare system: System;
 
-    @ForeignKey(() => User)
-    @Column({ type: DataType.UUID, allowNull: true })
-    declare creator_id: string | null;
+    @BelongsTo(() => User,   { foreignKey: 'creator_id', as: 'creator' })                           declare creator: User;
+    @BelongsTo(() => User,   { foreignKey: 'updater_id', as: 'updater' })                           declare updater: User;
 
-    @ForeignKey(() => User)
-    @Column({ type: DataType.UUID, allowNull: true })
-    declare updater_id: string | null;
-
-    @BelongsTo(() => User,   { foreignKey: 'user_id',    as: 'user'    })
-    declare user: User;
-
-    @BelongsTo(() => System, { foreignKey: 'system_id',  as: 'system'  })
-    declare system: System;
-
-    @BelongsTo(() => User,   { foreignKey: 'creator_id', as: 'creator' })
-    declare creator: User;
-
-    @BelongsTo(() => User,   { foreignKey: 'updater_id', as: 'updater' })
-    declare updater: User;
-
-    @CreatedAt declare created_at: Date;
-    @UpdatedAt declare updated_at: Date;
 }
 
 export default UserExternalLinks;

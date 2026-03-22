@@ -4,6 +4,7 @@ import System     from '../../../models/system/system.model';
 import SystemRole from '../../../models/system/system-role.model';
 import { KeycloakAdminService } from '../../communications/keycloak/keycloak-admin.service';
 import { CreateSystemDto, UpdateSystemDto, CreateSystemRoleDto } from './dto';
+import { UserService } from '../r2-user/service';
 
 @Injectable()
 export class SystemService {
@@ -15,12 +16,16 @@ export class SystemService {
         @InjectModel(SystemRole)
         private readonly systemRoleModel : typeof SystemRole,
         private readonly keycloakAdmin   : KeycloakAdminService,
+        private readonly userService     : UserService,
     ) {}
 
     // ─── System CRUD ──────────────────────────────────────────────────────────
 
-    async findAll(): Promise<System[]> {
-        return this.systemModel.findAll({ order: [['created_at', 'ASC']] });
+    async findAll(): Promise<any> {
+        const data = await this.systemModel.findAll({ order: [['created_at', 'ASC']] });
+        return {
+            data
+        }
     }
 
     async findById(id: string): Promise<System> {
@@ -29,13 +34,15 @@ export class SystemService {
         return system;
     }
 
-    async create(dto: CreateSystemDto, creator_id: string): Promise<System> {
+    async create(dto: CreateSystemDto, user_id: string): Promise<System> {
         const existing = await this.systemModel.findOne({ where: { id: dto.id } });
         if (existing) throw new ConflictException(`System '${dto.id}' already exists`);
 
+        const user = await this.userService.findByKeycloakId(user_id);
+
         const system = await this.systemModel.create({
             ...dto,
-            creator_id,
+            creator_id: user.id,
             allow_self_register : dto.allow_self_register ?? false,
             require_approval    : dto.require_approval    ?? false,
             is_internal         : dto.is_internal         ?? false,
@@ -46,8 +53,9 @@ export class SystemService {
         return system;
     }
 
-    async update(id: string, dto: UpdateSystemDto, updater_id: string): Promise<System> {
+    async update(id: string, dto: UpdateSystemDto, user_id: string): Promise<System> {
         const system = await this.findById(id);
+        const user = await this.userService.findByKeycloakId(user_id);
 
         const keycloak_changed =
             (dto.name        !== undefined && dto.name        !== system.name)        ||
@@ -61,16 +69,17 @@ export class SystemService {
         }
 
         Object.assign(system, dto);
-        system.updater_id = updater_id;
+        system.updater_id = user.id;
         await system.save();
 
         this.logger.log(`System updated: ${id}`);
         return system;
     }
 
-    async remove(id: string, deleter_id: string): Promise<void> {
+    async remove(id: string, user_id: string): Promise<void> {
         const system = await this.findById(id);
-        system.deleter_id = deleter_id;
+        const user = await this.userService.findByKeycloakId(user_id);
+        system.deleter_id = user.id;
         await system.save();
         await system.destroy();
         this.logger.log(`System soft-deleted: ${id}`);
@@ -94,7 +103,7 @@ export class SystemService {
     async createRole(
         system_id  : string,
         dto        : CreateSystemRoleDto,
-        creator_id : string,
+        user_id : string,
     ): Promise<SystemRole> {
         const system = await this.findById(system_id);
 
@@ -110,19 +119,30 @@ export class SystemService {
         // Create in Keycloak first — if that fails we don't want a DB row
         // pointing to a role that doesn't exist in Keycloak
         if (system.keycloak_client_id) {
-            await this.keycloakAdmin.createClientRole(
-                system.keycloak_client_id,
-                dto.role_name,
-                dto.description,
-            );
+            try {
+                await this.keycloakAdmin.createClientRole(
+                    system.keycloak_client_id,
+                    dto.role_name,
+                    dto.description,
+                );
+            } catch (err: any) {
+                // Role already exists in Keycloak — that is fine, continue
+                if (err?.response?.status === 409 || err?.message?.includes('already exists')) {
+                    this.logger.warn(`Role '${dto.role_name}' already exists in Keycloak — skipping creation`);
+                } else {
+                    throw err;
+                }
+            }
         }
+
+        const user = await this.userService.findByKeycloakId(user_id);
 
         const role = await this.systemRoleModel.create({
             system_id,
             role_name  : dto.role_name,
             description: dto.description || null,
             is_default : dto.is_default  ?? false,
-            creator_id,
+            creator_id: user.id,
         } as any);
 
         this.logger.log(`Role '${dto.role_name}' created in system '${system_id}'`);
@@ -132,7 +152,7 @@ export class SystemService {
     async removeRole(
         system_id  : string,
         role_name  : string,
-        deleter_id : string,
+        user_id : string,
     ): Promise<void> {
         const system = await this.findById(system_id);
 
@@ -146,7 +166,9 @@ export class SystemService {
             await this.keycloakAdmin.deleteClientRole(system.keycloak_client_id, role_name);
         }
 
-        role.deleter_id = deleter_id;
+        const user = await this.userService.findByKeycloakId(user_id);
+
+        role.deleter_id = user.id;
         await role.save();
         await role.destroy();
 

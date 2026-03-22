@@ -1,0 +1,118 @@
+<!-- Notifications toggle -->
+<button mat-icon-button (click)="openPanel()" #notificationsOrigin>
+    @if (unreadCount > 0) {
+    <span class="absolute left-0 right-0 top-0 flex h-3 items-center justify-center">
+        <span
+            class="ml-4 mt-2.5 flex h-4 min-w-4 shrink-0 items-center justify-center rounded-full bg-blue-800 px-1 text-xs font-medium text-indigo-50">
+            {{ unreadCount }}
+        </span>
+    </span>
+    }
+    <mat-icon [svgIcon]="'heroicons_outline:bell'"></mat-icon>
+</button>
+
+<!-- Notifications panel -->
+<ng-template #notificationsPanel>
+    <div class="flex w-full max-w-[2000px]">
+        <!-- Left side container (for chat/dialog content) -->
+        <div *ngIf="item" class="transition-all duration-300 ease-in-out fixed inset-0 flex flex-col mr-3 overflow-hidden shadow-lg sm:static sm:inset-auto sm:w-120 sm:min-w-120 sm:rounded-2xl sm:max-h-160 sm:min-h-20">
+
+            <div class="bg-slate-100 h-full w-full flex flex-col items-center justify-end p-0 m-0 relative">
+                <div class="z-10 w-full absolute top-0 right-0 flex bg-slate-100 border-b h-14 items-center justify-end gap-3 px-3">
+                    <div class="flex items-center justify-between w-full">
+                        <span class="font-semibold text-xl text-slate-500">{{user_name}} </span>
+                        <div class="flex items-center justify-end gap-4">
+                            <button mat-icon-button (click)="openMessage(item)" class="icon-size-6">
+                                <mat-icon class="text-current icon-size-5" [svgIcon]="'mdi:open-in-new'"></mat-icon>
+                            </button>
+                            <button mat-icon-button (click)="closeDialog()" class="icon-size-6">
+                                <mat-icon class="text-current icon-size-5" [svgIcon]="'heroicons_solid:x-mark'"></mat-icon>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="w-full sm:min-h-160 sm:max-h-160">
+                    <tracking-serivecs-component
+                        [cvId]="cvId"
+                        [isDetail]="true"
+                        [typeReq]="7"
+                        [tracking_id]="tracking_id"
+                        [role]="role"
+                        [userName]="user_name"
+                        [dataType]="'notification'"
+                    ></tracking-serivecs-component>
+
+                </div>
+            </div>
+        </div>
+        <div class="fixed inset-0 flex flex-col overflow-hidden shadow-lg sm:static sm:inset-auto sm:w-90 sm:min-w-90 sm:rounded-2xl sm:max-h-160 sm:min-h-20">
+
+            <div class="flex shrink-0 items-center bg-blue-900 py-4 pl-6 pr-4 text-on-primary">
+                <div class="-ml-1 mr-3 sm:hidden">
+                    <button mat-icon-button (click)="closePanel();$event.stopPropagation()">
+                        <mat-icon class="text-current icon-size-5" [svgIcon]="'heroicons_solid:x-mark'"></mat-icon>
+                    </button>
+                </div>
+                <div class="text-lg font-medium leading-10 md:text-xl">ការជូនដំណឹង</div>
+            </div>
+
+            <!-- Content -->
+
+            <div class="bg-card relative flex flex-auto flex-col divide-y hide-scrollbar overflow-y-auto sm:max-h-160 sm:w-90 sm:min-w-90">
+                <!-- Notifications -->
+                @for (notification of notifications; track trackByFn($index, notification)) {
+                <div class="group flex hover:bg-gray-50 dark:hover:bg-black dark:hover:bg-opacity-5 cursor-pointer relative"
+                    (click)="toggleChat(notification)">
+                    <span class="text-[12px] font-think absolute top-6 right-3 text-blue-500">{{ notification.assigned_at | khmerDate:'relative' }}</span>
+                    <div *ngIf="!notification?.read" class="absolute top-13 right-3 bg-blue-500 w-2 h-2 rounded-full"></div>
+
+                    <div class="absolute top-2 right-2 flex items-center justify-center rounded-full z-10 cursor-pointer" mat-icon-button (click)="delete(notification);$event.stopPropagation()">
+                        <mat-icon svgIcon="heroicons_solid:x-mark" class="icon-size-4 opacity-0 group-hover:opacity-100"></mat-icon>
+                    </div>
+                    @if (!notification.link) {
+                    <div class="flex flex-auto py-5 pl-6 sm:w-[360px] sm:min-w-[360px] sm:max-w-[360px] overflow-hidden">
+                        <ng-container
+                            *ngTemplateOutlet="notificationContent; context: { $implicit: notification }"></ng-container>
+                    </div>
+                    }
+                </div>
+                }
+
+                <!-- Notification content template -->
+                <ng-template #notificationContent let-notification>
+                    <!-- Image -->
+                    @if (notification.creator) {
+                    <img class="mr-4 h-8 w-8 shrink-0 overflow-hidden rounded-full object-cover object-center mt-2"
+                        [src]="fileUrl + '/' + notification.creator.avatar" [alt]="notification.creator.name" />
+                    }
+                    <!-- Text -->
+                    <div class="flex flex-auto flex-col">
+                        <div class="flex flex-col max-w-[230px]">
+                            <span class="text-lg font-medium">{{ notification.creator?.name }}</span>
+                            <span class="text-base"> {{ notification.title }}</span>
+                            <div class="flex items-center text-gray-500">
+                                "<span class="text-sm font-think m-0 max-w-[220px] block truncate"
+                                    [innerHTML]="cleanNotificationText(notification.text)"></span>"
+                            </div>
+                        </div>
+                    </div>
+                </ng-template>
+
+                <!-- No notifications -->
+                @if (!notifications || !notifications.length) {
+                <div class="flex flex-auto flex-col items-center justify-center px-8 py-12 sm:justify-start">
+                    <div
+                        class="flex h-14 w-14 flex-0 items-center justify-center rounded-full bg-primary-100 dark:bg-primary-600">
+                        <mat-icon class="text-primary-700 dark:text-primary-50"
+                            [svgIcon]="'heroicons_outline:bell'"></mat-icon>
+                    </div>
+                    <div class="mt-5 text-2xl font-semibold tracking-tight">No notifications</div>
+                    <div class="text-secondary mt-1 w-full max-w-60 text-center text-md">
+                        When you have notifications, they will appear here.
+                    </div>
+                </div>
+                }
+            </div>
+        </div>
+    </div>
+</ng-template>

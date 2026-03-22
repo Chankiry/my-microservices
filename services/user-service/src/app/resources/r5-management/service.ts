@@ -6,12 +6,12 @@ import { InjectModel } from '@nestjs/sequelize';
 import { KeycloakAdminService } from '../../communications/keycloak/keycloak-admin.service';
 import { UserService } from '../r2-user/service';
 import { SystemService } from '../r4-systems/service';
-import UserSystemAccess from '../../../models/user/user-system-access.model';
-import UserLoginLog     from '../../../models/user/user-login-log.model';
-import User             from '../../../models/user/user.model';
-import System           from '../../../models/system/system.model';
-import { GrantAccessDto, UpdateAccessDto, RejectAccessDto } from './dto';
-import SystemRole from '@models/system/system-role.model';
+import UserSystemAccess  from '../../../models/user/user-system-access.model';
+import UserLoginLog      from '../../../models/user/user-login-log.model';
+import SystemRole        from '../../../models/system/system-role.model';
+import User              from '../../../models/user/user.model';
+import System            from '../../../models/system/system.model';
+import { GrantAccessDto, UpdateAccessDto, RejectAccessDto, ExternalRoleChangeDto } from './dto';
 
 @Injectable()
 export class ManagementService {
@@ -19,15 +19,25 @@ export class ManagementService {
 
     constructor(
         @InjectModel(UserSystemAccess)
-        private readonly accessModel   : typeof UserSystemAccess,
+        private readonly accessModel     : typeof UserSystemAccess,
         @InjectModel(UserLoginLog)
-        private readonly loginLogModel : typeof UserLoginLog,
+        private readonly loginLogModel   : typeof UserLoginLog,
         @InjectModel(SystemRole)
-        private readonly systemRoleModel: typeof SystemRole,
-        private readonly userService   : UserService,
-        private readonly systemService : SystemService,
-        private readonly keycloakAdmin : KeycloakAdminService,
+        private readonly systemRoleModel : typeof SystemRole,
+        private readonly userService     : UserService,
+        private readonly systemService   : SystemService,
+        private readonly keycloakAdmin   : KeycloakAdminService,
     ) {}
+
+    // ─── Resolve keycloak_id → platform user UUID ─────────────────────────────
+    // req.user.sub is always a Keycloak UUID.
+    // All audit columns (creator_id, updater_id, granter_id etc.) are FK to users.id
+    // which is the platform UUID — not the Keycloak UUID.
+    private async resolveUserId(keycloak_id: string): Promise<string> {
+        const user = await this.userService.findByKeycloakId(keycloak_id);
+        if (!user) throw new NotFoundException(`User not found for keycloak_id: ${keycloak_id}`);
+        return user.id;
+    }
 
     // ─── Users overview ───────────────────────────────────────────────────────
 
@@ -58,14 +68,20 @@ export class ManagementService {
     }
 
     async findUserDetail(user_id: string) {
-        const user          = await this.userService.findById(user_id);
+        // Use findOne directly — bypasses Redis cache so we get a Sequelize model instance
+        const user = await User.findOne({ where: { id: user_id } });
+        if (!user) throw new NotFoundException(`User ${user_id} not found`);
+
         const system_access = await this.accessModel.findAll({
             where  : { user_id },
             include: [{ model: System, as: 'system' }],
             order  : [['created_at', 'ASC']],
         });
 
-        return { ...user.toJSON(), system_access };
+        return {
+            ...user.toJSON(),
+            system_access,
+        };
     }
 
     // ─── System-scoped views ──────────────────────────────────────────────────
@@ -107,12 +123,13 @@ export class ManagementService {
     // ─── Grant / revoke ───────────────────────────────────────────────────────
 
     async grantAccess(
-        user_id   : string,
-        dto       : GrantAccessDto,
-        granter_id: string,
+        user_id           : string,
+        dto               : GrantAccessDto,
+        requester_keycloak: string,   // ← this is req.user.sub (Keycloak UUID)
     ): Promise<UserSystemAccess> {
-        const user   = await this.userService.findById(user_id);
-        const system = await this.systemService.findById(dto.system_id);
+        const user       = await this.userService.findById(user_id);
+        const system     = await this.systemService.findById(dto.system_id);
+        const creator_id = await this.resolveUserId(requester_keycloak);  // ← resolve to platform UUID
 
         const existing = await this.accessModel.findOne({
             where: { user_id, system_id: dto.system_id },
@@ -123,13 +140,11 @@ export class ManagementService {
             );
         }
 
-        // Validate requested roles exist in system_roles table
         const requested_roles = dto.system_roles || [];
         if (requested_roles.length > 0) {
             await this.validateRoles(dto.system_id, requested_roles);
         }
 
-        // If no roles requested, auto-assign default roles for this system
         const roles_to_assign = requested_roles.length > 0
             ? requested_roles
             : await this.getDefaultRoles(dto.system_id);
@@ -143,9 +158,9 @@ export class ManagementService {
             account_type       : dto.account_type,
             registration_status: initial_status,
             system_roles       : roles_to_assign,
-            granted_by         : auto_approve ? granter_id : null,
+            granted_by         : auto_approve ? creator_id : null,
             granted_at         : auto_approve ? new Date()  : null,
-            creator_id         : granter_id,
+            creator_id,
         } as any);
 
         if (auto_approve && user.keycloak_id && roles_to_assign.length) {
@@ -162,14 +177,15 @@ export class ManagementService {
     }
 
     async updateAccess(
-        user_id    : string,
-        system_id  : string,
-        dto        : UpdateAccessDto,
-        updater_id : string,
+        user_id           : string,
+        system_id         : string,
+        dto               : UpdateAccessDto,
+        requester_keycloak: string,
     ): Promise<UserSystemAccess> {
-        const access = await this.findAccess(user_id, system_id);
-        const user   = await this.userService.findById(user_id);
-        const system = await this.systemService.findById(system_id);
+        const access     = await this.findAccess(user_id, system_id);
+        const user       = await this.userService.findById(user_id);
+        const system     = await this.systemService.findById(system_id);
+        const updater_id = await this.resolveUserId(requester_keycloak);
 
         if (dto.system_roles) {
             await this.validateRoles(system_id, dto.system_roles);
@@ -192,35 +208,15 @@ export class ManagementService {
         return access;
     }
 
-    async updateSystemRolesFromExternal(
-        system_id    : string,
-        external_id  : string,
-        new_roles    : string[],
-        requester_id : string,    // the service account keycloak_id of the calling system
-    ): Promise<UserSystemAccess> {
-        // Find user by their external link
-        const link = await this.findExternalLink(system_id, external_id);
-
-        // Validate new roles
-        await this.validateRoles(system_id, new_roles);
-
-        // Update via the existing updateAccess flow
-        return this.updateAccess(
-            link.user_id,
-            system_id,
-            { system_roles: new_roles },
-            requester_id,
-        );
-    }
-
     async revokeAccess(
-        user_id    : string,
-        system_id  : string,
-        deleter_id : string,
+        user_id           : string,
+        system_id         : string,
+        requester_keycloak: string,
     ): Promise<void> {
-        const access = await this.findAccess(user_id, system_id);
-        const user   = await this.userService.findById(user_id);
-        const system = await this.systemService.findById(system_id);
+        const access     = await this.findAccess(user_id, system_id);
+        const user       = await this.userService.findById(user_id);
+        const system     = await this.systemService.findById(system_id);
+        const deleter_id = await this.resolveUserId(requester_keycloak);
 
         if (user.keycloak_id && access.system_roles.length) {
             await this.syncKeycloakRoles(
@@ -241,11 +237,12 @@ export class ManagementService {
     // ─── Approval workflow ────────────────────────────────────────────────────
 
     async approveAccess(
-        user_id     : string,
-        system_id   : string,
-        approver_id : string,
+        user_id           : string,
+        system_id         : string,
+        requester_keycloak: string,
     ): Promise<UserSystemAccess> {
-        const access = await this.findAccess(user_id, system_id);
+        const access      = await this.findAccess(user_id, system_id);
+        const approver_id = await this.resolveUserId(requester_keycloak);
 
         if (access.registration_status !== 'pending') {
             throw new BadRequestException(`Access is '${access.registration_status}', not pending`);
@@ -274,12 +271,13 @@ export class ManagementService {
     }
 
     async rejectAccess(
-        user_id     : string,
-        system_id   : string,
-        rejecter_id : string,
-        dto         : RejectAccessDto,
+        user_id           : string,
+        system_id         : string,
+        requester_keycloak: string,
+        dto               : RejectAccessDto,
     ): Promise<UserSystemAccess> {
-        const access = await this.findAccess(user_id, system_id);
+        const access      = await this.findAccess(user_id, system_id);
+        const rejecter_id = await this.resolveUserId(requester_keycloak);
 
         if (access.registration_status !== 'pending') {
             throw new BadRequestException(`Access is '${access.registration_status}', not pending`);
@@ -294,6 +292,19 @@ export class ManagementService {
 
         this.logger.log(`Access rejected: user=${user_id} system=${system_id}`);
         return access;
+    }
+
+    // ─── External system role change ──────────────────────────────────────────
+
+    async updateSystemRolesFromExternal(
+        system_id         : string,
+        external_id       : string,
+        new_roles         : string[],
+        requester_keycloak: string,
+    ): Promise<UserSystemAccess> {
+        const link = await this.findExternalLink(system_id, external_id);
+        await this.validateRoles(system_id, new_roles);
+        return this.updateAccess(link.user_id, system_id, { system_roles: new_roles }, requester_keycloak);
     }
 
     // ─── Login tracking ───────────────────────────────────────────────────────
@@ -340,8 +351,6 @@ export class ManagementService {
         return access;
     }
 
-    // Syncs Keycloak client roles by revoking old ones and assigning new ones.
-    // Skips entirely if the system has no keycloak_client_id (no dedicated client).
     private async syncKeycloakRoles(
         keycloak_id       : string,
         keycloak_client_id: string | null,
@@ -375,9 +384,7 @@ export class ManagementService {
     }
 
     private async validateRoles(system_id: string, roles: string[]): Promise<void> {
-        const valid_roles = await this.systemRoleModel.findAll({
-            where: { system_id },
-        });
+        const valid_roles = await this.systemRoleModel.findAll({ where: { system_id } });
         const valid_names = valid_roles.map(r => r.role_name);
 
         const invalid = roles.filter(r => !valid_names.includes(r));
@@ -398,9 +405,7 @@ export class ManagementService {
 
     private async findExternalLink(system_id: string, external_id: string) {
         const UserExternalLinks = (await import('../../../models/user/user-external-links.model')).default;
-        const link = await UserExternalLinks.findOne({
-            where: { system_id, external_id },
-        });
+        const link = await UserExternalLinks.findOne({ where: { system_id, external_id } });
         if (!link) {
             throw new NotFoundException(
                 `No external link found for external_id='${external_id}' in system='${system_id}'`,
