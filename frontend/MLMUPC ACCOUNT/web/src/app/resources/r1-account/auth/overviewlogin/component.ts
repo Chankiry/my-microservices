@@ -1,64 +1,37 @@
-import { Component, inject, OnInit, ViewChild } from '@angular/core';
-import {
-    FormsModule,
-} from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatIconModule } from '@angular/material/icon';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { FormsModule }          from '@angular/forms';
+import { MatButtonModule }      from '@angular/material/button';
+import { MatIconModule }        from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { Router, RouterLink } from '@angular/router';
-import { env } from 'envs/env';
-// import { TranslatePipe } from 'helper/pipes/translate.pipe';
-import { Subject } from 'rxjs';
-import { MatDialog } from '@angular/material/dialog';
-import { QRDialogComponent } from '../../profile/qr/component';
+import { Router, RouterLink }   from '@angular/router';
+import { Subject }              from 'rxjs';
+
 @Component({
-    standalone: true,
-    imports: [
+    standalone  : true,
+    imports     : [
         FormsModule,
         MatButtonModule,
         MatIconModule,
-        MatCheckboxModule,
         MatProgressSpinnerModule,
         RouterLink,
     ],
-    selector: 'overview-login',
-    templateUrl: 'template.html'
+    selector    : 'overview-login',
+    templateUrl : 'template.html',
 })
+export class OverviewLoginComponent implements OnInit, OnDestroy {
 
-export class OverviewLoginComponent implements OnInit {
+    private _unsubscribeAll: Subject<any> = new Subject<any>();
 
-    constructor(
-        private _router             : Router,
-    ) {}
-    // siteKey: string = env.RecaptchaSiteKey;
-    phone: string = '';
-    private matdialog = inject(MatDialog);
+    constructor(private _router: Router) {}
 
-    private _unsubscribeAll: Subject<{ phone: number }> = new Subject<{ phone: number }>();
-
-    ngOnInit() {
-
-    }
+    ngOnInit(): void {}
 
     ngOnDestroy(): void {
-        // Unsubscribe from all subscriptions
         this._unsubscribeAll.next(null);
         this._unsubscribeAll.complete();
     }
 
-    openQrDialog(){
-        this.matdialog.open(QRDialogComponent, {
-            autoFocus: false,
-            width: '100dvw',
-            maxWidth: '600px',
-            enterAnimationDuration: '0s',
-            data: {
-                with_token: false,
-            }
-        });
-    }
-    navigateToVerifyEmail(): void {
-        this._router.navigate(['/auth/verify-code-email'], { state: { type: 'signUp' } });
+    navigateToSignIn(): void {
+        this._router.navigate(['/auth/sign-in']);
     }
 }

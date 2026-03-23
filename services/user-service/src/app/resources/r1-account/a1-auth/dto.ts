@@ -1,6 +1,5 @@
-import { IsString, MinLength, MaxLength } from 'class-validator';
+import { IsString, IsEmail, IsOptional, MinLength, MaxLength } from 'class-validator';
 
-// Platform login — phone is the Keycloak username
 export class LoginDto {
     @IsString() @MinLength(7) @MaxLength(20)
     phone!: string;
@@ -9,8 +8,24 @@ export class LoginDto {
     password!: string;
 }
 
-// Refresh token exchange
 export class RefreshDto {
     @IsString()
     refresh_token!: string;
+}
+
+export class RegisterDto {
+    @IsString() @MinLength(1) @MaxLength(100)
+    first_name!: string;
+
+    @IsString() @MinLength(1) @MaxLength(100)
+    last_name!: string;
+
+    @IsString() @MinLength(7) @MaxLength(20)
+    phone!: string;
+
+    @IsEmail()
+    email!: string;
+
+    @IsString() @MinLength(8)
+    password!: string;
 }

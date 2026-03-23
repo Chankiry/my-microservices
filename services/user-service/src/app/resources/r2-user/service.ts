@@ -271,15 +271,15 @@ export class UserService {
     }
 
     async updateBusinessProfile(
-        id: string,
-        fields: Partial<{ avatar: string; gender: string }>,
+        id    : string,
+        fields: Partial<Pick<User, 'avatar' | 'gender'>>,
     ): Promise<User> {
         const user = await this.userModel.findOne({ where: { id } });
         if (!user) throw new NotFoundException(`User ${id} not found`);
-
-        user.profile = { ...(user.profile || {}), ...fields };
+ 
+        Object.assign(user, fields);
         await user.save();
-
+ 
         await this.redisService.del(`user:profile:${id}`);
         this.logger.log(`Business profile updated for user ${id}`);
         return user;

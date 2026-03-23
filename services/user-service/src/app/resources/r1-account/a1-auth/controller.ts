@@ -5,7 +5,7 @@ import {
     UnauthorizedException,
 } from '@nestjs/common';
 import { AuthService } from './service';
-import { LoginDto, RefreshDto } from './dto';
+import { LoginDto, RefreshDto, RegisterDto } from './dto';
 import { JwtAuthGuard } from '../../../core/guards/jwt-auth.guard';
 
 @Controller()
@@ -14,6 +14,12 @@ export class AuthController {
     constructor(private readonly authService: AuthService) {}
 
     // ─── Public endpoints ─────────────────────────────────────────────────────
+
+    @Post('register')
+    @HttpCode(HttpStatus.CREATED)
+    async register(@Body() dto: RegisterDto) {
+        return this.authService.register(dto);
+    }
 
     @Post('login')
     @HttpCode(HttpStatus.OK)

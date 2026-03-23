@@ -1,133 +1,309 @@
 <div class="h-full flex flex-col">
 
-    <!-- Action -->
+    <!-- Redirect mode banner -->
+    <div *ngIf="isRedirectMode"
+         class="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-xl px-3 py-2 mb-2 text-sm text-blue-700">
+        <mat-icon class="icon-size-4 shrink-0" svgIcon="mdi:arrow-right-circle"></mat-icon>
+        <span>ប្រព័ន្ធ <strong>{{ redirectSystemName }}</strong> កំពុងស្នើឲ្យអ្នកចូលប្រព័ន្ធ</span>
+    </div>
+
+    <!-- Language switcher -->
     <div class="h-12 flex justify-end items-center">
         <languages></languages>
     </div>
 
     <!-- Header -->
-    <div class="flex flex-col justify-center items-center gap-2">
-        <div class="flex items-center justify-center w-24 h-24 rounded-full bg-[#f3f4f5]">
-            <mat-icon class="icon-size-14 text-black" svgIcon="mat_outline:login"></mat-icon>
+    <div class="flex flex-col items-center gap-1 mb-3">
+        <div class="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center">
+            <mat-icon class="icon-size-12 text-primary" svgIcon="mat_outline:login"></mat-icon>
         </div>
-        <span class="text-3xl leading-8 font-medium"> {{ 'Auth.Sign-In.Title' | transloco }} </span>
-        <span class="text-slate-500 text-center px-6"> {{ 'Auth.Sign-In.Sub-Title' | transloco }} </span>
+        <span class="text-2xl font-medium">ចូលប្រព័ន្ធ</span>
+        <span class="text-slate-500 text-sm text-center">ជ្រើសរើសប្រភេទគណនី</span>
     </div>
 
-    <!-- Tab switcher -->
-    <div class="flex gap-2 mt-4 mb-2">
-        <button
-            mat-stroked-button
-            class="flex-1"
-            [color]="activeTab === 'plt' ? 'primary' : ''"
-            [class.mat-flat-button]="activeTab === 'plt'"
-            (click)="switchTab('plt')">
-            <mat-icon class="mr-1" svgIcon="mdi:lock"></mat-icon>
-            គណនី PLT
-        </button>
-        <button
-            mat-stroked-button
-            class="flex-1"
-            [color]="activeTab === 'platform' ? 'primary' : ''"
-            [class.mat-flat-button]="activeTab === 'platform'"
-            (click)="switchTab('platform')">
-            <mat-icon class="mr-1" svgIcon="mdi:shield-account"></mat-icon>
+    <!-- Tab: PLT vs Platform -->
+    <div class="flex rounded-xl bg-gray-100 p-1 gap-1 mb-4">
+        <button class="flex-1 py-2 rounded-lg text-sm font-medium transition-all"
+                [class.bg-white]="activeLoginTab === 'platform'"
+                [class.shadow-sm]="activeLoginTab === 'platform'"
+                [class.text-primary]="activeLoginTab === 'platform'"
+                [class.text-gray-500]="activeLoginTab !== 'platform'"
+                (click)="switchLoginTab('platform')">
+            <mat-icon class="icon-size-4 mr-1 align-middle" svgIcon="mdi:shield-account"></mat-icon>
             គណនីវេទិកា
         </button>
+        <button class="flex-1 py-2 rounded-lg text-sm font-medium transition-all"
+                [class.bg-white]="activeLoginTab === 'plt'"
+                [class.shadow-sm]="activeLoginTab === 'plt'"
+                [class.text-primary]="activeLoginTab === 'plt'"
+                [class.text-gray-500]="activeLoginTab !== 'plt'"
+                (click)="switchLoginTab('plt')">
+            <mat-icon class="icon-size-4 mr-1 align-middle" svgIcon="mdi:lock"></mat-icon>
+            គណនី PLT
+        </button>
     </div>
 
-    <!-- ─── PLT Login Form ─────────────────────────────────────────────────── -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- VIEW: Account Picker                                    -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <ng-container *ngIf="viewState === 'account-picker'">
 
-    <form *ngIf="activeTab === 'plt'"
-          [formGroup]="form"
-          (keydown.enter)="onEnterKeyPress($event)"
-          class="md-form-field-appearance-outline my-auto">
+        <p class="text-sm text-gray-500 mb-3">ជ្រើសរើសគណនី</p>
 
-        <mat-form-field appearance="outline" class="w-full">
-            <mat-label>{{ 'Auth.Sign-In.Username' | transloco }}</mat-label>
-            <mat-icon matPrefix class="mat-icon-6" [svgIcon]="'mdi:account'"></mat-icon>
-            <input matInput [formControlName]="'username'">
-            <mat-error *ngIf="form.get('username')?.hasError('required')">
-                {{ 'Auth.Sign-In.Username-Require' | transloco }}
-            </mat-error>
-            <mat-error *ngIf="form.get('username')?.hasError('pattern')">
-                {{ 'Auth.Sign-In.Username-Pattern' | transloco }}
-            </mat-error>
-        </mat-form-field>
+        <!-- Saved accounts list -->
+        <div class="flex flex-col gap-2 flex-1 overflow-y-auto">
+            <div *ngFor="let account of savedAccounts"
+                 class="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:border-primary-200 hover:bg-primary-50 cursor-pointer transition-all"
+                 (click)="pickAccount(account)">
 
-        <mat-form-field appearance="outline" class="w-full">
-            <mat-label>{{ 'Auth.Sign-In.Password' | transloco }}</mat-label>
-            <mat-icon matPrefix class="mat-icon-6" [svgIcon]="'mdi:lock'"></mat-icon>
-            <input matInput type="password" [formControlName]="'password'" #pltPasswordField>
-            <button matSuffix mat-icon-button type="button"
-                    (click)="pltPasswordField.type === 'password' ? (pltPasswordField.type = 'text') : (pltPasswordField.type = 'password')">
-                <mat-icon class="mat-icon-6" [svgIcon]="pltPasswordField.type === 'password' ? 'mdi:eye' : 'mdi:eye-off'"></mat-icon>
+                <!-- Avatar -->
+                <div class="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center shrink-0 overflow-hidden">
+                    <img *ngIf="account.avatar" [src]="account.avatar"
+                         class="w-full h-full object-cover"
+                         (error)="$any($event.target).style.display='none'" />
+                    <mat-icon *ngIf="!account.avatar"
+                              class="icon-size-6 text-primary"
+                              svgIcon="mdi:account-circle"></mat-icon>
+                </div>
+
+                <!-- Info -->
+                <div class="flex flex-col flex-1 min-w-0">
+                    <span class="font-medium text-gray-800 truncate">{{ account.name }}</span>
+                    <span class="text-xs text-gray-400 truncate">{{ account.phone }}</span>
+                </div>
+
+                <!-- Loading spinner for this account -->
+                <mat-progress-spinner *ngIf="isRefreshing"
+                    [diameter]="20" [mode]="'indeterminate'" class="shrink-0" />
+
+                <!-- Remove button -->
+                <button *ngIf="!isRefreshing"
+                        mat-icon-button class="shrink-0 !w-8 !h-8"
+                        matTooltip="យកចេញ"
+                        (click)="removeAccount(account, $event)">
+                    <mat-icon class="icon-size-4 text-gray-300" svgIcon="mdi:close"></mat-icon>
+                </button>
+            </div>
+        </div>
+
+        <!-- Use another account -->
+        <button mat-stroked-button class="w-full mt-4"
+                (click)="useAnotherAccount()">
+            <mat-icon svgIcon="mdi:account-plus"></mat-icon>
+            ប្រើគណនីផ្សេង
+        </button>
+
+        <!-- Register link -->
+        <div class="text-center mt-3 text-sm text-gray-500">
+            មិនមានគណនីនៅឡើយ?
+            <a class="text-primary font-medium cursor-pointer" [routerLink]="['/auth/sign-up']">ចុះឈ្មោះ</a>
+        </div>
+
+    </ng-container>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- VIEW: Password Confirm (picked expired account)        -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <ng-container *ngIf="viewState === 'password-confirm'">
+
+        <!-- Back -->
+        <button mat-icon-button class="self-start -mt-1 mb-2" (click)="backToPicker()">
+            <mat-icon svgIcon="mdi:arrow-left"></mat-icon>
+        </button>
+
+        <!-- Selected account info -->
+        <div class="flex items-center gap-3 p-3 rounded-xl bg-gray-50 mb-4">
+            <div class="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center shrink-0">
+                <mat-icon class="icon-size-6 text-primary" svgIcon="mdi:account-circle"></mat-icon>
+            </div>
+            <div class="flex flex-col flex-1 min-w-0">
+                <span class="font-medium text-gray-800">{{ selectedAccount?.name }}</span>
+                <span class="text-xs text-gray-400">{{ selectedAccount?.phone }}</span>
+            </div>
+            <button mat-stroked-button class="text-sm shrink-0" (click)="useAnotherAccount()">
+                ផ្លាស់ប្ដូរ
             </button>
-            <mat-error *ngIf="form.get('password')?.hasError('required')">
-                {{ 'Auth.Sign-In.Password-Require' | transloco }}
-            </mat-error>
-        </mat-form-field>
+        </div>
 
-    </form>
+        <!-- Password form -->
+        <form [formGroup]="passwordForm" (keydown)="onEnterKeyPress($event)" class="flex flex-col gap-2">
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>ពាក្យសម្ងាត់</mat-label>
+                <mat-icon matPrefix svgIcon="mdi:lock"></mat-icon>
+                <input matInput type="password" formControlName="password" #pwField>
+                <button matSuffix mat-icon-button type="button"
+                    (click)="pwField.type === 'password' ? (pwField.type='text') : (pwField.type='password')">
+                    <mat-icon [svgIcon]="pwField.type === 'password' ? 'mdi:eye' : 'mdi:eye-off'"></mat-icon>
+                </button>
+                <mat-error *ngIf="passwordForm.get('password')?.hasError('required')">
+                    សូមបញ្ចូលពាក្យសម្ងាត់
+                </mat-error>
+            </mat-form-field>
+        </form>
 
-    <!-- ─── Platform Login Form ───────────────────────────────────────────── -->
+        <button mat-flat-button color="primary" class="w-full mt-3"
+                [disabled]="passwordForm.invalid || isLoading"
+                (click)="confirmPassword()">
+            <mat-progress-spinner *ngIf="isLoading" [diameter]="20" [mode]="'indeterminate'" />
+            <span *ngIf="!isLoading">ចូលប្រព័ន្ធ</span>
+        </button>
 
-    <form *ngIf="activeTab === 'platform'"
-          [formGroup]="platformForm"
-          (keydown.enter)="onEnterKeyPress($event)"
-          class="md-form-field-appearance-outline my-auto">
+    </ng-container>
 
-        <mat-form-field appearance="outline" class="w-full">
-            <mat-label>លេខទូរស័ព្ទ</mat-label>
-            <mat-icon matPrefix class="mat-icon-6" [svgIcon]="'mdi:phone'"></mat-icon>
-            <input matInput [formControlName]="'phone'" type="tel">
-            <mat-error *ngIf="platformForm.get('phone')?.hasError('required')">
-                សូមបញ្ចូលលេខទូរស័ព្ទ
-            </mat-error>
-            <mat-error *ngIf="platformForm.get('phone')?.hasError('minlength')">
-                លេខទូរស័ព្ទមិនត្រឹមត្រូវ
-            </mat-error>
-        </mat-form-field>
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- VIEW: New Account (phone + password)                   -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <ng-container *ngIf="viewState === 'new-account'">
 
-        <mat-form-field appearance="outline" class="w-full">
-            <mat-label>ពាក្យសម្ងាត់វេទិកា</mat-label>
-            <mat-icon matPrefix class="mat-icon-6" [svgIcon]="'mdi:lock'"></mat-icon>
-            <input matInput type="password" [formControlName]="'password'" #platformPasswordField>
-            <button matSuffix mat-icon-button type="button"
-                    (click)="platformPasswordField.type === 'password' ? (platformPasswordField.type = 'text') : (platformPasswordField.type = 'password')">
-                <mat-icon class="mat-icon-6" [svgIcon]="platformPasswordField.type === 'password' ? 'mdi:eye' : 'mdi:eye-off'"></mat-icon>
+        <!-- Back to picker if saved accounts exist -->
+        <button *ngIf="savedAccounts.length" mat-icon-button
+                class="self-start -mt-1 mb-2"
+                (click)="backToPicker()">
+            <mat-icon svgIcon="mdi:arrow-left"></mat-icon>
+        </button>
+
+        <form [formGroup]="newAccountForm" (keydown)="onEnterKeyPress($event)" class="flex flex-col gap-2 my-auto">
+
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>លេខទូរស័ព្ទ</mat-label>
+                <mat-icon matPrefix svgIcon="mdi:phone"></mat-icon>
+                <input matInput formControlName="phone" type="tel">
+                <mat-error *ngIf="newAccountForm.get('phone')?.hasError('required')">
+                    សូមបញ្ចូលលេខទូរស័ព្ទ
+                </mat-error>
+                <mat-error *ngIf="newAccountForm.get('phone')?.hasError('minlength')">
+                    លេខទូរស័ព្ទមិនត្រឹមត្រូវ
+                </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>ពាក្យសម្ងាត់</mat-label>
+                <mat-icon matPrefix svgIcon="mdi:lock"></mat-icon>
+                <input matInput type="password" formControlName="password" #newPwField>
+                <button matSuffix mat-icon-button type="button"
+                    (click)="newPwField.type === 'password' ? (newPwField.type='text') : (newPwField.type='password')">
+                    <mat-icon [svgIcon]="newPwField.type === 'password' ? 'mdi:eye' : 'mdi:eye-off'"></mat-icon>
+                </button>
+                <mat-error *ngIf="newAccountForm.get('password')?.hasError('required')">
+                    សូមបញ្ចូលពាក្យសម្ងាត់
+                </mat-error>
+            </mat-form-field>
+
+        </form>
+
+        <button mat-flat-button color="primary" class="w-full mt-3"
+                [disabled]="newAccountForm.invalid || isLoading"
+                (click)="platformSignIn()">
+            <mat-progress-spinner *ngIf="isLoading" [diameter]="20" [mode]="'indeterminate'" />
+            <span *ngIf="!isLoading">ចូលប្រព័ន្ធ</span>
+        </button>
+
+        <div class="text-center mt-3 text-sm text-gray-500">
+            មិនមានគណនីនៅឡើយ?
+            <a class="text-primary font-medium cursor-pointer" [routerLink]="['/auth/sign-up']">ចុះឈ្មោះ</a>
+        </div>
+
+    </ng-container>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- VIEW: PLT Login                                        -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <ng-container *ngIf="viewState === 'plt-login'">
+
+        <form [formGroup]="pltForm" (keydown)="onEnterKeyPress($event)" class="flex flex-col gap-2 my-auto">
+
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>ឈ្មោះអ្នកប្រើ</mat-label>
+                <mat-icon matPrefix svgIcon="mdi:account"></mat-icon>
+                <input matInput formControlName="username">
+                <mat-error *ngIf="pltForm.get('username')?.hasError('required')">
+                    សូមបញ្ចូលឈ្មោះអ្នកប្រើ
+                </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>ពាក្យសម្ងាត់</mat-label>
+                <mat-icon matPrefix svgIcon="mdi:lock"></mat-icon>
+                <input matInput type="password" formControlName="password" #pltPwField>
+                <button matSuffix mat-icon-button type="button"
+                    (click)="pltPwField.type === 'password' ? (pltPwField.type='text') : (pltPwField.type='password')">
+                    <mat-icon [svgIcon]="pltPwField.type === 'password' ? 'mdi:eye' : 'mdi:eye-off'"></mat-icon>
+                </button>
+                <mat-error *ngIf="pltForm.get('password')?.hasError('required')">
+                    សូមបញ្ចូលពាក្យសម្ងាត់
+                </mat-error>
+            </mat-form-field>
+
+        </form>
+
+        <button mat-flat-button color="primary" class="w-full mt-3"
+                [disabled]="pltForm.invalid || isLoading"
+                (click)="pltSignIn()">
+            <mat-progress-spinner *ngIf="isLoading" [diameter]="20" [mode]="'indeterminate'" />
+            <span *ngIf="!isLoading">ចូលប្រព័ន្ធ</span>
+        </button>
+
+    </ng-container>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- VIEW: Link Connect (Phase 8 — action=link)            -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <ng-container *ngIf="viewState === 'link-connect'">
+
+        <!-- Info banner -->
+        <div class="flex items-start gap-3 bg-blue-50 border border-blue-200 rounded-xl p-3 mb-4">
+            <mat-icon class="icon-size-5 text-blue-500 shrink-0 mt-0.5" svgIcon="mdi:link-plus"></mat-icon>
+            <div class="flex flex-col text-sm text-blue-700">
+                <span class="font-medium">ភ្ជាប់គណនី {{ redirectSystemName }}</span>
+                <span class="text-xs mt-0.5 text-blue-500">
+                    បញ្ចូលព័ត៌មានចូលប្រព័ន្ធ {{ redirectSystemName }}
+                    ដើម្បីភ្ជាប់ជាមួយគណនីវេទិការបស់អ្នក
+                </span>
+            </div>
+        </div>
+
+        <form [formGroup]="linkForm" (keydown)="onEnterKeyPress($event)" class="flex flex-col gap-2 flex-1">
+
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>ឈ្មោះអ្នកប្រើ ({{ redirectSystemName }})</mat-label>
+                <mat-icon matPrefix svgIcon="mdi:account"></mat-icon>
+                <input matInput formControlName="username">
+                <mat-error *ngIf="linkForm.get('username')?.hasError('required')">
+                    សូមបញ្ចូលឈ្មោះអ្នកប្រើ
+                </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>ពាក្យសម្ងាត់ ({{ redirectSystemName }})</mat-label>
+                <mat-icon matPrefix svgIcon="mdi:lock"></mat-icon>
+                <input matInput type="password" formControlName="password" #linkPwField>
+                <button matSuffix mat-icon-button type="button"
+                    (click)="linkPwField.type === 'password' ? (linkPwField.type='text') : (linkPwField.type='password')">
+                    <mat-icon [svgIcon]="linkPwField.type === 'password' ? 'mdi:eye' : 'mdi:eye-off'"></mat-icon>
+                </button>
+                <mat-error *ngIf="linkForm.get('password')?.hasError('required')">
+                    សូមបញ្ចូលពាក្យសម្ងាត់
+                </mat-error>
+            </mat-form-field>
+
+        </form>
+
+        <div class="flex gap-2 mt-4">
+            <button mat-stroked-button class="flex-1" (click)="cancelLink()">
+                បោះបង់
             </button>
-            <mat-error *ngIf="platformForm.get('password')?.hasError('required')">
-                សូមបញ្ចូលពាក្យសម្ងាត់
-            </mat-error>
-        </mat-form-field>
+            <button mat-flat-button color="primary" class="flex-1"
+                    [disabled]="linkForm.invalid || isLinking"
+                    (click)="linkAccount()">
+                <mat-progress-spinner *ngIf="isLinking" [diameter]="20" [mode]="'indeterminate'" />
+                <span *ngIf="!isLinking">
+                    <mat-icon svgIcon="mdi:link-plus"></mat-icon>
+                    ភ្ជាប់គណនី
+                </span>
+            </button>
+        </div>
 
-    </form>
+    </ng-container>
 
-    <!-- Divider -->
-    <div class="flex items-center gap-2 my-2">
-        <div class="flex-1 h-px bg-gray-200"></div>
-        <span class="text-gray-400 text-sm">ឬ</span>
-        <div class="flex-1 h-px bg-gray-200"></div>
-    </div>
-
-    <!-- Keycloak Login Button -->
-    <button mat-stroked-button class="w-full" (click)="loginWithKeycloak()">
-        <mat-icon class="mr-1" svgIcon="mdi:shield-key"></mat-icon>
-        ចូលតាមគណនីវេទិកា (Keycloak)
-    </button>
-
-    <!-- Submit Button — shows correct action based on active tab -->
-    <button mat-flat-button class="w-full" [color]="'primary'"
-            [disabled]="activeTab === 'plt' ? (form.disabled || form.invalid) : (platformForm.disabled || platformForm.invalid)"
-            (click)="activeTab === 'plt' ? signIn() : platformSignIn()">
-        <span *ngIf="activeTab === 'plt' ? !form.disabled : !platformForm.disabled">
-            {{ 'Auth.Sign-In.Action' | transloco }}
-        </span>
-        <mat-progress-spinner
-            *ngIf="activeTab === 'plt' ? form.disabled : platformForm.disabled"
-            [diameter]="24"
-            [mode]="'indeterminate'" />
-    </button>
 
 </div>

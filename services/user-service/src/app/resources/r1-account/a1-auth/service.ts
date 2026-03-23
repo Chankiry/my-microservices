@@ -1,4 +1,6 @@
 import {
+    BadRequestException,
+    ConflictException,
     Injectable, Logger, UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -7,6 +9,9 @@ import axios from 'axios';
 import * as jwt from 'jsonwebtoken';
 import { RedisService } from '@app/infra/cache/redis.service';
 import { JwtPayload } from '@app/shared/interfaces/jwt-payload.interface';
+import { RegisterDto } from './dto';
+import { UserService } from '@app/resources/r2-user/service';
+import { KeycloakAdminService } from '@app/communications/keycloak/keycloak-admin.service';
 
 @Injectable()
 export class AuthService {
@@ -23,11 +28,51 @@ export class AuthService {
     constructor(
         private readonly configService: ConfigService,
         private readonly redisService : RedisService,
+        private readonly keycloakAdmin : KeycloakAdminService,
+        private readonly userService   : UserService,
     ) {
         this.keycloakUrl       = this.configService.get('KEYCLOAK_URL',  'http://keycloak:8080');
         this.realm             = this.configService.get('KEYCLOAK_REALM', 'microservices-platform');
         this.loginClientId     = this.configService.get('KEYCLOAK_LOGIN_CLIENT_ID',     'kong-gateway');
         this.loginClientSecret = this.configService.get('KEYCLOAK_LOGIN_CLIENT_SECRET', '');
+    }
+
+        // ─── Register ─────────────────────────────────────────────────────────────
+ 
+    async register(dto: RegisterDto): Promise<{ message: string }> {
+ 
+        // Check phone uniqueness
+        const existingPhone = await this.userService.findByPhone(dto.phone);
+        if (existingPhone) {
+            throw new ConflictException('លេខទូរស័ព្ទនេះត្រូវបានប្រើប្រាស់រួចហើយ');
+        }
+ 
+        // Check email uniqueness
+        const existingEmail = await this.userService.findByEmail(dto.email);
+        if (existingEmail) {
+            throw new ConflictException('អ៊ីមែលនេះត្រូវបានប្រើប្រាស់រួចហើយ');
+        }
+ 
+        // Create user in DB + Keycloak (without password — set separately)
+        const user = await this.userService.create({
+            first_name : dto.first_name,
+            last_name  : dto.last_name,
+            phone      : dto.phone,
+            email      : dto.email,
+            is_active  : true,
+        });
+ 
+        if (!user.keycloak_id) {
+            throw new BadRequestException('Failed to create identity account');
+        }
+ 
+        // Set password and clear required actions
+        await this.keycloakAdmin.setPassword(user.keycloak_id, dto.password);
+        await this.keycloakAdmin.clearRequiredActions(user.keycloak_id);
+ 
+        this.logger.log(`User registered: ${user.id} phone: ${dto.phone}`);
+ 
+        return { message: 'ការចុះឈ្មោះបានជោគជ័យ។ សូមចូលប្រព័ន្ធ' };
     }
 
     // ─── Platform login ───────────────────────────────────────────────────────

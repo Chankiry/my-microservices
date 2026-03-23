@@ -1,0 +1,226 @@
+<div class="flex flex-col min-h-full bg-gray-50 p-4 md:p-6 gap-6">
+
+    <!-- Loading -->
+    <div *ngIf="isLoading" class="flex flex-1 items-center justify-center min-h-60">
+        <mat-progress-spinner [diameter]="48" [mode]="'indeterminate'" />
+    </div>
+
+    <ng-container *ngIf="!isLoading && profile">
+
+        <!-- ─── Header Card ──────────────────────────────────────────────────── -->
+        <div class="bg-white rounded-2xl shadow-sm p-6 flex flex-col sm:flex-row items-center sm:items-start gap-6">
+
+            <!-- Avatar -->
+            <div class="relative shrink-0">
+                <img [src]="getAvatarUrl()"
+                     class="w-24 h-24 rounded-full object-cover ring-4 ring-primary-100"
+                     (error)="$any($event.target).src='/images/placeholder/avatar.jpg'" />
+                <span class="absolute bottom-1 right-1 w-4 h-4 rounded-full border-2 border-white"
+                      [class.bg-green-400]="profile.is_active"
+                      [class.bg-gray-400]="!profile.is_active">
+                </span>
+            </div>
+
+            <!-- Info -->
+            <div class="flex flex-col items-center sm:items-start flex-1 gap-1.5">
+                <h1 class="text-2xl font-semibold text-gray-800">{{ getFullName() }}</h1>
+                <div class="flex items-center gap-2 text-gray-500 text-sm">
+                    <mat-icon class="icon-size-4" svgIcon="mdi:phone"></mat-icon>
+                    <span>{{ profile.phone }}</span>
+                </div>
+                <div *ngIf="profile.email" class="flex items-center gap-2 text-gray-500 text-sm">
+                    <mat-icon class="icon-size-4" svgIcon="mdi:email"></mat-icon>
+                    <span>{{ profile.email }}</span>
+                </div>
+                <div class="flex items-center gap-2 mt-1 text-sm text-primary font-medium">
+                    <mat-icon class="icon-size-4" svgIcon="mdi:apps"></mat-icon>
+                    <span>ភ្ជាប់ {{ activeSystemCount() }} ប្រព័ន្ធ</span>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-2 shrink-0">
+                <button mat-stroked-button color="primary">
+                    <mat-icon svgIcon="mdi:pencil"></mat-icon>
+                    កែប្រែ
+                </button>
+                <button mat-stroked-button>
+                    <mat-icon svgIcon="mdi:lock-reset"></mat-icon>
+                    ពាក្យសម្ងាត់
+                </button>
+            </div>
+        </div>
+
+        <!-- ─── Connected Systems ─────────────────────────────────────────────── -->
+        <div class="bg-white rounded-2xl shadow-sm p-6">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">ប្រព័ន្ធដែលភ្ជាប់</h2>
+
+            <div *ngIf="!profile.system_access?.length"
+                 class="flex flex-col items-center justify-center py-10 gap-3 text-gray-400">
+                <mat-icon class="icon-size-16" svgIcon="mdi:apps-box"></mat-icon>
+                <p>មិនមានប្រព័ន្ធភ្ជាប់នៅឡើយ</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div *ngFor="let access of profile.system_access"
+                     class="flex items-start gap-4 p-4 rounded-xl border border-gray-100 hover:border-primary-200 transition-colors">
+
+                    <!-- Logo -->
+                    <div class="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center shrink-0 overflow-hidden">
+                        <img *ngIf="access.system?.logo"
+                             [src]="FILE_URL + '/' + access.system.logo"
+                             class="w-full h-full object-cover" />
+                        <mat-icon *ngIf="!access.system?.logo"
+                                  class="icon-size-7 text-gray-400"
+                                  svgIcon="mdi:application"></mat-icon>
+                    </div>
+
+                    <!-- Info -->
+                    <div class="flex flex-col flex-1 min-w-0 gap-1">
+                        <div class="flex items-center justify-between gap-2">
+                            <span class="font-medium text-gray-800 truncate">{{ access.system?.name }}</span>
+                            <span class="text-xs px-2 py-0.5 rounded-full shrink-0 font-medium"
+                                  [ngClass]="getStatusColor(access.registration_status)">
+                                {{ getStatusLabel(access.registration_status) }}
+                            </span>
+                        </div>
+                        <div class="flex flex-wrap gap-1">
+                            <span *ngFor="let role of access.system_roles"
+                                  class="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">
+                                {{ role }}
+                            </span>
+                        </div>
+                        <span *ngIf="access.last_login_at" class="text-xs text-gray-400">
+                            ចូលចុងក្រោយ: {{ access.last_login_at | date:'dd/MM/yyyy HH:mm' }}
+                        </span>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex flex-col gap-1 shrink-0">
+                        <button *ngIf="access.registration_status === 'active'"
+                                mat-icon-button color="primary"
+                                matTooltip="ចូលប្រព័ន្ធ"
+                                (click)="navigateToSystem(access)">
+                            <mat-icon svgIcon="mdi:open-in-new"></mat-icon>
+                        </button>
+                        <button mat-icon-button color="warn"
+                                matTooltip="ផ្ដាច់ការភ្ជាប់"
+                                [disabled]="disconnectingId === access.system_id"
+                                (click)="disconnect(access)">
+                            <mat-progress-spinner *ngIf="disconnectingId === access.system_id"
+                                [diameter]="20" [mode]="'indeterminate'" />
+                            <mat-icon *ngIf="disconnectingId !== access.system_id"
+                                      svgIcon="mdi:link-off"></mat-icon>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ─── Available Systems ─────────────────────────────────────────────── -->
+        <div *ngIf="availableSystems.length" class="bg-white rounded-2xl shadow-sm p-6">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">ប្រព័ន្ធដែលអាចភ្ជាប់</h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div *ngFor="let system of availableSystems"
+                     class="flex items-center gap-4 p-4 rounded-xl border border-dashed border-gray-200 hover:border-primary-300 hover:bg-primary-50 transition-colors">
+
+                    <!-- Logo -->
+                    <div class="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center shrink-0 overflow-hidden">
+                        <img *ngIf="system.logo"
+                             [src]="FILE_URL + '/' + system.logo"
+                             class="w-full h-full object-cover" />
+                        <mat-icon *ngIf="!system.logo"
+                                  class="icon-size-7 text-gray-300"
+                                  svgIcon="mdi:application-outline"></mat-icon>
+                    </div>
+
+                    <!-- Info -->
+                    <div class="flex flex-col flex-1 min-w-0">
+                        <span class="font-medium text-gray-700">{{ system.name }}</span>
+                        <span *ngIf="system.description" class="text-xs text-gray-400 truncate">
+                            {{ system.description }}
+                        </span>
+                    </div>
+
+                    <!-- Connect button -->
+                    <button mat-stroked-button color="primary" class="shrink-0"
+                            (click)="openConnectDialog(system)">
+                        <mat-icon svgIcon="mdi:link-plus"></mat-icon>
+                        ភ្ជាប់
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </ng-container>
+
+</div>
+
+<!-- ─── Connect Dialog ──────────────────────────────────────────────────────── -->
+<div *ngIf="showConnectDialog"
+     class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+     (click)="closeConnectDialog()">
+
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6"
+         (click)="$event.stopPropagation()">
+
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-5">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center">
+                    <mat-icon class="text-primary icon-size-6" svgIcon="mdi:link-plus"></mat-icon>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-gray-800">ភ្ជាប់ប្រព័ន្ធ</h3>
+                    <p class="text-sm text-gray-500">{{ connectingSystem?.name }}</p>
+                </div>
+            </div>
+            <button mat-icon-button (click)="closeConnectDialog()">
+                <mat-icon svgIcon="mdi:close"></mat-icon>
+            </button>
+        </div>
+
+        <p class="text-sm text-gray-500 mb-4">
+            បញ្ចូលព័ត៌មានចូលប្រព័ន្ធ {{ connectingSystem?.name }} ដើម្បីភ្ជាប់គណនីរបស់អ្នក
+        </p>
+
+        <!-- Form -->
+        <form [formGroup]="connectForm" class="flex flex-col gap-3">
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>ឈ្មោះអ្នកប្រើ</mat-label>
+                <mat-icon matPrefix svgIcon="mdi:account"></mat-icon>
+                <input matInput formControlName="username">
+                <mat-error *ngIf="connectForm.get('username')?.hasError('required')">
+                    សូមបញ្ចូលឈ្មោះអ្នកប្រើ
+                </mat-error>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>ពាក្យសម្ងាត់</mat-label>
+                <mat-icon matPrefix svgIcon="mdi:lock"></mat-icon>
+                <input matInput type="password" formControlName="password" #pwField>
+                <button matSuffix mat-icon-button type="button"
+                    (click)="pwField.type === 'password' ? (pwField.type='text') : (pwField.type='password')">
+                    <mat-icon [svgIcon]="pwField.type === 'password' ? 'mdi:eye' : 'mdi:eye-off'"></mat-icon>
+                </button>
+                <mat-error *ngIf="connectForm.get('password')?.hasError('required')">
+                    សូមបញ្ចូលពាក្យសម្ងាត់
+                </mat-error>
+            </mat-form-field>
+        </form>
+
+        <!-- Actions -->
+        <div class="flex gap-3 mt-5">
+            <button mat-stroked-button class="flex-1" (click)="closeConnectDialog()">
+                បោះបង់
+            </button>
+            <button mat-flat-button color="primary" class="flex-1"
+                    [disabled]="connectForm.invalid || isConnecting"
+                    (click)="connect()">
+                <mat-progress-spinner *ngIf="isConnecting" [diameter]="20" [mode]="'indeterminate'" />
+                <span *ngIf="!isConnecting">ភ្ជាប់</span>
+            </button>
+        </div>
+    </div>
+</div>

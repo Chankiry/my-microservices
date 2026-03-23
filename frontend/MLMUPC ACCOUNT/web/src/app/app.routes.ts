@@ -1,87 +1,78 @@
-import { Injectable }           from '@angular/core';
-import { AuthGuard }            from 'app/core/auth/guards/auth.guard';
-import { NoAuthGuard }          from 'app/core/auth/guards/noAuth.guard';
-import { LayoutComponent }      from 'app/layout/layout.component';
-import { RoleEnum }             from '../helper/enums/role.enum';
-import { initialDataResolver }  from './app.resolver';
-import { roleResolver }         from './core/auth/resolvers/role.resolver';
+import { Injectable }       from '@angular/core';
 import { CanActivate, Route, Router } from '@angular/router';
+import { AuthGuard }        from 'app/core/auth/guards/auth.guard';
+import { NoAuthGuard }      from 'app/core/auth/guards/noAuth.guard';
+import { LayoutComponent }  from 'app/layout/layout.component';
+import { RoleEnum }         from '../helper/enums/role.enum';
+import { initialDataResolver } from './app.resolver';
+import { roleResolver }     from './core/auth/resolvers/role.resolver';
 
-@Injectable({
-    providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class RedirectGuard implements CanActivate {
-    constructor(private router: Router) { }
-
+    constructor(private router: Router) {}
     canActivate(): boolean {
-
         this.router.navigate(['/admin/dashboard']);
-
         return false;
     }
 }
 
 export const appRoutes: Route[] = [
-    // Redirect empty path to 'redirect'
+
     { path: '', pathMatch: 'full', redirectTo: 'redirect' },
 
-    // Dummy route to handle redirection based on role
+    // Redirect based on role
     {
-        path: 'redirect',
+        path      : 'redirect',
         canActivate: [RedirectGuard],
-        component: LayoutComponent
+        component : LayoutComponent,
     },
 
-    // Auth routes for guests
+    // ─── Guest routes ──────────────────────────────────────────────────────────
     {
-        path: 'auth',
+        path      : 'auth',
         canActivate: [NoAuthGuard],
-        component: LayoutComponent,
-        data: {
-            layout: 'empty'
-        },
-        loadChildren: () => import('app/resources/r1-account/auth/auth.routes')
+        component : LayoutComponent,
+        data      : { layout: 'empty' },
+        loadChildren: () => import('app/resources/r1-account/auth/auth.routes'),
     },
 
-    // Admin routes
+    // ─── Authenticated routes ──────────────────────────────────────────────────
     {
-        path: '',
+        path      : '',
         canActivate: [AuthGuard],
-        component: LayoutComponent,
-        resolve: {
-            initialData: initialDataResolver
-            // initialData: devInitialDataResolver
-        },
-        children: [
-            // Role admin
+        component : LayoutComponent,
+        resolve   : { initialData: initialDataResolver },
+        children  : [
+
+            // Profile — accessible by all authenticated users (admin + user)
             {
-                path: 'admin',
-                resolve: {
-                    role: roleResolver([RoleEnum.ADMIN])
-                    // role: devRoleResolver([RoleEnum.ADMIN])
-                },
-                loadChildren: () => import('app/resources/r2-admin/route')
+                path        : 'profile',
+                loadChildren: () => import('app/resources/r1-account/profile/routes'),
             },
-            // Role user
+
+            // Admin routes
             {
-                path: 'user',
-                resolve: {
-                    role: roleResolver([RoleEnum.USER])
-                    // role: devRoleResolver([RoleEnum.USER])
-                },
-                loadChildren: () => import('app/resources/r3-user/route')
+                path   : 'admin',
+                resolve: { role: roleResolver([RoleEnum.ADMIN]) },
+                loadChildren: () => import('app/resources/r2-admin/route'),
             },
+
+            // User routes
+            {
+                path   : 'user',
+                resolve: { role: roleResolver([RoleEnum.USER]) },
+                loadChildren: () => import('app/resources/r3-user/route'),
+            },
+
             // 404
             {
-                path: '404-not-found',
+                path     : '404-not-found',
                 pathMatch: 'full',
-                loadChildren: () => import('app/shared/error/not-found.routes')
+                loadChildren: () => import('app/shared/error/not-found.routes'),
             },
+
             // Catch all
-            {
-                path: '**',
-                redirectTo: '404-not-found'
-            }
-        ]
-    }
+            { path: '**', redirectTo: '404-not-found' },
+        ],
+    },
 ];

@@ -1,6 +1,5 @@
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { ENVIRONMENT_INITIALIZER, EnvironmentProviders, Provider, importProvidersFrom, inject, } from '@angular/core';
-import { MATERIAL_SANITY_CHECKS } from '@angular/material/core';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
 import { HelperConfig } from 'helper/services/config';
@@ -16,25 +15,11 @@ export type ProviderConfig = {
     helper?: HelperConfig;
 };
 
-/**
- * Helper provider
- */
 export const provideHelper = (
     config: ProviderConfig
 ): Array<Provider | EnvironmentProviders> => {
-    // Base providers
     const providers: Array<Provider | EnvironmentProviders> = [
         {
-            // Disable 'theme' sanity check
-            provide: MATERIAL_SANITY_CHECKS,
-            useValue: {
-                doctype: true,
-                theme: false,
-                version: true,
-            },
-        },
-        {
-            // Use the 'outline' appearance on Angular Material form fields by default
             provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,
             useValue: {
                 appearance: 'outline',
@@ -44,21 +29,18 @@ export const provideHelper = (
             provide: HELPER_CONFIG,
             useValue: config?.helper ?? {},
         },
-
         importProvidersFrom(MatDialogModule),
         {
             provide: ENVIRONMENT_INITIALIZER,
             useValue: () => inject(HelperConfirmationService),
             multi: true,
         },
-
         provideHttpClient(withInterceptors([helperLoadingInterceptor])),
         {
             provide: ENVIRONMENT_INITIALIZER,
             useValue: () => inject(HelperLoadingService),
             multi: true,
         },
-
         {
             provide: ENVIRONMENT_INITIALIZER,
             useValue: () => inject(HelperMediaWatcherService),
@@ -81,6 +63,5 @@ export const provideHelper = (
         },
     ];
 
-    // Return the providers
     return providers;
 };

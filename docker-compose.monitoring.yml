@@ -118,19 +118,6 @@ services:
       - prometheus
     networks:
       - microservices-network
-      
-  # ==========================================
-  # Cache Management UI
-  # ==========================================
-  redis-commander:
-    image: rediscommander/redis-commander:latest
-    container_name: microservices-redis-commander
-    environment:
-      REDIS_HOSTS: local:redis:6379:0:redis123
-    ports:
-      - "8081:8081"
-    networks:
-      - microservices-network
 
   # ==========================================
   # Distributed Tracing (Jaeger)

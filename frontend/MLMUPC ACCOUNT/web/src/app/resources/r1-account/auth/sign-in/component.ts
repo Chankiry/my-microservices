@@ -1,42 +1,40 @@
-// ================================================================================>> Main Library
-import { CommonModule }                                                                               from '@angular/common';
-import { Component, EventEmitter, OnInit, Output, ViewChild, ViewEncapsulation }                      from '@angular/core';
-import { FormsModule, NgForm, ReactiveFormsModule, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import { Router, RouterLink }                                                                         from '@angular/router';
+import { CommonModule }                  from '@angular/common';
+import { Component, OnInit, ViewEncapsulation } from '@angular/core';
+import {
+    FormsModule, ReactiveFormsModule,
+    UntypedFormBuilder, UntypedFormGroup, Validators,
+} from '@angular/forms';
+import { Router, RouterLink }            from '@angular/router';
 
-// ================================================================================>> Third Party Library
-// ===>> Material
-import { MatButtonModule }                                                                            from '@angular/material/button';
-import { MatCheckboxModule }                                                                          from '@angular/material/checkbox';
-import { MatIconModule }                                                                              from '@angular/material/icon';
-import { MatInputModule }                                                                             from '@angular/material/input';
-import { MatProgressSpinnerModule }                                                                   from '@angular/material/progress-spinner';
-import { MatFormFieldModule }                                                                         from '@angular/material/form-field';
-import { MatDialog, MatDialogConfig, MatDialogModule }                                                from '@angular/material/dialog';
+import { MatButtonModule }          from '@angular/material/button';
+import { MatIconModule }            from '@angular/material/icon';
+import { MatInputModule }           from '@angular/material/input';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatFormFieldModule }       from '@angular/material/form-field';
+import { MatDividerModule }         from '@angular/material/divider';
+import { MatTooltipModule }         from '@angular/material/tooltip';
 
-// ===>> Transloco
-import { TranslocoModule }                                                                            from '@ngneat/transloco';
+import { TranslocoModule }          from '@ngneat/transloco';
+import { helperAnimations }         from 'helper/animations';
+import { SnackbarService }          from 'helper/services/snack-bar/snack-bar.service';
+import GlobalConstants              from 'helper/shared/constants';
+import { ErrorHandleService }       from 'app/shared/error-handle.service';
+import { AuthService as CoreAuthService } from 'app/core/auth/auth.service';
+import { LanguagesComponent }       from 'app/layout/common/languages/languages.component';
+import { ResourceAuthService, RedirectParams } from '../service';
+import {
+    SavedAccount,
+    getSavedAccounts, saveAccount, removeAccount,
+    setCurrentAccount, getCurrentAccountPhone,
+} from '../saved-account.interface';
+import { jwtDecode } from 'jwt-decode';
 
-// ================================================================================>> Custom Library
-// ===>> Env
-import { env }                                                                                        from 'envs/env';
-
-// ===>> Helper Library
-import { helperAnimations }                                                                           from 'helper/animations';
-import { SnackbarService }                                                                            from 'helper/services/snack-bar/snack-bar.service';
-import GlobalConstants                                                                                from 'helper/shared/constants';
-
-// ===>> Shared
-import { ErrorHandleService }                                                                         from 'app/shared/error-handle.service';
-
-// ===>> Service
-import { AuthService }                                                                                from 'app/core/auth/auth.service';
-
-// ===>> Locals
-import { LanguagesComponent }                                                                         from 'app/layout/common/languages/languages.component';
-import { ResponseSignIn } from 'app/core/auth/auth.types';
-import { MatDividerModule } from '@angular/material/divider';
-import { HttpClient } from '@angular/common/http';
+type ViewState =
+    | 'account-picker'
+    | 'password-confirm'
+    | 'new-account'
+    | 'plt-login'
+    | 'link-connect';   // ← Phase 8: show connect dialog for link action
 
 @Component({
     selector      : 'auth-sign-in',
@@ -52,11 +50,10 @@ import { HttpClient } from '@angular/common/http';
         MatFormFieldModule,
         MatInputModule,
         MatButtonModule,
-        MatDialogModule,
         MatIconModule,
-        MatCheckboxModule,
         MatProgressSpinnerModule,
         MatDividerModule,
+        MatTooltipModule,
         TranslocoModule,
         LanguagesComponent,
         RouterLink,
@@ -64,107 +61,274 @@ import { HttpClient } from '@angular/common/http';
 })
 export class AuthSignInComponent implements OnInit {
 
-    public form         : UntypedFormGroup;
-    public platformForm : UntypedFormGroup;
+    public viewState       : ViewState = 'new-account';
+    public savedAccounts   : SavedAccount[] = [];
+    public selectedAccount : SavedAccount | null = null;
+    public activeLoginTab  : 'platform' | 'plt' = 'platform';
 
-    // Which form is shown — 'plt' (default) or 'platform'
-    public activeTab: 'plt' | 'platform' = 'platform';
+    public redirectParams  : RedirectParams | null = null;
 
-    @Output() updateChange = new EventEmitter<ResponseSignIn>();
+    public pltForm        : UntypedFormGroup;
+    public newAccountForm : UntypedFormGroup;
+    public passwordForm   : UntypedFormGroup;
+    public linkForm       : UntypedFormGroup;   // ← Phase 8: link connect form
 
-    private readonly platformLoginUrl = `http://localhost:8000/api/v1/account/auth/login`;
+    public isLoading    : boolean = false;
+    public isRefreshing : boolean = false;
+    public isLinking    : boolean = false;
 
     constructor(
-        private _authService        : AuthService,
-        private _formBuilder        : UntypedFormBuilder,
-        private _router             : Router,
-        private _http               : HttpClient,
-        private _errorHandleService : ErrorHandleService,
-        private _snackBarService    : SnackbarService,
+        private _coreAuthService : CoreAuthService,
+        private _authService     : ResourceAuthService,
+        private _formBuilder     : UntypedFormBuilder,
+        private _router          : Router,
+        private _snackBarService : SnackbarService,
+        private _errorHandleService: ErrorHandleService,
     ) {}
 
     ngOnInit(): void {
-        // PLT login form
-        this.form = this._formBuilder.group({
+        this.pltForm = this._formBuilder.group({
+            username: ['', Validators.required],
+            password: ['', Validators.required],
+        });
+        this.newAccountForm = this._formBuilder.group({
+            phone   : ['', [Validators.required, Validators.minLength(7)]],
+            password: ['', Validators.required],
+        });
+        this.passwordForm = this._formBuilder.group({
+            password: ['', Validators.required],
+        });
+        this.linkForm = this._formBuilder.group({
             username: ['', Validators.required],
             password: ['', Validators.required],
         });
 
-        // Platform login form
-        this.platformForm = this._formBuilder.group({
-            phone   : ['087600063', [Validators.required, Validators.minLength(7)]],
-            password: ['admin123', Validators.required],
+        // Check redirect params
+        this.redirectParams = this._authService.readRedirectFromUrl();
+        if (this.redirectParams) {
+            this._authService.setPendingRedirect(this.redirectParams);
+        }
+
+        // If action=link and user already logged in → skip login, show link dialog
+        if (this.redirectParams?.action === 'link' && this._coreAuthService.accessToken) {
+            this.viewState = 'link-connect';
+            return;
+        }
+
+        this._initView();
+    }
+
+    // ─── Init ─────────────────────────────────────────────────────────────────
+
+    private _initView(): void {
+        this.savedAccounts = getSavedAccounts();
+        this.viewState = this.savedAccounts.length ? 'account-picker' : 'new-account';
+    }
+
+    // ─── Redirect helpers ─────────────────────────────────────────────────────
+
+    get isRedirectMode(): boolean { return !!this.redirectParams; }
+    get isLinkMode(): boolean     { return this.redirectParams?.action === 'link'; }
+    get redirectSystemName(): string { return this.redirectParams?.system_id || ''; }
+
+    // ─── Account picker ───────────────────────────────────────────────────────
+
+    async pickAccount(account: SavedAccount): Promise<void> {
+        const currentPhone = getCurrentAccountPhone();
+        const refreshToken = this._coreAuthService.refreshToken;
+        const accessToken  = this._coreAuthService.accessToken;
+
+        if (account.phone === currentPhone && accessToken) {
+            try {
+                const payload: any = jwtDecode(accessToken);
+                if (payload.exp && payload.exp > Date.now() / 1000 + 30) {
+                    this._afterLogin();
+                    return;
+                }
+            } catch { /* fall through */ }
+        }
+
+        if (account.phone === currentPhone && refreshToken) {
+            this.isRefreshing = true;
+            try {
+                await this._authService.refresh(refreshToken).toPromise();
+                setCurrentAccount(account.phone);
+                this._afterLogin();
+                return;
+            } catch { /* fall through */ }
+            finally { this.isRefreshing = false; }
+        }
+
+        this.selectedAccount = account;
+        this.passwordForm.reset();
+        this.viewState = 'password-confirm';
+    }
+
+    useAnotherAccount(): void {
+        this.newAccountForm.reset();
+        this.viewState = 'new-account';
+    }
+
+    backToPicker(): void {
+        this.selectedAccount = null;
+        this.viewState = this.savedAccounts.length ? 'account-picker' : 'new-account';
+    }
+
+    removeAccount(account: SavedAccount, event: MouseEvent): void {
+        event.stopPropagation();
+        removeAccount(account.phone);
+        this.savedAccounts = getSavedAccounts();
+        if (!this.savedAccounts.length) this.viewState = 'new-account';
+    }
+
+    // ─── Platform login — new account ────────────────────────────────────────
+
+    platformSignIn(): void {
+        if (this.newAccountForm.invalid || this.isLoading) return;
+        this.isLoading = true;
+        this.newAccountForm.disable();
+
+        const { phone, password } = this.newAccountForm.value;
+        this._authService.login({ phone, password }).subscribe({
+            next : res => this._saveAndProceed(res, phone),
+            error: err => {
+                this.isLoading = false;
+                this.newAccountForm.enable();
+                this._errorHandleService.handleHttpError(err);
+            },
         });
     }
 
-    switchTab(tab: 'plt' | 'platform'): void {
-        this.activeTab = tab;
+    // ─── Platform login — confirm saved account password ─────────────────────
+
+    confirmPassword(): void {
+        if (this.passwordForm.invalid || this.isLoading || !this.selectedAccount) return;
+        this.isLoading = true;
+        this.passwordForm.disable();
+
+        this._authService.login({
+            phone   : this.selectedAccount.phone,
+            password: this.passwordForm.value.password,
+        }).subscribe({
+            next : res => this._saveAndProceed(res, this.selectedAccount!.phone),
+            error: err => {
+                this.isLoading = false;
+                this.passwordForm.enable();
+                this._errorHandleService.handleHttpError(err);
+            },
+        });
+    }
+
+    // ─── PLT login ────────────────────────────────────────────────────────────
+
+    pltSignIn(): void {
+        if (this.pltForm.invalid || this.isLoading) return;
+        this.isLoading = true;
+        this.pltForm.disable();
+
+        this._coreAuthService.signIn(this.pltForm.value).subscribe({
+            next: res => {
+                this._snackBarService.openSnackBar(res.message, GlobalConstants.success);
+                this.isLoading = false;
+                this.pltForm.enable();
+            },
+            error: err => {
+                this.isLoading = false;
+                this.pltForm.enable();
+                this._errorHandleService.handleHttpError(err);
+            },
+        });
+    }
+
+    // ─── Phase 8: Link account ────────────────────────────────────────────────
+
+    linkAccount(): void {
+        if (this.linkForm.invalid || this.isLinking || !this.redirectParams) return;
+        this.isLinking = true;
+        this.linkForm.disable();
+
+        this._authService.redirectLink({
+            system_id   : this.redirectParams.system_id,
+            redirect_uri: this.redirectParams.redirect_uri,
+            username    : this.linkForm.value.username,
+            password    : this.linkForm.value.password,
+        }).subscribe({
+            next: res => {
+                this._authService.clearPendingRedirect();
+                this._snackBarService.openSnackBar('ភ្ជាប់គណនីបានជោគជ័យ', GlobalConstants.success);
+                window.location.href = res.redirect_url;
+            },
+            error: err => {
+                this.isLinking = false;
+                this.linkForm.enable();
+                this._errorHandleService.handleHttpError(err);
+            },
+        });
+    }
+
+    cancelLink(): void {
+        this._authService.clearPendingRedirect();
+        this._router.navigate(['/admin/dashboard']);
+    }
+
+    // ─── Post-login ───────────────────────────────────────────────────────────
+
+    private _saveAndProceed(res: any, phone: string): void {
+        try {
+            const payload: any = jwtDecode(res.access_token);
+            const name = [payload.given_name, payload.family_name].filter(Boolean).join(' ')
+                      || payload.preferred_username || phone;
+            saveAccount({ phone, name, email: payload.email || '', avatar: '', last_used: Date.now() });
+        } catch {
+            saveAccount({ phone, name: phone, email: '', avatar: '', last_used: Date.now() });
+        }
+
+        this._snackBarService.openSnackBar('ចូលប្រព័ន្ធជោគជ័យ', GlobalConstants.success);
+        this._afterLogin();
+    }
+
+    private _afterLogin(): void {
+        const pending = this._authService.getPendingRedirect();
+
+        if (pending?.action === 'link') {
+            // After login for link flow → show link connect dialog
+            this.viewState = 'link-connect';
+            this.isLoading = false;
+            return;
+        }
+
+        if (pending?.action === 'login') {
+            this._authService.validateRedirect(pending).subscribe({
+                next: res => {
+                    this._authService.clearPendingRedirect();
+                    window.location.href = res.redirect_url;
+                },
+                error: err => {
+                    this.isLoading = false;
+                    this._errorHandleService.handleHttpError(err);
+                },
+            });
+            return;
+        }
+
+        this._router.navigate(['/admin/dashboard']);
+    }
+
+    // ─── Tab switch ───────────────────────────────────────────────────────────
+
+    switchLoginTab(tab: 'platform' | 'plt'): void {
+        this.activeLoginTab = tab;
+        this.viewState = tab === 'plt' ? 'plt-login' : (
+            this.savedAccounts.length ? 'account-picker' : 'new-account'
+        );
     }
 
     onEnterKeyPress(event: KeyboardEvent): void {
-        if (event.key === 'Enter') {
-            event.preventDefault();
-            this.activeTab === 'plt' ? this.signIn() : this.platformSignIn();
-        }
-    }
-
-    // ─── PLT login (existing) ─────────────────────────────────────────────────
-
-    signIn(): void {
-        if (this.form.disabled || this.form.invalid) return;
-
-        this.form.disable();
-
-        this._authService.signIn(this.form.value).subscribe({
-            next: res => {
-                this.updateChange.emit(res);
-                this._snackBarService.openSnackBar(res.message, GlobalConstants.success);
-            },
-            error: err => {
-                this.form.enable();
-                this._errorHandleService.handleHttpError(err);
-            },
-        });
-    }
-
-    // ─── Platform login (new) ─────────────────────────────────────────────────
-
-    platformSignIn(): void {
-        if (this.platformForm.disabled || this.platformForm.invalid) return;
-
-        this.platformForm.disable();
-
-        this._http.post<{
-            access_token : string;
-            refresh_token: string;
-            expires_in   : number;
-            token_type   : string;
-        }>(this.platformLoginUrl, {
-            phone   : this.platformForm.value.phone,
-            password: this.platformForm.value.password,
-        }).subscribe({
-            next: res => {
-                this._authService.accessToken  = res.access_token;
-                this._authService.refreshToken = res.refresh_token;
-                this._snackBarService.openSnackBar('ចូលប្រព័ន្ធជោគជ័យ', GlobalConstants.success);
-                this._router.navigate(['/admin/home']);
-            },
-            error: err => {
-                this.platformForm.enable();
-                this._errorHandleService.handleHttpError(err);
-            },
-        });
-    }
-
-private readonly keycloakLoginUrl =
-    `http://localhost:8080/realms/microservices-platform/protocol/openid-connect/auth` +
-    `?client_id=kong-gateway` +
-    `&redirect_uri=http://localhost:4444/callback` +
-    `&response_type=code` +
-    `&scope=openid%20profile%20email`;
-    // `&prompt=login`;  // ← add this
-
-    loginWithKeycloak(): void {
-        window.location.href = this.keycloakLoginUrl;
+        if (event.key !== 'Enter') return;
+        event.preventDefault();
+        if (this.viewState === 'new-account')      this.platformSignIn();
+        if (this.viewState === 'password-confirm') this.confirmPassword();
+        if (this.viewState === 'plt-login')        this.pltSignIn();
+        if (this.viewState === 'link-connect')     this.linkAccount();
     }
 }

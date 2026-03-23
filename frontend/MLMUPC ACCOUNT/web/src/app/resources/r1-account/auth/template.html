@@ -6,37 +6,19 @@
         <img class="block sm:hidden h-30 w-auto mt-4" src="images/logo/MLMUPC_Logo_Text_Bottom.png" />
     </div>
 
-    <!-- <div class="absolute top-4 right-4">
-        <button class="bg-gray-100 underline dark:bg-background-dark-2 hover:brightness-95 p-2 rounded-full scale-90 md:scale-100" (click)="openAboutDialog()">
-            អំពីប្រព័ន្ធ
-        </button>
-    </div> -->
-
     <!-- Content Card -->
-    <div class=" max-w-100 md:min-w-240 h-140 flex justify-center shadow-none sm:shadow-lg relative bg-white py-6 rounded-2xl">
+    <div class="max-w-100 md:min-w-240 h-140 flex justify-center shadow-none sm:shadow-lg relative bg-white py-6 rounded-2xl">
 
-        <!-- Image-->
+        <!-- Image -->
         <div class="min-w-1/2 h-full pl-6 hidden md:flex">
             <div class="h-full w-full hidden md:flex items-center justify-center overflow-hidden rounded-xl bg-black/5">
                 <img class="w-[440px] h-[440px] object-cover" src="images/apps/Login.png" />
             </div>
         </div>
 
-
         <!-- Content -->
         <div class="flex-grow flex flex-col px-8 min-w-0">
-
-            <auth-sign-in
-                *ngIf="!go_to_verify_otp"
-                class="flex-grow"
-                (updateChange)="verifyOTP($event)" />
-
-            <auth-sign-in-otp
-                *ngIf="go_to_verify_otp"
-                class="flex-grow"
-                [username] = "email"
-                (back)="signIn($event)" />
-
+            <auth-sign-in class="flex-grow" />
         </div>
 
     </div>
@@ -46,39 +28,31 @@
 
         <!-- Contact Section -->
         <div class="flex flex-col justify-center items-start gap-4">
-            <!-- Address Section -->
             <div class="flex gap-1.5 -ml-0.5">
                 <mat-icon svgIcon="mdi:map-marker" class="h-5 w-5 text-primary icon-size-6"></mat-icon>
-                <span class="text-[14px] mt-0.5 text-primary ">
+                <span class="text-[14px] mt-0.5 text-primary">
                     JVJF+5F, ដីឡូត៌លេខ ២០០៥, ផ្លូវលេខ ៣០៧, Phnom Penh
                 </span>
             </div>
 
             <!-- Social Icons -->
             <div class="flex gap-4 h-5 items-end">
-                <!-- Telegram -->
                 <a href="https://t.me/MLMUPCofCambodia" class="h-5 w-5">
                     <mat-icon svgIcon="logos:telegram" class="text-primary icon-size-5"></mat-icon>
                 </a>
-
-                <!-- Facebook -->
                 <a href="https://www.facebook.com/mlmupc.pressteam" class="h-5 w-5">
                     <mat-icon svgIcon="logos:facebook" class="text-primary icon-size-5"></mat-icon>
                 </a>
-
-                <!-- Youtube -->
                 <a href="https://www.youtube.com/@MLMUPC_KH" class="h-5 w-7 flex items-start justify-center mb-[1.5px]">
                     <mat-icon svgIcon="logos:youtube-icon" class="text-primary icon-size-6"></mat-icon>
                 </a>
-
-                <!-- Email -->
                 <a href="mailto:onewindowmlmupc@gmail.com" class="h-5 w-5 mb-[1.5px]">
                     <mat-icon svgIcon="mdi:email" class="text-primary icon-size-6"></mat-icon>
                 </a>
             </div>
         </div>
 
-        <!-- Version Section -->
-        <span class="text-[14px] text-slate-800 opacity-50">{{ 'Version' | transloco }} {{ appVersion }}</span>
+        <!-- Version -->
+        <span class="text-[14px] text-slate-800 opacity-50">{{ appVersion }}</span>
     </div>
 </div>

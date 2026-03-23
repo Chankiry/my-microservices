@@ -2,18 +2,24 @@ import { HelperNavigationItem } from 'helper/components/navigation';
 
 const adminNavigation: HelperNavigationItem[] = [
     {
-        id: 'home',
+        id: 'dashboard',
         type: 'basic',
         icon: 'mdi:home-outline',
         link: '/admin/dashboard',
     },
+    {
+        id  : 'profile',
+        type: 'basic',
+        icon: 'mdi:account-circle-outline',
+        link: '/profile/my-profile',
+    },
 ];
 const userNavigation: HelperNavigationItem[] = [
     {
-        id: 'home',
+        id  : 'profile',
         type: 'basic',
-        icon: 'mdi:home-outline',
-        link: '/user/dashboard',
+        icon: 'mdi:account-circle-outline',
+        link: '/profile/my-profile',
     },
 ];
 
