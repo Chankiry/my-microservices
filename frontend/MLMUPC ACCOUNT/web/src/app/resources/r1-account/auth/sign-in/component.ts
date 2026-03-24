@@ -11,8 +11,8 @@ import { MatIconModule }            from '@angular/material/icon';
 import { MatInputModule }           from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatFormFieldModule }       from '@angular/material/form-field';
-import { MatDividerModule }         from '@angular/material/divider';
 import { MatTooltipModule }         from '@angular/material/tooltip';
+import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 
 import { TranslocoModule }          from '@ngneat/transloco';
 import { helperAnimations }         from 'helper/animations';
@@ -20,8 +20,8 @@ import { SnackbarService }          from 'helper/services/snack-bar/snack-bar.se
 import GlobalConstants              from 'helper/shared/constants';
 import { ErrorHandleService }       from 'app/shared/error-handle.service';
 import { AuthService as CoreAuthService } from 'app/core/auth/auth.service';
-import { LanguagesComponent }       from 'app/layout/common/languages/languages.component';
 import { ResourceAuthService, RedirectParams } from '../service';
+import { ConfirmDialogComponent } from './confirm-dialog.component';
 import {
     SavedAccount,
     getSavedAccounts, saveAccount, removeAccount,
@@ -33,8 +33,7 @@ type ViewState =
     | 'account-picker'
     | 'password-confirm'
     | 'new-account'
-    | 'plt-login'
-    | 'link-connect';   // ← Phase 8: show connect dialog for link action
+    | 'link-connect';
 
 @Component({
     selector      : 'auth-sign-in',
@@ -52,10 +51,9 @@ type ViewState =
         MatButtonModule,
         MatIconModule,
         MatProgressSpinnerModule,
-        MatDividerModule,
         MatTooltipModule,
+        MatDialogModule,
         TranslocoModule,
-        LanguagesComponent,
         RouterLink,
     ],
 })
@@ -64,33 +62,27 @@ export class AuthSignInComponent implements OnInit {
     public viewState       : ViewState = 'new-account';
     public savedAccounts   : SavedAccount[] = [];
     public selectedAccount : SavedAccount | null = null;
-    public activeLoginTab  : 'platform' | 'plt' = 'platform';
-
     public redirectParams  : RedirectParams | null = null;
 
-    public pltForm        : UntypedFormGroup;
     public newAccountForm : UntypedFormGroup;
     public passwordForm   : UntypedFormGroup;
-    public linkForm       : UntypedFormGroup;   // ← Phase 8: link connect form
+    public linkForm       : UntypedFormGroup;
 
     public isLoading    : boolean = false;
     public isRefreshing : boolean = false;
     public isLinking    : boolean = false;
 
     constructor(
-        private _coreAuthService : CoreAuthService,
-        private _authService     : ResourceAuthService,
-        private _formBuilder     : UntypedFormBuilder,
-        private _router          : Router,
-        private _snackBarService : SnackbarService,
-        private _errorHandleService: ErrorHandleService,
+        private _coreAuthService    : CoreAuthService,
+        private _authService        : ResourceAuthService,
+        private _formBuilder        : UntypedFormBuilder,
+        private _router             : Router,
+        private _snackBarService    : SnackbarService,
+        private _errorHandleService : ErrorHandleService,
+        private _dialog             : MatDialog,
     ) {}
 
     ngOnInit(): void {
-        this.pltForm = this._formBuilder.group({
-            username: ['', Validators.required],
-            password: ['', Validators.required],
-        });
         this.newAccountForm = this._formBuilder.group({
             phone   : ['', [Validators.required, Validators.minLength(7)]],
             password: ['', Validators.required],
@@ -109,7 +101,7 @@ export class AuthSignInComponent implements OnInit {
             this._authService.setPendingRedirect(this.redirectParams);
         }
 
-        // If action=link and user already logged in → skip login, show link dialog
+        // action=link + already logged in → skip to link dialog
         if (this.redirectParams?.action === 'link' && this._coreAuthService.accessToken) {
             this.viewState = 'link-connect';
             return;
@@ -127,8 +119,8 @@ export class AuthSignInComponent implements OnInit {
 
     // ─── Redirect helpers ─────────────────────────────────────────────────────
 
-    get isRedirectMode(): boolean { return !!this.redirectParams; }
-    get isLinkMode(): boolean     { return this.redirectParams?.action === 'link'; }
+    get isRedirectMode(): boolean  { return !!this.redirectParams; }
+    get isLinkMode(): boolean      { return this.redirectParams?.action === 'link'; }
     get redirectSystemName(): string { return this.redirectParams?.system_id || ''; }
 
     // ─── Account picker ───────────────────────────────────────────────────────
@@ -176,14 +168,31 @@ export class AuthSignInComponent implements OnInit {
 
     removeAccount(account: SavedAccount, event: MouseEvent): void {
         event.stopPropagation();
-        removeAccount(account.phone);
-        this.savedAccounts = getSavedAccounts();
-        if (!this.savedAccounts.length) this.viewState = 'new-account';
+
+        const dialogRef = this._dialog.open(ConfirmDialogComponent, {
+            width: '400px',
+            data: {
+                title: 'ដកចេញគណនី',
+                message: `តើលោកអ្នកពិតប្រាកដថាចង់ដកចេញគណនី ${account.name}?`,
+                confirmLabel: 'ដកចេញ',
+                cancelLabel: 'បោះបង់',
+                confirmColor: 'warn',
+            }
+        });
+
+        dialogRef.afterClosed().subscribe(result => {
+            if (result) {
+                removeAccount(account.phone);
+                this.savedAccounts = getSavedAccounts();
+                if (!this.savedAccounts.length) this.viewState = 'new-account';
+                this._snackBarService.openSnackBar('គណនីត្រូវបានដកចេញ', GlobalConstants.success);
+            }
+        });
     }
 
-    // ─── Platform login — new account ────────────────────────────────────────
+    // ─── Login — new account ──────────────────────────────────────────────────
 
-    platformSignIn(): void {
+    signIn(): void {
         if (this.newAccountForm.invalid || this.isLoading) return;
         this.isLoading = true;
         this.newAccountForm.disable();
@@ -199,7 +208,7 @@ export class AuthSignInComponent implements OnInit {
         });
     }
 
-    // ─── Platform login — confirm saved account password ─────────────────────
+    // ─── Login — saved account password confirm ───────────────────────────────
 
     confirmPassword(): void {
         if (this.passwordForm.invalid || this.isLoading || !this.selectedAccount) return;
@@ -219,28 +228,7 @@ export class AuthSignInComponent implements OnInit {
         });
     }
 
-    // ─── PLT login ────────────────────────────────────────────────────────────
-
-    pltSignIn(): void {
-        if (this.pltForm.invalid || this.isLoading) return;
-        this.isLoading = true;
-        this.pltForm.disable();
-
-        this._coreAuthService.signIn(this.pltForm.value).subscribe({
-            next: res => {
-                this._snackBarService.openSnackBar(res.message, GlobalConstants.success);
-                this.isLoading = false;
-                this.pltForm.enable();
-            },
-            error: err => {
-                this.isLoading = false;
-                this.pltForm.enable();
-                this._errorHandleService.handleHttpError(err);
-            },
-        });
-    }
-
-    // ─── Phase 8: Link account ────────────────────────────────────────────────
+    // ─── Link account (Phase 8) ───────────────────────────────────────────────
 
     linkAccount(): void {
         if (this.linkForm.invalid || this.isLinking || !this.redirectParams) return;
@@ -282,7 +270,6 @@ export class AuthSignInComponent implements OnInit {
         } catch {
             saveAccount({ phone, name: phone, email: '', avatar: '', last_used: Date.now() });
         }
-
         this._snackBarService.openSnackBar('ចូលប្រព័ន្ធជោគជ័យ', GlobalConstants.success);
         this._afterLogin();
     }
@@ -291,7 +278,6 @@ export class AuthSignInComponent implements OnInit {
         const pending = this._authService.getPendingRedirect();
 
         if (pending?.action === 'link') {
-            // After login for link flow → show link connect dialog
             this.viewState = 'link-connect';
             this.isLoading = false;
             return;
@@ -314,21 +300,11 @@ export class AuthSignInComponent implements OnInit {
         this._router.navigate(['/admin/dashboard']);
     }
 
-    // ─── Tab switch ───────────────────────────────────────────────────────────
-
-    switchLoginTab(tab: 'platform' | 'plt'): void {
-        this.activeLoginTab = tab;
-        this.viewState = tab === 'plt' ? 'plt-login' : (
-            this.savedAccounts.length ? 'account-picker' : 'new-account'
-        );
-    }
-
     onEnterKeyPress(event: KeyboardEvent): void {
         if (event.key !== 'Enter') return;
         event.preventDefault();
-        if (this.viewState === 'new-account')      this.platformSignIn();
+        if (this.viewState === 'new-account')      this.signIn();
         if (this.viewState === 'password-confirm') this.confirmPassword();
-        if (this.viewState === 'plt-login')        this.pltSignIn();
         if (this.viewState === 'link-connect')     this.linkAccount();
     }
 }

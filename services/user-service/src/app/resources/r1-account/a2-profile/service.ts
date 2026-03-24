@@ -46,7 +46,9 @@ export class ProfileService {
             order  : [['created_at', 'ASC']],
         });
 
-        return { ...user.toJSON(), system_access };
+        // user may be a cached plain object or a Sequelize instance — handle both
+        const userData = typeof user.toJSON === 'function' ? user.toJSON() : { ...user };
+        return { ...userData, system_access };
     }
 
     // ─── Get available systems (not yet connected) ────────────────────────────

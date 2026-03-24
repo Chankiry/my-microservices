@@ -1,9 +1,10 @@
-import { CommonModule }         from '@angular/common';
-import { Component }            from '@angular/core';
-import { MatIconModule }        from '@angular/material/icon';
-import { TranslocoModule }      from '@ngneat/transloco';
-import { AuthSignInComponent }  from './sign-in/component';
-import { env }                  from 'envs/env';
+import { CommonModule }     from '@angular/common';
+import { Component }        from '@angular/core';
+import { RouterOutlet }     from '@angular/router';
+import { MatIconModule }    from '@angular/material/icon';
+import { TranslocoModule }  from '@ngneat/transloco';
+import { env }              from 'envs/env';
+import { LanguagesComponent } from 'app/layout/common/languages/languages.component';
 
 @Component({
     standalone  : true,
@@ -11,9 +12,10 @@ import { env }                  from 'envs/env';
     templateUrl : 'template.html',
     imports     : [
         CommonModule,
+        RouterOutlet,
         MatIconModule,
         TranslocoModule,
-        AuthSignInComponent,
+        LanguagesComponent
     ],
 })
 export class AuthLayoutComponent {

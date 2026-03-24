@@ -17,7 +17,6 @@ import { helperAnimations }         from 'helper/animations';
 import { SnackbarService }          from 'helper/services/snack-bar/snack-bar.service';
 import GlobalConstants              from 'helper/shared/constants';
 import { ErrorHandleService }       from 'app/shared/error-handle.service';
-import { LanguagesComponent }       from 'app/layout/common/languages/languages.component';
 import { ResourceAuthService }      from '../service';
 
 @Component({
@@ -37,7 +36,6 @@ import { ResourceAuthService }      from '../service';
         MatIconModule,
         MatProgressSpinnerModule,
         TranslocoModule,
-        LanguagesComponent,
         RouterLink,
     ],
 })
@@ -59,7 +57,7 @@ export class AuthSignUpComponent implements OnInit {
             first_name      : ['', [Validators.required, Validators.maxLength(100)]],
             last_name       : ['', [Validators.required, Validators.maxLength(100)]],
             phone           : ['', [Validators.required, Validators.minLength(7), Validators.maxLength(20)]],
-            email           : ['', [Validators.required, Validators.email]],
+            email           : [null, [Validators.email]],
             password        : ['', [Validators.required, Validators.minLength(8)]],
             confirm_password: ['', Validators.required],
         }, { validators: this._passwordMatchValidator });

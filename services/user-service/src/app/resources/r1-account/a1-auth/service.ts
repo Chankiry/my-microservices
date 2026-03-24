@@ -40,39 +40,45 @@ export class AuthService {
         // ─── Register ─────────────────────────────────────────────────────────────
  
     async register(dto: RegisterDto): Promise<{ message: string }> {
- 
-        // Check phone uniqueness
-        const existingPhone = await this.userService.findByPhone(dto.phone);
-        if (existingPhone) {
-            throw new ConflictException('លេខទូរស័ព្ទនេះត្រូវបានប្រើប្រាស់រួចហើយ');
+        try {
+            // Check phone uniqueness
+            const existingPhone = await this.userService.findByPhone(dto.phone);
+            if (existingPhone) {
+                throw new ConflictException('លេខទូរស័ព្ទនេះត្រូវបានប្រើប្រាស់រួចហើយ');
+            }
+     
+            // Check email uniqueness
+            if (dto.email) {
+                const existingEmail = await this.userService.findByEmail(dto.email);
+                if (existingEmail) {
+                    throw new ConflictException('អ៊ីមែលនេះត្រូវបានប្រើប្រាស់រួចហើយ');
+                }
+            }
+     
+            // Create user in DB + Keycloak (without password — set separately)
+            const user = await this.userService.create({
+                first_name : dto.first_name,
+                last_name  : dto.last_name,
+                phone      : dto.phone,
+                email      : dto.email,
+                is_active  : true,
+            });
+     
+            if (!user.keycloak_id) {
+                throw new BadRequestException('Failed to create identity account');
+            }
+     
+            // Set password and clear required actions
+            await this.keycloakAdmin.setPassword(user.keycloak_id, dto.password);
+            await this.keycloakAdmin.clearRequiredActions(user.keycloak_id);
+     
+            this.logger.log(`User registered: ${user.id} phone: ${dto.phone}`);
+     
+            return { message: 'ការចុះឈ្មោះបានជោគជ័យ។ សូមចូលប្រព័ន្ធ' };
+        } catch (err) {
+            console.log(err);
+            throw err;
         }
- 
-        // Check email uniqueness
-        const existingEmail = await this.userService.findByEmail(dto.email);
-        if (existingEmail) {
-            throw new ConflictException('អ៊ីមែលនេះត្រូវបានប្រើប្រាស់រួចហើយ');
-        }
- 
-        // Create user in DB + Keycloak (without password — set separately)
-        const user = await this.userService.create({
-            first_name : dto.first_name,
-            last_name  : dto.last_name,
-            phone      : dto.phone,
-            email      : dto.email,
-            is_active  : true,
-        });
- 
-        if (!user.keycloak_id) {
-            throw new BadRequestException('Failed to create identity account');
-        }
- 
-        // Set password and clear required actions
-        await this.keycloakAdmin.setPassword(user.keycloak_id, dto.password);
-        await this.keycloakAdmin.clearRequiredActions(user.keycloak_id);
- 
-        this.logger.log(`User registered: ${user.id} phone: ${dto.phone}`);
- 
-        return { message: 'ការចុះឈ្មោះបានជោគជ័យ។ សូមចូលប្រព័ន្ធ' };
     }
 
     // ─── Platform login ───────────────────────────────────────────────────────

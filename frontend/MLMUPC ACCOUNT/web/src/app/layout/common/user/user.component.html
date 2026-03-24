@@ -4,26 +4,9 @@
     </span>
 </button>
 
-<mat-menu transloco="let t" [xPosition]="'before'" #userActions="matMenu" class="absolute top-3 -right-2 py-0">
-
-    <!-- If user role is "អ្នកប្រើប្រាស់", call the function -->
-    <!-- <button mat-menu-item (click)="viewUserDialog('គណនី')">
-        <mat-icon svgIcon="heroicons_outline:user-circle"></mat-icon>
-        <span class="text-lg text-slate-900"> {{ 'Menu-Option.Profile' | transloco }}</span>
-    </button> -->
-
-    <!-- <button *ngIf="user?.roles?.length > 1" mat-menu-item (click)="handleSwitchRole()">
-        <mat-icon svgIcon="mat_solid:manage_accounts" />
-        <span class="text-lg text-slate-900"> {{ 'Menu-Option.Switch-Role' | transloco }} </span>
-    </button> -->
-
-    <!-- <mat-divider class="my-0" /> -->
-
+<mat-menu [xPosition]="'before'" #userActions="matMenu" class="absolute top-3 -right-2 py-0">
     <button mat-menu-item (click)="signOut()">
         <mat-icon svgIcon="feather:log-out" />
         <span class="text-lg text-slate-900"> {{ 'Menu-Option.Sign-Out' | transloco }} </span>
     </button>
-
 </mat-menu>
-
-<user-switch-role [class]="classList" [roles]="user?.roles" #switchRoleComponent />

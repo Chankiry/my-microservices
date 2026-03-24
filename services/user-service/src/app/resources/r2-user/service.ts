@@ -31,44 +31,52 @@ export class UserService {
     // ─── Read ─────────────────────────────────────────────────────────────────
 
     async findById(id: string): Promise<User> {
-        const key    = `user:profile:${id}`;
-        const cached = await this.redisService.get<User>(key);
-        if (cached) return cached;
+        const cached = await this.redisService.get<any>(`user:profile:${id}`);
+        if (cached) {
+            // Cache hit — re-fetch to return a proper Sequelize instance
+            const user = await this.userModel.findOne({ where: { id } });
+            if (!user) throw new NotFoundException(`User ${id} not found`);
+            return user;
+        }
 
         const user = await this.userModel.findOne({ where: { id } });
         if (!user) throw new NotFoundException(`User ${id} not found`);
 
-        await this.redisService.set(key, user, this.CACHE_TTL);
+        await this.redisService.set(`user:profile:${id}`, user.toJSON(), this.CACHE_TTL);
         return user;
     }
 
     async findByKeycloakId(keycloak_id: string): Promise<User | null> {
-        const key    = `user:keycloak:${keycloak_id}`;
-        const cached = await this.redisService.get<User>(key);
-        if (cached) return cached;
+        const cached = await this.redisService.get<any>(`user:keycloak:${keycloak_id}`);
+        if (cached) {
+            // Cache hit — re-fetch to return a proper Sequelize instance
+            return this.userModel.findOne({ where: { keycloak_id } });
+        }
 
         const user = await this.userModel.findOne({ where: { keycloak_id } });
-        if (user) await this.redisService.set(key, user, this.CACHE_TTL);
+        if (user) await this.redisService.set(`user:keycloak:${keycloak_id}`, user.toJSON(), this.CACHE_TTL);
         return user;
     }
 
     async findByEmail(email: string): Promise<User | null> {
-        const key    = `user:email:${email}`;
-        const cached = await this.redisService.get<User>(key);
-        if (cached) return cached;
+        const cached = await this.redisService.get<any>(`user:email:${email}`);
+        if (cached) {
+            return this.userModel.findOne({ where: { email } });
+        }
 
         const user = await this.userModel.findOne({ where: { email } });
-        if (user) await this.redisService.set(key, user, this.CACHE_TTL);
+        if (user) await this.redisService.set(`user:email:${email}`, user.toJSON(), this.CACHE_TTL);
         return user;
     }
 
     async findByPhone(phone: string): Promise<User | null> {
-        const key    = `user:phone:${phone}`;
-        const cached = await this.redisService.get<User>(key);
-        if (cached) return cached;
+        const cached = await this.redisService.get<any>(`user:phone:${phone}`);
+        if (cached) {
+            return this.userModel.findOne({ where: { phone } });
+        }
 
         const user = await this.userModel.findOne({ where: { phone } });
-        if (user) await this.redisService.set(key, user, this.CACHE_TTL);
+        if (user) await this.redisService.set(`user:phone:${phone}`, user.toJSON(), this.CACHE_TTL);
         return user;
     }
 
@@ -122,7 +130,7 @@ export class UserService {
             if (!keycloak_id) {
                 try {
                     keycloak_id = await this.keycloakAdmin.createUser({
-                        username   : dto.phone,          // phone = Keycloak username
+                        username   : dto.phone,
                         email      : dto.email || undefined,
                         first_name : dto.first_name,
                         last_name  : dto.last_name,
@@ -131,11 +139,9 @@ export class UserService {
                     this.logger.log(`Keycloak user created: ${keycloak_id}`);
                 } catch (err: any) {
                     this.logger.warn(`Keycloak create failed, proceeding without keycloak_id: ${err.message}`);
-                    // Don't block local creation — admin can link later
                 }
             }
 
-            // ── Step 2: create local profile row ─────────────────────────────────
             const user = await this.userModel.create({
                 ...dto,
                 keycloak_id,
@@ -177,9 +183,7 @@ export class UserService {
             await tx.commit();
             await this.invalidateUserCache(id, user);
             this.logger.log(`User updated: ${id}`);
-            return {
-                data: user
-            };
+            return { data: user };
         } catch (err) {
             await tx.rollback();
             throw err;
@@ -206,9 +210,7 @@ export class UserService {
             await tx.commit();
             await this.invalidateUserCache(id, user);
             this.logger.log(`User soft-deleted: ${id}`);
-            return {
-                success: true,
-            }
+            return { success: true };
         } catch (err) {
             await tx.rollback();
             throw err;
@@ -276,10 +278,10 @@ export class UserService {
     ): Promise<User> {
         const user = await this.userModel.findOne({ where: { id } });
         if (!user) throw new NotFoundException(`User ${id} not found`);
- 
+
         Object.assign(user, fields);
         await user.save();
- 
+
         await this.redisService.del(`user:profile:${id}`);
         this.logger.log(`Business profile updated for user ${id}`);
         return user;

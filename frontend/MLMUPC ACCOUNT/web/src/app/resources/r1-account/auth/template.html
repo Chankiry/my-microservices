@@ -1,58 +1,106 @@
-<div class="w-full h-[100dvh] flex flex-col items-center justify-center bg-white sm:bg-slate-100">
+<div class="w-full h-[100dvh] flex overflow-hidden bg-white">
 
-    <!-- Top Left Logo -->
-    <div class="absolute w-full h-16 top-0 left-0 p-4 flex items-start justify-center sm:justify-start">
-        <img class="hidden sm:block h-16 w-auto" src="images/logo/MLMUPC_Logo_Text_Right.png" />
-        <img class="block sm:hidden h-30 w-auto mt-4" src="images/logo/MLMUPC_Logo_Text_Bottom.png" />
-    </div>
+    <!-- Left Panel - Form -->
+    <div class="flex-1 flex flex-col bg-white overflow-y-auto">
 
-    <!-- Content Card -->
-    <div class="max-w-100 md:min-w-240 h-140 flex justify-center shadow-none sm:shadow-lg relative bg-white py-6 rounded-2xl">
+        <!-- Top Header with Logo -->
+        <div class="flex-shrink-0 border-b border-gray-200 p-6 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <img class="hidden sm:block h-16 w-auto" src="images/logo/MLMUPC_Logo_Text_Right.png" />
+              <img class="block sm:hidden h-30 w-auto mt-4" src="images/logo/MLMUPC_Logo_Text_Bottom.png" />
+            </div>
+            <languages></languages>
+        </div>
 
-        <!-- Image -->
-        <div class="min-w-1/2 h-full pl-6 hidden md:flex">
-            <div class="h-full w-full hidden md:flex items-center justify-center overflow-hidden rounded-xl bg-black/5">
-                <img class="w-[440px] h-[440px] object-cover" src="images/apps/Login.png" />
+        <!-- Form Content - router-outlet renders sign-in or sign-up here -->
+        <div class="flex-1 flex flex-col overflow-y-auto">
+            <div class="px-50 py-6 flex items-center justify-center h-full">
+                <router-outlet></router-outlet>
             </div>
         </div>
 
-        <!-- Content -->
-        <div class="flex-grow flex flex-col px-8 min-w-0">
-            <auth-sign-in class="flex-grow" />
+        <!-- Bottom Footer - Contact & Social -->
+        <div class="flex-shrink-0 border-t border-gray-200 p-6 text-xs">
+            <div class="flex flex-col gap-3">
+                <div class="flex gap-1.5">
+                    <mat-icon svgIcon="mdi:map-marker" class="h-4 w-4 text-cyan-600 flex-shrink-0"></mat-icon>
+                    <span class="text-xs text-cyan-600">
+                        JVJF+5F, ដីឡូត៌លេខ ២០០៥, Phnom Penh
+                    </span>
+                </div>
+
+                <!-- Social Icons -->
+                <div class="flex gap-3">
+                    <a href="https://www.facebook.com/mlmupc.pressteam" class="text-gray-400 hover:text-cyan-600">
+                        <mat-icon svgIcon="logos:facebook" class="text-primary h-4 w-4"></mat-icon>
+                    </a>
+                    <a href="https://t.me/MLMUPCofCambodia" class="text-gray-400 hover:text-cyan-600">
+                        <mat-icon svgIcon="logos:telegram" class="text-primary h-4 w-4"></mat-icon>
+                    </a>
+                    <a href="https://https//x.com/mlmupc" class="text-gray-400 hover:text-cyan-600">
+                        <mat-icon svgIcon="mdi:twitter" class="text-primary h-4 w-4"></mat-icon>
+                    </a>
+                    <a href="https://www.youtube.com/@MLMUPC_KH" class="text-gray-400 hover:text-cyan-600">
+                        <mat-icon svgIcon="logos:youtube-icon" class="text-primary h-4 w-4"></mat-icon>
+                    </a>
+                </div>
+            </div>
         </div>
 
     </div>
 
-    <!-- Bottom (Contact & Version) -->
-    <div class="absolute w-full bottom-0 left-0 p-4 text-[12px] justify-between items-end hidden sm:flex">
+    <!-- Right Panel - Background Image with Overlay -->
+    <div class="hidden lg:flex flex-1 relative bg-cover bg-center"
+         [style.backgroundImage]="'url(images/background/front-background.JPG)'">
 
-        <!-- Contact Section -->
-        <div class="flex flex-col justify-center items-start gap-4">
-            <div class="flex gap-1.5 -ml-0.5">
-                <mat-icon svgIcon="mdi:map-marker" class="h-5 w-5 text-primary icon-size-6"></mat-icon>
-                <span class="text-[14px] mt-0.5 text-primary">
-                    JVJF+5F, ដីឡូត៌លេខ ២០០៥, ផ្លូវលេខ ៣០៧, Phnom Penh
-                </span>
+        <!-- Overlay Gradient -->
+        <div class="absolute inset-0 bg-gradient-to-b from-gray-900/30 via-gray-900/50 to-gray-900/70"></div>
+
+        <!-- Content Overlay -->
+        <div class="relative z-10 px-30 flex flex-col items-start justify-center w-full h-full text-white">
+
+            <!-- User Icon Badge -->
+            <div class="mb-12 bg-[#02adef] bg-opacity-60 border-[3px] border-[#02adef] rounded-full flex items-center justify-center p-4">
+                <img class="h-24 w-24 object-contain drop-shadow-lg" src="images/icons/Account.png" alt="Account Icon" />
             </div>
 
-            <!-- Social Icons -->
-            <div class="flex gap-4 h-5 items-end">
-                <a href="https://t.me/MLMUPCofCambodia" class="h-5 w-5">
-                    <mat-icon svgIcon="logos:telegram" class="text-primary icon-size-5"></mat-icon>
-                </a>
-                <a href="https://www.facebook.com/mlmupc.pressteam" class="h-5 w-5">
-                    <mat-icon svgIcon="logos:facebook" class="text-primary icon-size-5"></mat-icon>
-                </a>
-                <a href="https://www.youtube.com/@MLMUPC_KH" class="h-5 w-7 flex items-start justify-center mb-[1.5px]">
-                    <mat-icon svgIcon="logos:youtube-icon" class="text-primary icon-size-6"></mat-icon>
-                </a>
-                <a href="mailto:onewindowmlmupc@gmail.com" class="h-5 w-5 mb-[1.5px]">
-                    <mat-icon svgIcon="mdi:email" class="text-primary icon-size-6"></mat-icon>
-                </a>
+            <!-- Text Content -->
+            <div class="text-start mb-20">
+                <h1 class="text-5xl font-semibold">ស្វាគមន៍មកកាន់</h1>
+                <h1 class="text-5xl font-semibold">ប្រព័ន្ធគ្រប់គ្រងគណនីឌីជីថល ដ.ន.ស.</h1>
+                <h1 class="text-5xl font-semibold">Account Management System</h1>
             </div>
+
+
+            <!-- Bottom Logo -->
+            <div class="absolute bottom-30 left-0 right-0 flex justify-center items-end">
+                <img class="h-18 w-18 object-contain drop-shadow-lg" src="images/logo/MLMUPC_Logo.png" alt="Logo" />
+            </div>
+
+            <!-- Feature Icons at Bottom -->
+            <div class="absolute bottom-8 left-0 right-0 flex justify-center items-end gap-3 px-8">
+                <div class="flex items-center justify-center w-15 h-15 rounded-lg bg-white backdrop-blur-sm text-white">
+                    <img src="images/icons/LRS.png" alt="LRS Icon" class="h-10 w-10"/>
+                </div>
+                <div class="flex items-center justify-center w-15 h-15 rounded-lg bg-white backdrop-blur-sm text-white">
+                    <img src="images/icons/Express.png" alt="Express Icon" class="h-10 w-10"/>
+                </div>
+                <div class="flex items-center justify-center w-15 h-15 rounded-lg bg-white backdrop-blur-sm text-white">
+                    <img src="images/icons/Express.png" alt="Express Icon" class="h-10 w-10"/>
+                </div>
+                <div class="flex items-center justify-center w-15 h-15 rounded-lg bg-white backdrop-blur-sm text-white">
+                    <img src="images/icons/People Center.png" alt="People Center Icon" class="h-10 w-10"/>
+                </div>
+                <div class="flex items-center justify-center w-15 h-15 rounded-lg bg-white backdrop-blur-sm text-white">
+                    <img src="images/icons/PLT.png" alt="PLT Icon" class="h-10 w-10"/>
+                </div>
+                <div class="flex items-center justify-center w-15 h-15 rounded-lg bg-white backdrop-blur-sm text-white">
+                    <img src="images/icons/Construction.png" alt="Construction Icon" class="h-10 w-10"/>
+                </div>
+            </div>
+
         </div>
 
-        <!-- Version -->
-        <span class="text-[14px] text-slate-800 opacity-50">{{ appVersion }}</span>
     </div>
+
 </div>

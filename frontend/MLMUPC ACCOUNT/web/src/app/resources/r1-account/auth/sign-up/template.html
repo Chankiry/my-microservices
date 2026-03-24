@@ -1,103 +1,101 @@
-<div class="h-full flex flex-col">
-
-    <!-- Action -->
-    <div class="h-12 flex justify-end items-center">
-        <languages></languages>
-    </div>
+<div class="flex flex-col w-full">
 
     <!-- Header -->
-    <div class="flex flex-col justify-center items-center gap-1 mb-4">
-        <div class="flex items-center justify-center w-20 h-20 rounded-full bg-[#f3f4f5]">
-            <mat-icon class="icon-size-12 text-primary" svgIcon="mat_outline:person_add"></mat-icon>
-        </div>
-        <span class="text-2xl font-medium">ចុះឈ្មោះគណនី</span>
-        <span class="text-slate-500 text-sm text-center">បំពេញព័ត៌មានដើម្បីបង្កើតគណនីថ្មី</span>
+    <div class="mb-6 shrink-0">
+        <h1 class="text-2xl font-bold text-gray-800 mb-1">ចុះឈ្មោះគណនី</h1>
+        <p class="text-sm text-gray-500">បំពេញព័ត៌មានដើម្បីបង្កើតគណនីថ្មី</p>
     </div>
 
     <!-- Form -->
-    <form [formGroup]="form" class="flex flex-col gap-1 overflow-y-auto flex-1 pr-1">
+    <form [formGroup]="form" class="md-form-field-appearance-outline flex flex-col gap-5 overflow-y-auto flex-1 w-full">
 
-        <!-- First name + Last name -->
-        <div class="flex gap-3">
-            <mat-form-field appearance="outline" class="flex-1">
-                <mat-label>នាម</mat-label>
-                <mat-icon matPrefix svgIcon="mdi:account"></mat-icon>
-                <input matInput formControlName="first_name" placeholder="សុខ">
-                <mat-error *ngIf="form.get('first_name')?.hasError('required')">សូមបញ្ចូលនាម</mat-error>
+        <!-- Section: Personal Information -->
+        <div class="space-y-3">
+            <div class="flex items-center gap-2 mb-3">
+                <div class="h-1 w-1 rounded-full bg-cyan-600"></div>
+                <p class="text-xs font-semibold text-gray-600 uppercase tracking-wider">ព័ត៌មានផ្ទាល់ខ្លួន</p>
+            </div>
+
+            <div class="flex gap-3">
+                <mat-form-field appearance="outline" class="flex-1">
+                    <mat-label>នាម</mat-label>
+                    <mat-icon matPrefix svgIcon="mdi:account" class="text-gray-400"></mat-icon>
+                    <input matInput formControlName="first_name" placeholder="សុខ" autocomplete="given-name">
+                    <mat-error *ngIf="form.get('first_name')?.hasError('required')">សូមបញ្ចូលនាម</mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="flex-1">
+                    <mat-label>គោត្តនាម</mat-label>
+                    <input matInput formControlName="last_name" placeholder="ចន្ទ" autocomplete="family-name">
+                    <mat-error *ngIf="form.get('last_name')?.hasError('required')">សូមបញ្ចូលគោត្តនាម</mat-error>
+                </mat-form-field>
+            </div>
+
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>លេខទូរស័ព្ទ</mat-label>
+                <mat-icon matPrefix svgIcon="mdi:phone" class="text-gray-400"></mat-icon>
+                <input matInput formControlName="phone" type="tel" placeholder="087600063" autocomplete="tel">
+                <mat-error *ngIf="form.get('phone')?.hasError('required')">សូមបញ្ចូលលេខទូរស័ព្ទ</mat-error>
+                <mat-error *ngIf="form.get('phone')?.hasError('minlength')">លេខទូរស័ព្ទមិនត្រឹមត្រូវ</mat-error>
             </mat-form-field>
 
-            <mat-form-field appearance="outline" class="flex-1">
-                <mat-label>គោត្តនាម</mat-label>
-                <input matInput formControlName="last_name" placeholder="ចន្ទ">
-                <mat-error *ngIf="form.get('last_name')?.hasError('required')">សូមបញ្ចូលគោត្តនាម</mat-error>
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>អ៊ីមែល</mat-label>
+                <mat-icon matPrefix svgIcon="mdi:email" class="text-gray-400"></mat-icon>
+                <input matInput formControlName="email" type="email" placeholder="example@email.com" autocomplete="email">
+                <mat-error *ngIf="form.get('email')?.hasError('required')">សូមបញ្ចូលអ៊ីមែល</mat-error>
+                <mat-error *ngIf="form.get('email')?.hasError('email')">ទម្រង់អ៊ីមែលមិនត្រឹមត្រូវ</mat-error>
             </mat-form-field>
         </div>
 
-        <!-- Phone -->
-        <mat-form-field appearance="outline" class="w-full">
-            <mat-label>លេខទូរស័ព្ទ</mat-label>
-            <mat-icon matPrefix svgIcon="mdi:phone"></mat-icon>
-            <input matInput formControlName="phone" type="tel" placeholder="087600063">
-            <mat-error *ngIf="form.get('phone')?.hasError('required')">សូមបញ្ចូលលេខទូរស័ព្ទ</mat-error>
-            <mat-error *ngIf="form.get('phone')?.hasError('minlength')">លេខទូរស័ព្ទមិនត្រឹមត្រូវ</mat-error>
-        </mat-form-field>
+        <!-- Section: Security -->
+        <div class="space-y-3">
+            <div class="flex items-center gap-2 mb-3">
+                <div class="h-1 w-1 rounded-full bg-cyan-600"></div>
+                <p class="text-xs font-semibold text-gray-600 uppercase tracking-wider">សុវត្ថិភាព</p>
+            </div>
 
-        <!-- Email -->
-        <mat-form-field appearance="outline" class="w-full">
-            <mat-label>អ៊ីមែល</mat-label>
-            <mat-icon matPrefix svgIcon="mdi:email"></mat-icon>
-            <input matInput formControlName="email" type="email" placeholder="example@email.com">
-            <mat-error *ngIf="form.get('email')?.hasError('required')">សូមបញ្ចូលអ៊ីមែល</mat-error>
-            <mat-error *ngIf="form.get('email')?.hasError('email')">ទម្រង់អ៊ីមែលមិនត្រឹមត្រូវ</mat-error>
-        </mat-form-field>
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>ពាក្យសម្ងាត់</mat-label>
+                <mat-icon matPrefix svgIcon="mdi:lock" class="text-gray-400"></mat-icon>
+                <input matInput type="password" formControlName="password" #passwordField placeholder="••••••••" autocomplete="new-password">
+                <button matSuffix mat-icon-button type="button"
+                    (click)="passwordField.type === 'password' ? (passwordField.type = 'text') : (passwordField.type = 'password')">
+                    <mat-icon [svgIcon]="passwordField.type === 'password' ? 'mdi:eye' : 'mdi:eye-off'" class="text-gray-400"></mat-icon>
+                </button>
+                <mat-hint>យ៉ាងតិច ៨ តួអក្សរ</mat-hint>
+                <mat-error *ngIf="form.get('password')?.hasError('required')">សូមបញ្ចូលពាក្យសម្ងាត់</mat-error>
+                <mat-error *ngIf="form.get('password')?.hasError('minlength')">ពាក្យសម្ងាត់ត្រូវមានយ៉ាងតិច ៨ តួអក្សរ</mat-error>
+            </mat-form-field>
 
-        <!-- Password -->
-        <mat-form-field appearance="outline" class="w-full">
-            <mat-label>ពាក្យសម្ងាត់</mat-label>
-            <mat-icon matPrefix svgIcon="mdi:lock"></mat-icon>
-            <input matInput type="password" formControlName="password" #passwordField>
-            <button matSuffix mat-icon-button type="button"
-                (click)="passwordField.type === 'password' ? (passwordField.type = 'text') : (passwordField.type = 'password')">
-                <mat-icon [svgIcon]="passwordField.type === 'password' ? 'mdi:eye' : 'mdi:eye-off'"></mat-icon>
-            </button>
-            <mat-error *ngIf="form.get('password')?.hasError('required')">សូមបញ្ចូលពាក្យសម្ងាត់</mat-error>
-            <mat-error *ngIf="form.get('password')?.hasError('minlength')">ពាក្យសម្ងាត់ត្រូវមានយ៉ាងតិច ៨ តួអក្សរ</mat-error>
-        </mat-form-field>
-
-        <!-- Confirm Password -->
-        <mat-form-field appearance="outline" class="w-full">
-            <mat-label>បញ្ជាក់ពាក្យសម្ងាត់</mat-label>
-            <mat-icon matPrefix svgIcon="mdi:lock-check"></mat-icon>
-            <input matInput type="password" formControlName="confirm_password" #confirmField>
-            <button matSuffix mat-icon-button type="button"
-                (click)="confirmField.type === 'password' ? (confirmField.type = 'text') : (confirmField.type = 'password')">
-                <mat-icon [svgIcon]="confirmField.type === 'password' ? 'mdi:eye' : 'mdi:eye-off'"></mat-icon>
-            </button>
-            <mat-error *ngIf="form.get('confirm_password')?.hasError('required')">សូមបញ្ជាក់ពាក្យសម្ងាត់</mat-error>
-            <mat-error *ngIf="form.get('confirm_password')?.hasError('mismatch')">ពាក្យសម្ងាត់មិនត្រូវគ្នា</mat-error>
-        </mat-form-field>
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>បញ្ជាក់ពាក្យសម្ងាត់</mat-label>
+                <mat-icon matPrefix svgIcon="mdi:lock-check" class="text-gray-400"></mat-icon>
+                <input matInput type="password" formControlName="confirm_password" #confirmField placeholder="••••••••" autocomplete="new-password">
+                <button matSuffix mat-icon-button type="button"
+                    (click)="confirmField.type === 'password' ? (confirmField.type = 'text') : (confirmField.type = 'password')">
+                    <mat-icon [svgIcon]="confirmField.type === 'password' ? 'mdi:eye' : 'mdi:eye-off'" class="text-gray-400"></mat-icon>
+                </button>
+                <mat-error *ngIf="form.get('confirm_password')?.hasError('required')">សូមបញ្ជាក់ពាក្យសម្ងាត់</mat-error>
+                <mat-error *ngIf="form.get('confirm_password')?.hasError('mismatch')">ពាក្យសម្ងាត់មិនត្រូវគ្នា</mat-error>
+            </mat-form-field>
+        </div>
 
     </form>
 
     <!-- Submit -->
-    <button mat-flat-button class="w-full mt-3" color="primary"
-            [disabled]="form.invalid || isLoading"
-            (click)="register()">
-        <span *ngIf="!isLoading">ចុះឈ្មោះ</span>
-        <mat-progress-spinner *ngIf="isLoading" [diameter]="24" [mode]="'indeterminate'" />
-    </button>
+    <div class="flex flex-col gap-3 shrink-0">
+        <button mat-flat-button class="w-full bg-gradient-to-r from-cyan-600 to-cyan-700 text-white hover:from-cyan-700 hover:to-cyan-800 font-semibold shadow-md hover:shadow-lg transition-all py-2.5"
+                [disabled]="form.invalid || isLoading"
+                (click)="register()">
+            <mat-progress-spinner *ngIf="isLoading" [diameter]="20" [mode]="'indeterminate'" />
+            <span *ngIf="!isLoading">ចុះឈ្មោះ</span>
+        </button>
 
-    <!-- Divider -->
-    <div class="flex items-center gap-2 my-3">
-        <div class="flex-1 h-px bg-gray-200"></div>
-        <span class="text-gray-400 text-sm">ឬ</span>
-        <div class="flex-1 h-px bg-gray-200"></div>
+        <p class="text-center text-sm text-gray-600">
+            មានគណនីរួចហើយ?
+            <a [routerLink]="['/auth/sign-in']" class="text-cyan-700 font-semibold hover:text-cyan-800 cursor-pointer">ចូលប្រព័ន្ធ</a>
+        </p>
     </div>
-
-    <!-- Back to login -->
-    <button mat-stroked-button class="w-full" [routerLink]="['/auth/sign-in']">
-        <mat-icon svgIcon="mdi:arrow-left" class="mr-1"></mat-icon>
-        ត្រឡប់ទៅការចូលប្រព័ន្ធ
-    </button>
 
 </div>

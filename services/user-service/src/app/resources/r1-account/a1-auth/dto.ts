@@ -23,8 +23,8 @@ export class RegisterDto {
     @IsString() @MinLength(7) @MaxLength(20)
     phone!: string;
 
-    @IsEmail()
-    email!: string;
+    @IsOptional() @IsEmail()
+    email?: string | null;
 
     @IsString() @MinLength(8)
     password!: string;

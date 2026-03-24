@@ -29,17 +29,17 @@ export class ProfileController {
         return this.profileService.updateProfile(req.user.sub, dto);
     }
 
-    @Patch('password')
+    @Patch('change-password')
     async changePassword(@Request() req: any, @Body() dto: ChangePasswordDto) {
         return this.profileService.changePassword(req.user.sub, dto);
     }
 
-    @Patch('email')
+    @Patch('change-email')
     async changeEmail(@Request() req: any, @Body() dto: ChangeEmailDto) {
         return this.profileService.changeEmail(req.user.sub, dto);
     }
 
-    @Patch('phone')
+    @Patch('change-phone')
     async changePhone(@Request() req: any, @Body() dto: ChangePhoneDto) {
         return this.profileService.changePhone(req.user.sub, dto);
     }
