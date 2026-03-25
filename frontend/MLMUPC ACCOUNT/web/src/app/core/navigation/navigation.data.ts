@@ -14,16 +14,7 @@ const adminNavigation: HelperNavigationItem[] = [
         link: '/profile/my-profile',
     },
 ];
-const userNavigation: HelperNavigationItem[] = [
-    {
-        id  : 'profile',
-        type: 'basic',
-        icon: 'mdi:account-circle-outline',
-        link: '/profile/my-profile',
-    },
-];
 
 export const navigationData = {
-    admin: adminNavigation,
-    user: userNavigation,
+    admin: adminNavigation
 };

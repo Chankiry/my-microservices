@@ -93,18 +93,10 @@ export class ResourceAuthService {
 
     // ─── Redirect login helpers ───────────────────────────────────────────────
 
+    // NOTE: redirect params are read from ActivatedRoute in sign-in component.
+    // This method kept for compatibility — returns null.
     readRedirectFromUrl(): RedirectParams | null {
-        const hash   = window.location.hash;
-        const qIndex = hash.indexOf('?');
-        if (qIndex === -1) return null;
-
-        const params      = new URLSearchParams(hash.substring(qIndex + 1));
-        const redirect_uri = params.get('redirect_uri');
-        const system_id   = params.get('system_id');
-        const action      = params.get('action') as 'login' | 'link';
-
-        if (!redirect_uri || !system_id || !action) return null;
-        return { redirect_uri, system_id, action };
+        return null;
     }
 
     setPendingRedirect(params: RedirectParams): void {

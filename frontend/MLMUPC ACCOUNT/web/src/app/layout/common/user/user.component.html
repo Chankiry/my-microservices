@@ -4,7 +4,11 @@
     </span>
 </button>
 
-<mat-menu [xPosition]="'before'" #userActions="matMenu" class="absolute top-3 -right-2 py-0">
+<mat-menu [xPosition]="'before'" #userActions="matMenu" class="absolute top-3 -right-2 py-0 bg-white">
+    <button mat-menu-item (click)="goToProfile()">
+        <mat-icon svgIcon="mdi:account" />
+        <span class="text-lg text-slate-900"> {{ 'Menu-Option.Profile' | transloco }} </span>
+    </button>
     <button mat-menu-item (click)="signOut()">
         <mat-icon svgIcon="feather:log-out" />
         <span class="text-lg text-slate-900"> {{ 'Menu-Option.Sign-Out' | transloco }} </span>

@@ -79,6 +79,7 @@ export const appConfig: ApplicationConfig = {
                     const path   = window.location.pathname;
                     const search = window.location.search;
 
+                    console.log(path, search)
                     if (path !== '/callback') return;
 
                     const params = new URLSearchParams(search);
@@ -91,6 +92,7 @@ export const appConfig: ApplicationConfig = {
                     }
 
                     try {
+
                         const response = await fetch(
                             'http://localhost:8000/api/v1/account/auth/login/keycloak/callback',
                             {

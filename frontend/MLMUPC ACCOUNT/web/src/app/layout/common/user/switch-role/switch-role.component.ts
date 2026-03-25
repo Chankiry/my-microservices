@@ -79,10 +79,6 @@ export class SwitchRoleComponent implements OnChanges, OnDestroy {
                 // this.notificationsService.getAll();
                 if (role.name_kh === RoleEnum.ADMIN) {
                     this._router.navigateByUrl('/admin/dashboard')
-                } else if (role.name_kh === RoleEnum.VOLUNTEER) {
-                    this._router.navigateByUrl('/volunteer/dashboard')
-                } else if (role.name_kh === RoleEnum.USER) {
-                    this._router.navigateByUrl('/user/dashboard')
                 }
                 else {
                     this._router.navigateByUrl('');

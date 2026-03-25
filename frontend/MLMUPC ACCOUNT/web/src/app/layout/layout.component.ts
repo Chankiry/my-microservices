@@ -16,6 +16,7 @@ import { Subject, combineLatest, filter, map, takeUntil } from 'rxjs';
 import { EmptyLayoutComponent } from './empty/empty.component';
 import { ClassyLayoutComponent } from './classy/classy.component';
 import { CompactLayoutComponent } from './compact/compact.component';
+import { HeaderLayoutComponent } from './header/component';
 
 @Component({
     selector: 'layout',
@@ -26,7 +27,8 @@ import { CompactLayoutComponent } from './compact/compact.component';
     imports: [
         EmptyLayoutComponent,
         ClassyLayoutComponent,
-        CompactLayoutComponent
+        CompactLayoutComponent,
+        HeaderLayoutComponent
     ],
 })
 export class LayoutComponent implements OnInit, OnDestroy {

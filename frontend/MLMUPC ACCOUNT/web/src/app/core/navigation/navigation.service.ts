@@ -21,7 +21,6 @@ export class NavigationService {
     set navigations(role: RoleInfo) {
         switch (role.slug) {
             case 'admin': this._navigation.next(navigationData.admin); break;
-            case 'user' : this._navigation.next(navigationData.user);  break;
             default     : this._navigation.next([]);                   break;
         }
     }

@@ -34,6 +34,16 @@ export const appRoutes: Route[] = [
         loadChildren: () => import('app/resources/r1-account/auth/auth.routes'),
     },
 
+    // ─── Profile (authenticated, no navigation) ────────────────────────────────
+    {
+        path        : 'profile',
+        canActivate : [AuthGuard],
+        component   : LayoutComponent,
+        data        : { layout: 'header' },
+        resolve     : { initialData: initialDataResolver },
+        loadChildren: () => import('app/resources/r1-account/profile/routes'),
+    },
+
     // ─── Authenticated routes ──────────────────────────────────────────────────
     {
         path      : '',
@@ -41,10 +51,6 @@ export const appRoutes: Route[] = [
         component : LayoutComponent,
         resolve   : { initialData: initialDataResolver },
         children  : [
-            {
-                path        : 'profile',
-                loadChildren: () => import('app/resources/r1-account/profile/routes'),
-            },
             {
                 path   : 'admin',
                 resolve: { role: roleResolver(['admin']) },

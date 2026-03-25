@@ -26,11 +26,9 @@ import { TranslocoModule }      from '@ngneat/transloco';
     ],
 })
 export class UserComponent implements OnInit, OnDestroy {
-
     public user    : User | null = null;
     public src     : string = '/images/placeholder/avatar.jpg';
     public FILE_URL = env.FILE_BASE_URL;
-
     private _unsubscribeAll = new Subject<any>();
 
     constructor(
@@ -61,6 +59,10 @@ export class UserComponent implements OnInit, OnDestroy {
         if (!this.user) return '';
         return [this.user.first_name, this.user.last_name]
             .filter(Boolean).join(' ') || this.user.phone;
+    }
+
+    goToProfile(): void {
+        this._router.navigateByUrl('/profile/my-profile');
     }
 
     signOut(): void {

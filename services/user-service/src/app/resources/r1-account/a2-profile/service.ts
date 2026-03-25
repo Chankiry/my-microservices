@@ -311,7 +311,9 @@ export class ProfileService {
 
 
     // ─── Redirect Login Validation (Phase 7) ─────────────────────────────────
-    // Called after user logs in — validates redirect_uri and returns redirect URL
+    // Instead of returning the token directly in the URL, we generate a
+    // short-lived one-time code stored in Redis.
+    // The external system exchanges it via POST /auth/login/keycloak/callback.
 
     async validateRedirectLogin(
         keycloak_id  : string,
@@ -329,7 +331,6 @@ export class ProfileService {
             throw new BadRequestException('ប្រព័ន្ធនេះមិនមានសកម្ម');
         }
 
-        // Validate redirect_uri starts with system's base_url
         if (!system.base_url) {
             throw new BadRequestException('ប្រព័ន្ធនេះមិនមានការកំណត់ redirect URL');
         }
@@ -342,7 +343,6 @@ export class ProfileService {
         }
 
         if (action === 'login') {
-            // Check user has active access to this system
             const access = await this.accessModel.findOne({
                 where: { user_id: user.id, system_id, registration_status: 'active' },
             });
@@ -350,10 +350,9 @@ export class ProfileService {
                 throw new BadRequestException('អ្នកមិនទាន់ភ្ជាប់ប្រព័ន្ធនេះ');
             }
 
-            // Build redirect URL with token
+            // For internal systems, pre-exchange the token now so the callback
+            // can return a system-specific token without extra round-trips
             let token = access_token;
-
-            // Internal system — exchange for system token
             if (!system.keycloak_client_id && system.auth_callback_url) {
                 try {
                     const sso_url = system.auth_callback_url.replace('/auth/validate', '/auth/sso');
@@ -367,21 +366,58 @@ export class ProfileService {
                 }
             }
 
-            const separator   = redirect_uri.includes('?') ? '&' : '?';
-            const redirect_url = `${redirect_uri}${separator}token=${encodeURIComponent(token)}`;
+            // Generate one-time code — stored in Redis for 5 minutes
+            const crypto     = await import('crypto');
+            const code       = crypto.randomBytes(32).toString('hex');
+            await this.redisService.set(`redirect:code:${code}`, {
+                token,
+                user_id  : user.id,
+                system_id,
+            }, 300); // 5 minutes
 
-            this.logger.log(`Redirect login: user=${user.id} system=${system_id}`);
+            const separator   = redirect_uri.includes('?') ? '&' : '?';
+            const redirect_url = `${redirect_uri}${separator}code=${encodeURIComponent(code)}`;
+
+            this.logger.log(`Redirect login code issued: user=${user.id} system=${system_id}`);
             return { redirect_url };
         }
 
-        // action === 'link' — Phase 8
-        // For link, the frontend handles showing the connect dialog after login.
-        // This endpoint only validates that the redirect_uri is allowed.
-        // The actual linking is done via POST /profile/redirect/link
+        // action === 'link'
         const separator    = redirect_uri.includes('?') ? '&' : '?';
         const redirect_url = `${redirect_uri}${separator}status=ready&platform_user_id=${user.id}`;
         this.logger.log(`Redirect link ready: user=${user.id} system=${system_id}`);
         return { redirect_url };
+    }
+
+    // ─── Exchange redirect code for token ─────────────────────────────────────
+    // Called by external system backend: POST /auth/login/keycloak/callback
+    // Code is single-use and expires in 5 minutes.
+
+    async exchangeRedirectCode(code: string): Promise<{
+        access_token: string;
+        user_id     : string;
+        system_id   : string;
+    }> {
+        const key  = `redirect:code:${code}`;
+        const data = await this.redisService.get<{
+            token    : string;
+            user_id  : string;
+            system_id: string;
+        }>(key);
+
+        if (!data) {
+            throw new UnauthorizedException('Code is invalid or has expired');
+        }
+
+        // Single-use — delete immediately after exchange
+        await this.redisService.del(key);
+
+        this.logger.log(`Redirect code exchanged: user=${data.user_id} system=${data.system_id}`);
+        return {
+            access_token: data.token,
+            user_id     : data.user_id,
+            system_id   : data.system_id,
+        };
     }
 
 

@@ -17,6 +17,8 @@ import { SnackbarService }          from 'helper/services/snack-bar/snack-bar.se
 import { ErrorHandleService }       from 'app/shared/error-handle.service';
 import GlobalConstants              from 'helper/shared/constants';
 import { env }                      from 'envs/env';
+import { TranslocoModule } from '@ngneat/transloco';
+import { MatMenuModule } from '@angular/material/menu';
 
 @Component({
     selector     : 'profile-page',
@@ -36,11 +38,13 @@ import { env }                      from 'envs/env';
         MatFormFieldModule,
         MatInputModule,
         MatTooltipModule,
+        TranslocoModule,
+        MatMenuModule,
     ],
 })
 export class ProfileComponent implements OnInit, OnDestroy {
 
-    public profile          : UserProfile | null = null;
+    public data          : UserProfile | null = null;
     public availableSystems : SystemInfo[]        = [];
     public isLoading        : boolean = true;
 
@@ -84,11 +88,12 @@ export class ProfileComponent implements OnInit, OnDestroy {
         this._profileService.getProfile()
             .pipe(takeUntil(this._unsubscribeAll))
             .subscribe({
-                next: profile => {
-                    this.profile   = profile;
-                    this.isLoading = false;
-                    this._loadAvailableSystems();
-                    this._changeDetectorRef.markForCheck();
+                next: res => {
+                  this.data   = res;
+                  console.log(this.data);
+                  this.isLoading = false;
+                  this._loadAvailableSystems();
+                  this._changeDetectorRef.markForCheck();
                 },
                 error: err => {
                     this.isLoading = false;
@@ -182,13 +187,13 @@ export class ProfileComponent implements OnInit, OnDestroy {
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     getFullName(): string {
-        if (!this.profile) return '';
-        return `${this.profile.first_name || ''} ${this.profile.last_name || ''}`.trim()
-            || this.profile.phone;
+        if (!this.data) return '';
+        return `${this.data.first_name || ''} ${this.data.last_name || ''}`.trim()
+            || this.data.phone;
     }
 
     getAvatarUrl(): string {
-        if (this.profile?.avatar_uri) return `${this.FILE_URL}/${this.profile.avatar_uri}`;
+        if (this.data?.avatar_uri) return `${this.FILE_URL}/${this.data.avatar_uri}`;
         return '/images/placeholder/avatar.jpg';
     }
 
@@ -213,7 +218,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     }
 
     activeSystemCount(): number {
-        return this.profile?.system_access?.filter(
+        return this.data?.system_access?.filter(
             s => s.registration_status === 'active'
         ).length || 0;
     }

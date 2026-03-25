@@ -4,22 +4,20 @@ import {
     UseGuards, Request,
     UnauthorizedException,
 } from '@nestjs/common';
-import { AuthService } from './service';
-import { LoginDto, RefreshDto, RegisterDto } from './dto';
-import { JwtAuthGuard } from '../../../core/guards/jwt-auth.guard';
+import { AuthService }       from './service';
+import { LoginDto, RefreshDto } from './dto';
+import { JwtAuthGuard }      from '../../../core/guards/jwt-auth.guard';
+import { ProfileService }    from '../a2-profile/service';
 
 @Controller()
 export class AuthController {
 
-    constructor(private readonly authService: AuthService) {}
+    constructor(
+        private readonly authService    : AuthService,
+        private readonly profileService : ProfileService,
+    ) {}
 
     // ─── Public endpoints ─────────────────────────────────────────────────────
-
-    @Post('register')
-    @HttpCode(HttpStatus.CREATED)
-    async register(@Body() dto: RegisterDto) {
-        return this.authService.register(dto);
-    }
 
     @Post('login')
     @HttpCode(HttpStatus.OK)
@@ -38,10 +36,21 @@ export class AuthController {
         return this.authService.getJwks();
     }
 
+    // ─── Redirect code exchange ───────────────────────────────────────────────
+    // External system backends call this to exchange the one-time code
+    // (received in their callback URL) for the actual token.
+    //
+    // POST /auth/login/keycloak/callback
+    // Body: { code: "<one-time-code>" }
+    // Returns: { access_token, user_id, system_id }
+
     @Post('login/keycloak/callback')
     @HttpCode(HttpStatus.OK)
     async keycloakCallback(@Body('code') code: string) {
-        return this.authService.exchangeCodeForToken(code);
+        if (!code) {
+            throw new UnauthorizedException('Code is required');
+        }
+        return this.profileService.exchangeRedirectCode(code);
     }
 
     // ─── Protected endpoint ───────────────────────────────────────────────────

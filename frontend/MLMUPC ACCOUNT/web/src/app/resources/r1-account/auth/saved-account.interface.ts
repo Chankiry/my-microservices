@@ -22,9 +22,9 @@ export function getSavedAccounts(): SavedAccount[] {
 }
 
 export function saveAccount(account: SavedAccount): void {
-    const accounts = getSavedAccounts().filter(a => a.phone !== account.phone);
-    accounts.unshift({ ...account, last_used: Date.now() });
-    localStorage.setItem(SAVED_ACCOUNTS_KEY, JSON.stringify(accounts));
+    // Always keep only 1 — the most recently used account
+    const latest = { ...account, last_used: Date.now() };
+    localStorage.setItem(SAVED_ACCOUNTS_KEY, JSON.stringify([latest]));
     localStorage.setItem(CURRENT_ACCOUNT_KEY, account.phone);
 }
 

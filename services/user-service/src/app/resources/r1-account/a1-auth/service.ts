@@ -247,6 +247,7 @@ export class AuthService {
         expires_in   : number;
         token_type   : string;
     }> {
+        console.log('Exchanging code for token:', code);
         const token_url    = `${this.keycloakUrl}/realms/${this.realm}/protocol/openid-connect/token`;
         const redirect_uri = 'http://localhost:4444/callback';
 

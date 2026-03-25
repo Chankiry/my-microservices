@@ -4,7 +4,7 @@ import {
     FormsModule, ReactiveFormsModule,
     UntypedFormBuilder, UntypedFormGroup, Validators,
 } from '@angular/forms';
-import { Router, RouterLink }            from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { MatButtonModule }          from '@angular/material/button';
 import { MatIconModule }            from '@angular/material/icon';
@@ -12,7 +12,6 @@ import { MatInputModule }           from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatFormFieldModule }       from '@angular/material/form-field';
 import { MatTooltipModule }         from '@angular/material/tooltip';
-import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 
 import { TranslocoModule }          from '@ngneat/transloco';
 import { helperAnimations }         from 'helper/animations';
@@ -21,13 +20,14 @@ import GlobalConstants              from 'helper/shared/constants';
 import { ErrorHandleService }       from 'app/shared/error-handle.service';
 import { AuthService as CoreAuthService } from 'app/core/auth/auth.service';
 import { ResourceAuthService, RedirectParams } from '../service';
-import { ConfirmDialogComponent } from './confirm-dialog.component';
 import {
     SavedAccount,
     getSavedAccounts, saveAccount, removeAccount,
     setCurrentAccount, getCurrentAccountPhone,
 } from '../saved-account.interface';
 import { jwtDecode } from 'jwt-decode';
+import { ConfirmDialogComponent } from './confirm-dialog.component';
+import { MatDialog } from '@angular/material/dialog';
 
 type ViewState =
     | 'account-picker'
@@ -52,7 +52,6 @@ type ViewState =
         MatIconModule,
         MatProgressSpinnerModule,
         MatTooltipModule,
-        MatDialogModule,
         TranslocoModule,
         RouterLink,
     ],
@@ -68,13 +67,15 @@ export class AuthSignInComponent implements OnInit {
     public passwordForm   : UntypedFormGroup;
     public linkForm       : UntypedFormGroup;
 
-    public isLoading    : boolean = false;
+    public isLoading          : boolean = false;
+    public confirmRemovePhone : string | null = null;  // phone pending removal confirm
     public isRefreshing : boolean = false;
     public isLinking    : boolean = false;
 
     constructor(
         private _coreAuthService    : CoreAuthService,
         private _authService        : ResourceAuthService,
+        private _route              : ActivatedRoute,
         private _formBuilder        : UntypedFormBuilder,
         private _router             : Router,
         private _snackBarService    : SnackbarService,
@@ -95,9 +96,16 @@ export class AuthSignInComponent implements OnInit {
             password: ['', Validators.required],
         });
 
-        // Check redirect params
-        this.redirectParams = this._authService.readRedirectFromUrl();
-        if (this.redirectParams) {
+        // ─── Read redirect params from Angular router ─────────────────────────
+        // Must use ActivatedRoute — window.location.hash gets cleared by Angular
+        // before we can read it manually.
+        const q = this._route.snapshot.queryParams;
+        if (q['redirect_uri'] && q['system_id'] && q['action']) {
+            this.redirectParams = {
+                redirect_uri: q['redirect_uri'],
+                system_id   : q['system_id'],
+                action      : q['action'] as 'login' | 'link',
+            };
             this._authService.setPendingRedirect(this.redirectParams);
         }
 
@@ -119,8 +127,8 @@ export class AuthSignInComponent implements OnInit {
 
     // ─── Redirect helpers ─────────────────────────────────────────────────────
 
-    get isRedirectMode(): boolean  { return !!this.redirectParams; }
-    get isLinkMode(): boolean      { return this.redirectParams?.action === 'link'; }
+    get isRedirectMode(): boolean    { return !!this.redirectParams; }
+    get isLinkMode(): boolean        { return this.redirectParams?.action === 'link'; }
     get redirectSystemName(): string { return this.redirectParams?.system_id || ''; }
 
     // ─── Account picker ───────────────────────────────────────────────────────

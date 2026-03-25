@@ -1,34 +1,42 @@
-import { inject } from '@angular/core';
-import { CanActivateChildFn, CanActivateFn, Router } from '@angular/router';
-import { of } from 'rxjs';
+import { inject }  from '@angular/core';
+import { ActivatedRouteSnapshot, CanActivateChildFn, CanActivateFn, Router, RouterStateSnapshot } from '@angular/router';
+import { of }      from 'rxjs';
 import { AuthService } from 'app/core/auth/auth.service';
-import { UserPayload } from 'helper/interfaces/payload.interface';
-import { jwtDecode } from 'jwt-decode';
+import { jwtDecode }   from 'jwt-decode';
 
-export const NoAuthGuard: CanActivateFn | CanActivateChildFn = (_route, state) => {
-    console.log('=== NO AUTH GUARD ===', state.url);
+export const NoAuthGuard: CanActivateFn | CanActivateChildFn = (
+    route: ActivatedRouteSnapshot,
+    state: RouterStateSnapshot,
+) => {
+    const router      = inject(Router);
+    const authService = inject(AuthService);
+    const token       = authService?.accessToken;
 
-    if (state.url.startsWith('/auth/callback')) {
-        console.log('→ allowing callback');
-        return of(true);
-    }
-    const router: Router = inject(Router);
-    const authService    = inject(AuthService);
-
-    // Always allow callback route — Keycloak redirects here with ?code=xxx
-    // even if a stale token exists in localStorage
+    // Always allow callback route
     if (state.url.startsWith('/auth/callback')) {
         return of(true);
     }
 
-    const token = authService?.accessToken;
+    // If redirect params present — allow through even if already logged in.
+    // The sign-in component will detect the params and complete the flow.
+    const hasRedirectParams =
+        route.queryParams['redirect_uri'] &&
+        route.queryParams['system_id']    &&
+        route.queryParams['action'];
+
+    if (hasRedirectParams) {
+        return of(true);
+    }
+
+    // Normal case — if already logged in, go to dashboard
     if (token) {
-        const tokenPayload: any = jwtDecode(token);
-        if (tokenPayload) {
-            return of(router.parseUrl(''));
-        }
+        try {
+            const payload: any = jwtDecode(token);
+            if (payload?.exp && payload.exp > Date.now() / 1000) {
+                return of(router.parseUrl(''));
+            }
+        } catch { /* expired/invalid — let them through */ }
     }
 
-    // Allow the access
     return of(true);
 };
