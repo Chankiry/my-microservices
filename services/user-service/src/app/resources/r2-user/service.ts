@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, Logger, NotFoundException, Body, Res } from '@nestjs/common';
+import { HttpException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel, InjectConnection } from '@nestjs/sequelize';
 import { ConfigService } from '@nestjs/config';
 import { Op, literal, Sequelize } from 'sequelize';
@@ -7,6 +7,13 @@ import { KafkaProducerService } from '../../communications/kafka/kafka-producer.
 import { KeycloakAdminService } from '../../communications/keycloak/keycloak-admin.service';
 import { OutboxService } from '../../outbox/outbox.service';
 import { RedisService } from '@app/infra/cache/redis.service';
+import { ERROR_MESSAGE, MESSAGE } from '@app/shared/enums/message.enum';
+import {
+    CustomCreateOptions,
+    CustomSaveOptions,
+    CustomDestroyOptions,
+    CustomUpdateOptions,
+} from '@app/shared/interfaces/custom-option.interface';
 import User from '../../../models/user/user.model';
 import { Response } from 'express';
 import { Pagination, ResponseUtil } from '@app/shared/interfaces/base.interface';
@@ -32,101 +39,79 @@ export class UserService {
 
     // ─── Read ─────────────────────────────────────────────────────────────────
 
-    async findById(
-        res: Response, 
-        id: string
-    ): Promise<any> {
-        try{
+    async findById(res: Response, id: string): Promise<any> {
+        try {
             const cached = await this.redisService.get<any>(`user:profile:${id}`);
-            if (cached) {
-                // Cache hit — re-fetch to return a proper Sequelize instance
-                const user = await this.userModel.findOne({ where: { id } });
-                if (!user) throw new NotFoundException(`User ${id} not found`);
-                return user;
-            }
-    
+            if (cached) return ResponseUtil.success(res, cached);
+
             const user = await this.userModel.findOne({ where: { id } });
-            if (!user) throw new NotFoundException(`User ${id} not found`);
-    
+            if (!user) throw new NotFoundException(ERROR_MESSAGE.USER_NOT_FOUND);
+
             await this.redisService.set(`user:profile:${id}`, user.toJSON(), this.CACHE_TTL);
             return ResponseUtil.success(res, user);
-        } catch(e){
-            console.log(e);
-            throw new BadRequestException(e.message);
+        } catch (err) {
+            if (err instanceof HttpException) throw err;
+            this.logger.error(`[findById] ${err.message}`, err.stack);
+            throw new InternalServerErrorException(ERROR_MESSAGE.SOMETHING_WRONG);
         }
     }
 
-    async findByKeycloakId(
-        res: Response, 
-        keycloak_id: string
-    ): Promise<any> {
+    async findByKeycloakId(res: Response, keycloak_id: string): Promise<any> {
         try {
             const cached = await this.redisService.get<any>(`user:keycloak:${keycloak_id}`);
-            if (cached) {
-                // Cache hit — re-fetch to return a proper Sequelize instance
-                return this.userModel.findOne({ where: { keycloak_id } });
-            }
-    
+            if (cached) return ResponseUtil.success(res, cached);
+
             const user = await this.userModel.findOne({ where: { keycloak_id } });
             if (user) await this.redisService.set(`user:keycloak:${keycloak_id}`, user.toJSON(), this.CACHE_TTL);
             return ResponseUtil.success(res, user);
-        } catch(e) {
-            console.log(e);
-            throw new BadRequestException(e.message);
-        };
+        } catch (err) {
+            if (err instanceof HttpException) throw err;
+            this.logger.error(`[findByKeycloakId] ${err.message}`, err.stack);
+            throw new InternalServerErrorException(ERROR_MESSAGE.SOMETHING_WRONG);
+        }
     }
 
-    async findByEmail(
-        res: Response, 
-        email: string
-    ): Promise<any> {
-        try{
-
+    async findByEmail(res: Response, email: string): Promise<any> {
+        try {
             const cached = await this.redisService.get<any>(`user:email:${email}`);
-            if (cached) {
-                return this.userModel.findOne({ where: { email } });
-            }
-    
+            if (cached) return ResponseUtil.success(res, cached);
+
             const user = await this.userModel.findOne({ where: { email } });
             if (user) await this.redisService.set(`user:email:${email}`, user.toJSON(), this.CACHE_TTL);
             return ResponseUtil.success(res, user);
-        } catch(e) {
-            console.log(e);
-            throw new BadRequestException(e.message);
-        };
+        } catch (err) {
+            if (err instanceof HttpException) throw err;
+            this.logger.error(`[findByEmail] ${err.message}`, err.stack);
+            throw new InternalServerErrorException(ERROR_MESSAGE.SOMETHING_WRONG);
+        }
     }
 
-    async findByPhone(
-        res: Response, 
-        phone: string
-    ): Promise<any> {
+    async findByPhone(res: Response, phone: string): Promise<any> {
         try {
             const cached = await this.redisService.get<any>(`user:phone:${phone}`);
-            if (cached) {
-                return this.userModel.findOne({ where: { phone } });
-            }
-    
+            if (cached) return ResponseUtil.success(res, cached);
+
             const user = await this.userModel.findOne({ where: { phone } });
             if (user) await this.redisService.set(`user:phone:${phone}`, user.toJSON(), this.CACHE_TTL);
             return ResponseUtil.success(res, user);
-        } catch(e) {
-            console.log(e);
-            throw new BadRequestException(e.message);
-        };
+        } catch (err) {
+            if (err instanceof HttpException) throw err;
+            this.logger.error(`[findByPhone] ${err.message}`, err.stack);
+            throw new InternalServerErrorException(ERROR_MESSAGE.SOMETHING_WRONG);
+        }
     }
 
     async findAll(
-        res: Response
-        , key?: string
-        , page?: number
-        , per_page?: number
-        , is_active?: boolean
+        res: Response,
+        key?: string,
+        page?: number,
+        per_page?: number,
+        is_active?: boolean,
     ): Promise<any> {
-        try{
-
+        try {
             const offset = (page - 1) * per_page;
             const where: any = {};
-    
+
             if (key) {
                 where[Op.or] = [
                     { phone      : { [Op.iLike]: `%${key}%` } },
@@ -135,9 +120,9 @@ export class UserService {
                     { last_name  : { [Op.iLike]: `%${key}%` } },
                 ];
             }
-    
+
             if (is_active !== undefined) where.is_active = is_active;
-    
+
             const { count, rows } = await this.userModel.findAndCountAll({
                 where,
                 limit: per_page,
@@ -146,16 +131,17 @@ export class UserService {
             });
 
             const pagination: Pagination = {
-                total_items: count,
-                total_pages: Math.ceil(count / per_page),
-                page: Math.ceil((offset + 1) / per_page),
-                per_page: per_page,
-            }
-    
+                total_items : count,
+                total_pages : Math.ceil(count / per_page),
+                page        : Math.ceil((offset + 1) / per_page),
+                per_page    : per_page,
+            };
+
             return ResponseUtil.listSuccess(res, rows, pagination);
-        } catch(e){
-            console.log(e);
-            throw new BadRequestException(e.message);
+        } catch (err) {
+            if (err instanceof HttpException) throw err;
+            this.logger.error(`[findAll] ${err.message}`, err.stack);
+            throw new InternalServerErrorException(ERROR_MESSAGE.SOMETHING_WRONG);
         }
     }
 
@@ -169,10 +155,7 @@ export class UserService {
 
     // ─── Write ────────────────────────────────────────────────────────────────
 
-    async create(
-        res: Response,
-        body: CreateUserDto
-    ): Promise<any> {
+    async create(res: Response, body: CreateUserDto): Promise<any> {
         const tx = await this.sequelize.transaction();
         try {
             let keycloak_id = body.keycloak_id || null;
@@ -187,18 +170,23 @@ export class UserService {
                         is_active  : body.is_active ?? true,
                     });
                     this.logger.log(`Keycloak user created: ${keycloak_id}`);
-                } catch (err: any) {
-                    this.logger.warn(`Keycloak create failed, proceeding without keycloak_id: ${err.message}`);
-                    console.log(err);
-                    throw new BadRequestException(`Failed to create user in Keycloak: ${err.message}`);
+                } catch (kcErr: any) {
+                    this.logger.error(`Keycloak create failed: ${kcErr.message}`, kcErr.stack);
+                    throw new InternalServerErrorException(ERROR_MESSAGE.OPERATION_FAILED);
                 }
             }
 
-            const user = await this.userModel.create({
-                ...body,
-                keycloak_id,
-                creator_id: body.creator_id || null,
-            } as any, { transaction: tx });
+            const user = await this.userModel.create(
+                {
+                    ...body,
+                    keycloak_id,
+                } as any,
+                {
+                    transaction     : tx,
+                    individualHooks : true,
+                    user_id         : body.creator_id || null,
+                } as CustomCreateOptions<User>,
+            );
 
             await this.outboxService.saveToOutbox(tx, 'USER_CREATED', 'user', user.id, {
                 user_id    : user.id,
@@ -212,27 +200,31 @@ export class UserService {
             this.logger.log(`User created: ${user.id} keycloak_id: ${keycloak_id}`);
             return ResponseUtil.success(res, user);
         } catch (err) {
-            console.log(err);
             await tx.rollback();
-            throw new BadRequestException(err.message);
+            if (err instanceof HttpException) throw err;
+            this.logger.error(`[create] ${err.message}`, err.stack);
+            throw new InternalServerErrorException(ERROR_MESSAGE.SOMETHING_WRONG);
         }
     }
 
     async update(
-        res: Response, 
-        id: string, 
-        body: UpdateUserDto, 
-        updater_id?: string
+        res: Response,
+        id: string,
+        body: UpdateUserDto,
+        updater_id?: string,
     ): Promise<any> {
         const tx = await this.sequelize.transaction();
         try {
             const user = await this.userModel.findOne({ where: { id }, transaction: tx });
-            if (!user) throw new NotFoundException(`User ${id} not found`);
+            if (!user) throw new NotFoundException(ERROR_MESSAGE.USER_NOT_FOUND);
 
             const changes = this.getChanges(user, body);
             Object.assign(user, body);
-            if (updater_id) user.updater_id = updater_id;
-            await user.save({ transaction: tx });
+
+            await user.save({
+                transaction : tx,
+                user_id     : updater_id,
+            } as CustomUpdateOptions<User>);
 
             if (Object.keys(changes).length > 0) {
                 await this.outboxService.saveToOutbox(tx, 'USER_UPDATED', 'user', id, { changes });
@@ -243,114 +235,158 @@ export class UserService {
             this.logger.log(`User updated: ${id}`);
             return ResponseUtil.success(res, user);
         } catch (err) {
-            console.log(err);
             await tx.rollback();
-            throw new BadRequestException(err.message);
+            if (err instanceof HttpException) throw err;
+            this.logger.error(`[update] ${err.message}`, err.stack);
+            throw new InternalServerErrorException(ERROR_MESSAGE.SOMETHING_WRONG);
         }
     }
 
     async remove(
-        res: Response, 
-        id: string, 
-        deleter_id?: string
+        res: Response,
+        id: string,
+        deleter_id?: string,
     ): Promise<any> {
         const tx = await this.sequelize.transaction();
         try {
             const user = await this.userModel.findOne({ where: { id }, transaction: tx });
-            if (!user) throw new NotFoundException(`User ${id} not found`);
+            if (!user) throw new NotFoundException(ERROR_MESSAGE.USER_NOT_FOUND);
 
             await this.outboxService.saveToOutbox(tx, 'USER_DELETED', 'user', id, {
                 user_id    : id,
                 deleted_at : new Date().toISOString(),
             });
 
-            if (deleter_id) {
-                user.deleter_id = deleter_id;
-                await user.save({ transaction: tx });
-            }
-            await user.destroy({ transaction: tx });
+            await user.destroy({
+                transaction     : tx,
+                individualHooks : true,
+                user_id         : deleter_id,
+            } as CustomDestroyOptions);
 
             await tx.commit();
             await this.invalidateUserCache(id, user);
             this.logger.log(`User soft-deleted: ${id}`);
-            return ResponseUtil.success(res, null);
+            return ResponseUtil.success(res, null, MESSAGE.DELETE_SUCCESS);
         } catch (err) {
-            console.log(err);
             await tx.rollback();
-            throw new BadRequestException(err.message);
+            if (err instanceof HttpException) throw err;
+            this.logger.error(`[remove] ${err.message}`, err.stack);
+            throw new InternalServerErrorException(ERROR_MESSAGE.SOMETHING_WRONG);
         }
     }
 
     // ─── Targeted updates ─────────────────────────────────────────────────────
 
     async updateStatus(
-        res: Response, 
-        id: string, 
-        is_active: boolean, 
-        updater_id?: string
+        res: Response,
+        id: string,
+        is_active: boolean,
+        updater_id?: string,
     ): Promise<any> {
-        try{
-            const user = await this.userModel.findOne({ where: { id } });
-            if (!user) throw new NotFoundException(`User ${id} not found`);
-    
+        const tx = await this.sequelize.transaction();
+        try {
+            const user = await this.userModel.findOne({ where: { id }, transaction: tx });
+            if (!user) throw new NotFoundException(ERROR_MESSAGE.USER_NOT_FOUND);
+
             if (user.keycloak_id) {
                 await this.keycloakAdmin.setEnabled(user.keycloak_id, is_active);
             }
-    
+
             user.is_active = is_active;
-            if (updater_id) user.updater_id = updater_id;
-            await user.save();
-    
+            await user.save({
+                transaction : tx,
+                user_id     : updater_id,
+            } as CustomUpdateOptions<User>);
+
+            await tx.commit();
             await this.invalidateUserCache(id, user);
             this.logger.log(`User ${id} is_active=${is_active}`);
             return ResponseUtil.success(res, user);
-        } catch(e){
-            console.log(e);
-            throw new BadRequestException(e.message);
+        } catch (err) {
+            await tx.rollback();
+            if (err instanceof HttpException) throw err;
+            this.logger.error(`[updateStatus] ${err.message}`, err.stack);
+            throw new InternalServerErrorException(ERROR_MESSAGE.SOMETHING_WRONG);
         }
     }
 
     async updateKeycloakId(id: string, keycloak_id: string): Promise<User> {
-        const user = await this.userModel.findOne({ where: { id } });
-        if (!user) throw new NotFoundException(`User ${id} not found`);
+        const tx = await this.sequelize.transaction();
+        try {
+            const user = await this.userModel.findOne({ where: { id }, transaction: tx });
+            if (!user) throw new NotFoundException(ERROR_MESSAGE.USER_NOT_FOUND);
 
-        user.keycloak_id = keycloak_id;
-        await user.save();
+            user.keycloak_id = keycloak_id;
+            await user.save({ transaction: tx } as CustomUpdateOptions<User>);
 
-        await this.invalidateUserCache(id, user);
-        return user;
+            await tx.commit();
+            await this.invalidateUserCache(id, user);
+            return user;
+        } catch (err) {
+            await tx.rollback();
+            if (err instanceof HttpException) throw err;
+            this.logger.error(`[updateKeycloakId] ${err.message}`, err.stack);
+            throw new InternalServerErrorException(ERROR_MESSAGE.SOMETHING_WRONG);
+        }
     }
 
     async updateLastLogin(id: string): Promise<void> {
-        await this.userModel.update({ last_login_at: new Date() }, { where: { id } });
-        await this.redisService.del(`user:profile:${id}`);
+        const tx = await this.sequelize.transaction();
+        try {
+            await this.userModel.update(
+                { last_login_at: new Date() },
+                { where: { id }, transaction: tx },
+            );
+            await tx.commit();
+            await this.redisService.del(`user:profile:${id}`);
+        } catch (err) {
+            await tx.rollback();
+            if (err instanceof HttpException) throw err;
+            this.logger.error(`[updateLastLogin] ${err.message}`, err.stack);
+            throw new InternalServerErrorException(ERROR_MESSAGE.SOMETHING_WRONG);
+        }
     }
 
     async updatePhone(id: string, phone: string): Promise<void> {
-        const user = await this.userModel.findOne({ where: { id } });
-        if (!user) throw new NotFoundException(`User ${id} not found`);
+        const tx = await this.sequelize.transaction();
+        try {
+            const user = await this.userModel.findOne({ where: { id }, transaction: tx });
+            if (!user) throw new NotFoundException(ERROR_MESSAGE.USER_NOT_FOUND);
 
-        const old_phone = user.phone;
-        await this.userModel.update({ phone }, { where: { id } });
+            const old_phone = user.phone;
+            await this.userModel.update({ phone }, { where: { id }, transaction: tx });
 
-        await this.redisService.del(`user:phone:${old_phone}`);
-        await this.redisService.del(`user:phone:${phone}`);
-        await this.redisService.del(`user:profile:${id}`);
+            await tx.commit();
+            await this.redisService.del(`user:phone:${old_phone}`);
+            await this.redisService.del(`user:phone:${phone}`);
+            await this.redisService.del(`user:profile:${id}`);
+        } catch (err) {
+            await tx.rollback();
+            if (err instanceof HttpException) throw err;
+            this.logger.error(`[updatePhone] ${err.message}`, err.stack);
+            throw new InternalServerErrorException(ERROR_MESSAGE.SOMETHING_WRONG);
+        }
     }
 
     async updateMirrorFields(id: string, fields: Partial<Pick<User,
         'email' | 'first_name' | 'last_name' | 'is_active' | 'email_verified'
     >>): Promise<void> {
-        await this.userModel.update(fields, { where: { id } });
-        await this.redisService.del(`user:profile:${id}`);
-        this.logger.log(`Mirror fields updated for user ${id}`);
+        const tx = await this.sequelize.transaction();
+        try {
+            await this.userModel.update(fields, { where: { id }, transaction: tx });
+            await tx.commit();
+            await this.redisService.del(`user:profile:${id}`);
+            this.logger.log(`Mirror fields updated for user ${id}`);
+        } catch (err) {
+            await tx.rollback();
+            if (err instanceof HttpException) throw err;
+            this.logger.error(`[updateMirrorFields] ${err.message}`, err.stack);
+            throw new InternalServerErrorException(ERROR_MESSAGE.SOMETHING_WRONG);
+        }
     }
 
-    // ─── Create from Keycloak (Kafka sync path) ───────────────────────────────
-    // Called by UserSyncConsumer when Keycloak fires USER_REGISTERED or
-    // ADMIN_USER_CREATED. The user already exists in Keycloak — this only
-    // creates the DB row. Does NOT call KeycloakAdminService.createUser().
- 
+    // ─── Create from Keycloak (Kafka sync path) ──────────────────────────────
+
     async createFromKeycloak(params: {
         keycloak_id    : string;
         phone          : string;
@@ -362,17 +398,23 @@ export class UserService {
     }): Promise<User> {
         const tx = await this.sequelize.transaction();
         try {
-            const user = await this.userModel.create({
-                keycloak_id   : params.keycloak_id,
-                phone         : params.phone,
-                email         : params.email         ?? null,
-                first_name    : params.first_name    ?? null,
-                last_name     : params.last_name     ?? null,
-                is_active     : params.is_active     ?? true,
-                email_verified: params.email_verified ?? false,
-                creator_id    : null,
-            } as any, { transaction: tx });
- 
+            const user = await this.userModel.create(
+                {
+                    keycloak_id   : params.keycloak_id,
+                    phone         : params.phone,
+                    email         : params.email         ?? null,
+                    first_name    : params.first_name    ?? null,
+                    last_name     : params.last_name     ?? null,
+                    is_active     : params.is_active     ?? true,
+                    email_verified: params.email_verified ?? false,
+                } as any,
+                {
+                    transaction     : tx,
+                    individualHooks : true,
+                    // No user_id — system-initiated, creator_id stays null
+                } as CustomCreateOptions<User>,
+            );
+
             await this.outboxService.saveToOutbox(tx, 'USER_CREATED', 'user', user.id, {
                 user_id   : user.id,
                 phone     : user.phone,
@@ -380,30 +422,30 @@ export class UserService {
                 first_name: user.first_name,
                 last_name : user.last_name,
             });
- 
+
             await tx.commit();
             this.logger.log(`User created from Keycloak sync: ${user.id} keycloak_id: ${params.keycloak_id}`);
             return user;
         } catch (err) {
-            console.log(err);
             await tx.rollback();
-            throw new BadRequestException(err.message);
+            if (err instanceof HttpException) throw err;
+            this.logger.error(`[createFromKeycloak] ${err.message}`, err.stack);
+            throw new InternalServerErrorException(ERROR_MESSAGE.SOMETHING_WRONG);
         }
     }
 
-
     // ─── Private helpers ──────────────────────────────────────────────────────
 
-    private getChanges(user: User, dto: UpdateUserDto): Record<string, any> {
+    private getChanges(user: User, body: UpdateUserDto): Record<string, any> {
         const changes: Record<string, any> = {};
-        if (dto.first_name !== undefined && dto.first_name !== user.first_name)
-            changes.first_name = { old: user.first_name, new: dto.first_name };
-        if (dto.last_name !== undefined && dto.last_name !== user.last_name)
-            changes.last_name = { old: user.last_name, new: dto.last_name };
-        if (dto.email !== undefined && dto.email !== user.email)
-            changes.email = { old: user.email, new: dto.email };
-        if (dto.is_active !== undefined && dto.is_active !== user.is_active)
-            changes.is_active = { old: user.is_active, new: dto.is_active };
+        if (body.first_name !== undefined && body.first_name !== user.first_name)
+            changes.first_name = { old: user.first_name, new: body.first_name };
+        if (body.last_name !== undefined && body.last_name !== user.last_name)
+            changes.last_name = { old: user.last_name, new: body.last_name };
+        if (body.email !== undefined && body.email !== user.email)
+            changes.email = { old: user.email, new: body.email };
+        if (body.is_active !== undefined && body.is_active !== user.is_active)
+            changes.is_active = { old: user.is_active, new: body.is_active };
         return changes;
     }
 

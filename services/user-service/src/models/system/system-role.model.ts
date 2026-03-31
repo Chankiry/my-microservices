@@ -5,6 +5,7 @@ import {
 } from 'sequelize-typescript';
 import System from './system.model';
 import User   from '../user/user.model';
+import { BaseModel } from '@models/baseModel';
 
 @Table({
     tableName : 'system_roles',
@@ -13,16 +14,13 @@ import User   from '../user/user.model';
     deletedAt : 'deleted_at',
     paranoid  : true,
 })
-class SystemRole extends Model<SystemRole> {
+class SystemRole extends BaseModel<SystemRole> {
 
     // ============================================================================================ Primary Key
     @Column({ primaryKey: true, type: DataType.UUID,defaultValue: DataType.UUIDV4})                 declare id: string;
 
     // ============================================================================================ Foreign Keys
     @ForeignKey(() => System) @Column({ type: DataType.STRING(50), allowNull: false })              declare system_id: string;
-    @ForeignKey(() => User) @Column({ type: DataType.UUID, allowNull: true })                       declare creator_id: string | null;
-    @ForeignKey(() => User) @Column({ type: DataType.UUID, allowNull: true })                       declare updater_id: string | null;
-    @ForeignKey(() => User) @Column({ type: DataType.UUID, allowNull: true })                       declare deleter_id: string | null;
 
     // ============================================================================================ Field
     @Column({ type: DataType.STRING(100), allowNull: false })                                       declare name_kh     : string;
@@ -54,16 +52,8 @@ class SystemRole extends Model<SystemRole> {
     // For client type: whatever name was created in that client.
     @Column({ type: DataType.STRING(100), allowNull: true })                                        declare keycloak_role_name: string | null;
 
-    @CreatedAt                                                                                      declare created_at: Date;
-    @UpdatedAt                                                                                      declare updated_at: Date;
-    @DeletedAt                                                                                      declare deleted_at: Date | null;
-
     // ============================================================================================ Many to One
     @BelongsTo(() => System, { foreignKey: 'system_id',  as: 'system'  })                           declare system: System;
-
-    @BelongsTo(() => User,   { foreignKey: 'creator_id', as: 'creator' })                           declare creator: User;
-    @BelongsTo(() => User,   { foreignKey: 'updater_id', as: 'updater' })                           declare updater: User;
-    @BelongsTo(() => User,   { foreignKey: 'deleter_id', as: 'deleter' })                           declare deleter: User;
 
 }
 

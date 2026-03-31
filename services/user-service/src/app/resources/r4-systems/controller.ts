@@ -29,13 +29,13 @@ export class SystemController {
     }
 
     @Post()
-    async create(@Body() dto: CreateSystemDto, @Request() req: any) {
-        return this.systemService.create(dto, req.user.sub);
+    async create(@Body() body: CreateSystemDto, @Request() req: any) {
+        return this.systemService.create(body, req.user.sub);
     }
 
     @Patch(':id')
-    async update(@Param('id') id: string, @Body() dto: UpdateSystemDto, @Request() req: any) {
-        return this.systemService.update(id, dto, req.user.sub);
+    async update(@Param('id') id: string, @Body() body: UpdateSystemDto, @Request() req: any) {
+        return this.systemService.update(id, body, req.user.sub);
     }
 
     @Delete(':id')
@@ -54,20 +54,20 @@ export class SystemController {
     @Post(':id/roles')
     async createRole(
         @Param('id') id: string,
-        @Body() dto: CreateSystemRoleDto,
+        @Body() body: CreateSystemRoleDto,
         @Request() req: any,
     ) {
-        return this.systemService.createRole(id, dto, req.user.sub);
+        return this.systemService.createRole(id, body, req.user.sub);
     }
 
     @Patch(':id/roles/:slug')
     async updateRole(
         @Param('id')   id  : string,
         @Param('slug') slug: string,
-        @Body() dto: UpdateSystemRoleDto,
+        @Body() body: UpdateSystemRoleDto,
         @Request() req: any,
     ) {
-        return this.systemService.updateRole(id, slug, dto, req.user.sub);
+        return this.systemService.updateRole(id, slug, body, req.user.sub);
     }
 
     @Delete(':id/roles/:slug')

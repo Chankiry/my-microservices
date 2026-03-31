@@ -31,8 +31,8 @@ export class ManagementController {
     }
 
     @Post('users')
-    async createPlatformUser(@Body() dto: CreatePlatformUserDto, @Request() req: any) {
-        return this.managementService.createPlatformUser(dto, req.user.sub);
+    async createPlatformUser(@Body() body: CreatePlatformUserDto, @Request() req: any) {
+        return this.managementService.createPlatformUser(body, req.user.sub);
     }
 
     @Get('users/:user_id')
@@ -53,10 +53,10 @@ export class ManagementController {
     @Post('users/:user_id/roles')
     async assignRole(
         @Param('user_id') user_id: string,
-        @Body() dto: AssignUserRoleDto,
+        @Body() body: AssignUserRoleDto,
         @Request() req: any,
     ) {
-        return this.managementService.assignRoleToUser(user_id, dto, req.user.sub);
+        return this.managementService.assignRoleToUser(user_id, body, req.user.sub);
     }
 
     @Delete('users/:user_id/roles/:role_id')
@@ -99,11 +99,11 @@ export class ManagementController {
     @Roles('system-connector')
     async updateExternalRoles(
         @Param('system_id') system_id: string,
-        @Body() dto: ExternalRoleChangeDto,
+        @Body() body: ExternalRoleChangeDto,
         @Request() req: any,
     ) {
         return this.managementService.updateSystemRolesFromExternal(
-            system_id, dto.external_id, dto.role_slugs, req.user.sub,
+            system_id, body.external_id, body.role_slugs, req.user.sub,
         );
     }
 
@@ -112,20 +112,20 @@ export class ManagementController {
     @Post('users/:user_id/access')
     async grantAccess(
         @Param('user_id') user_id: string,
-        @Body() dto: GrantAccessDto,
+        @Body() body: GrantAccessDto,
         @Request() req: any,
     ) {
-        return this.managementService.grantAccess(user_id, dto, req.user.sub);
+        return this.managementService.grantAccess(user_id, body, req.user.sub);
     }
 
     @Patch('users/:user_id/access/:system_id')
     async updateAccess(
         @Param('user_id')   user_id  : string,
         @Param('system_id') system_id: string,
-        @Body() dto: UpdateAccessDto,
+        @Body() body: UpdateAccessDto,
         @Request() req: any,
     ) {
-        return this.managementService.updateAccess(user_id, system_id, dto, req.user.sub);
+        return this.managementService.updateAccess(user_id, system_id, body, req.user.sub);
     }
 
     @Delete('users/:user_id/access/:system_id')
@@ -151,9 +151,9 @@ export class ManagementController {
     async rejectAccess(
         @Param('user_id')   user_id  : string,
         @Param('system_id') system_id: string,
-        @Body() dto: RejectAccessDto,
+        @Body() body: RejectAccessDto,
         @Request() req: any,
     ) {
-        return this.managementService.rejectAccess(user_id, system_id, req.user.sub, dto);
+        return this.managementService.rejectAccess(user_id, system_id, req.user.sub, body);
     }
 }

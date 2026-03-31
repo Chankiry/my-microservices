@@ -127,14 +127,13 @@ export class UserGrpcService {
     ) {
         this.logger.log(`gRPC ListUsers: page=${data.page} limit=${data.limit}`);
         try {
+            const parsedPage = data.page || 1;
+            const parsedPerPage = data.per_page || 10;
             const result = (await this.userService.findAll(
                 res,
-                {
-                    page:     data.page  || 1,
-                    limit:    data.limit || 10,
-                    search:   data.search   || undefined,
-                    is_active: data.is_active !== undefined ? data.is_active : undefined,
-                }
+                data.key,
+                parsedPage,
+                parsedPerPage
             )).data;
             return {
                 users: result.data.map(u => this.toProto(u)),

@@ -5,6 +5,7 @@ import {
 } from 'sequelize-typescript';
 import User   from './user.model';
 import System from '../system/system.model';
+import { BaseModel } from '@models/baseModel';
 
 @Table({
     tableName : 'user_system_access',
@@ -13,7 +14,7 @@ import System from '../system/system.model';
     deletedAt : 'deleted_at',
     paranoid  : true,
 })
-class UserSystemAccess extends Model<UserSystemAccess> {
+class UserSystemAccess extends BaseModel<UserSystemAccess> {
 
     // ============================================================================================ Primary Key
     @Column({ primaryKey: true, type: DataType.UUID,defaultValue: DataType.UUIDV4})                 declare id: string;
@@ -23,9 +24,6 @@ class UserSystemAccess extends Model<UserSystemAccess> {
     @ForeignKey(() => User) @Column({ type: DataType.UUID, allowNull: false })                      declare user_id: string;
     @ForeignKey(() => User) @Column({ type: DataType.UUID, allowNull: true })                       declare granted_by: string | null;
     @ForeignKey(() => User) @Column({ type: DataType.UUID, allowNull: true })                       declare rejected_by: string | null;
-    @ForeignKey(() => User) @Column({ type: DataType.UUID, allowNull: true })                       declare creator_id: string | null;
-    @ForeignKey(() => User) @Column({ type: DataType.UUID, allowNull: true })                       declare updater_id: string | null;
-    @ForeignKey(() => User) @Column({ type: DataType.UUID, allowNull: true })                       declare deleter_id: string | null;
     
     // ============================================================================================ Field
     @Column({ type: DataType.ENUM('public', 'managed', 'internal'), allowNull : false})             declare account_type: 'public' | 'managed' | 'internal';
@@ -39,19 +37,12 @@ class UserSystemAccess extends Model<UserSystemAccess> {
     @Column({ type: DataType.DATE, allowNull: true })                                               declare rejected_at: Date | null;
     @Column({ type: DataType.TEXT, allowNull: true })                                               declare rejected_reason: string | null;
     @Column({ type: DataType.DATE, allowNull: true })                                               declare last_login_at: Date | null;
-    
-    @CreatedAt                                                                                      declare created_at: Date;
-    @UpdatedAt                                                                                      declare updated_at: Date;
-    @DeletedAt                                                                                      declare deleted_at: Date | null;
 
     // ============================================================================================ Many to One
     @BelongsTo(() => User,   { foreignKey: 'user_id',     as: 'user'     })                         declare user: User;
     @BelongsTo(() => System, { foreignKey: 'system_id',   as: 'system'   })                         declare system: System;
     @BelongsTo(() => User,   { foreignKey: 'granted_by',  as: 'granter'  })                         declare granter: User;
     @BelongsTo(() => User,   { foreignKey: 'rejected_by', as: 'rejecter' })                         declare rejecter: User;
-    @BelongsTo(() => User,   { foreignKey: 'creator_id',  as: 'creator'  })                         declare creator: User;
-    @BelongsTo(() => User,   { foreignKey: 'updater_id',  as: 'updater'  })                         declare updater: User;
-    @BelongsTo(() => User,   { foreignKey: 'deleter_id',  as: 'deleter'  })                         declare deleter: User;
 }
 
 export default UserSystemAccess;

@@ -4,13 +4,14 @@ import {
 } from 'sequelize-typescript';
 import User   from './user.model';
 import System from '../system/system.model';
+import { BaseModel } from '@models/baseModel';
 
 @Table({
     tableName : 'user_login_logs',
     createdAt : 'created_at',
     updatedAt : false,
 })
-class UserLoginLog extends Model<UserLoginLog> {
+class UserLoginLog extends BaseModel<UserLoginLog> {
 
     // ============================================================================================ Primary Key
     @Column({ primaryKey: true, type: DataType.UUID,defaultValue: DataType.UUIDV4})                 declare id: string;
@@ -18,8 +19,6 @@ class UserLoginLog extends Model<UserLoginLog> {
     // ============================================================================================ Foreign Keys
     @ForeignKey(() => System) @Column({ type: DataType.STRING(50), allowNull: false })              declare system_id: string;
     @ForeignKey(() => User) @Column({ type: DataType.UUID, allowNull: false })                      declare user_id: string;
-
-    @CreatedAt                                                                                      declare created_at: Date;
 
     // ============================================================================================ Field
     @Column({ type: DataType.STRING(45), allowNull: true })                                         declare ip: string | null;

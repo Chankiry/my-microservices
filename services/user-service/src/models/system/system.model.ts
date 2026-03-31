@@ -4,6 +4,7 @@ import {
     CreatedAt, UpdatedAt, DeletedAt,
 } from 'sequelize-typescript';
 import User from '../user/user.model';
+import { BaseModel } from '@models/baseModel';
 
 @Table({
     tableName : 'systems',
@@ -12,15 +13,12 @@ import User from '../user/user.model';
     deletedAt : 'deleted_at',
     paranoid  : true,
 })
-class System extends Model<System> {
+class System extends BaseModel<System> {
 
     // ============================================================================================ Primary Key
     @Column({ primaryKey: true, type: DataType.STRING(50) })                                        declare id: string;
 
     // ============================================================================================ Foreign Keys
-    @ForeignKey(() => User) @Column({ type: DataType.UUID, allowNull: true })                       declare creator_id: string | null;
-    @ForeignKey(() => User) @Column({ type: DataType.UUID, allowNull: true })                       declare updater_id: string | null;
-    @ForeignKey(() => User) @Column({ type: DataType.UUID, allowNull: true })                       declare deleter_id: string | null;
 
     // ============================================================================================ Fields
     @Column({ type: DataType.STRING(100), allowNull: false })                                       declare name: string;
@@ -42,14 +40,7 @@ class System extends Model<System> {
     // e.g. http://localhost:3005 or https://plt.example.com
     @Column({ type: DataType.STRING(500), allowNull: true })                                        declare base_url: string | null;
 
-    @CreatedAt                                                                                      declare created_at: Date;
-    @UpdatedAt                                                                                      declare updated_at: Date;
-    @DeletedAt                                                                                      declare deleted_at: Date | null;
-
     // ============================================================================================ Many to One
-    @BelongsTo(() => User, { foreignKey: 'creator_id', as: 'creator' })                            declare creator: User;
-    @BelongsTo(() => User, { foreignKey: 'updater_id', as: 'updater' })                            declare updater: User;
-    @BelongsTo(() => User, { foreignKey: 'deleter_id', as: 'deleter' })                            declare deleter: User;
 }
 
 export default System;

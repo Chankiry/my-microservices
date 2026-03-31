@@ -10,7 +10,6 @@ import {
     Request,
     HttpCode,
     HttpStatus,
-    ForbiddenException,
     Patch,
     Post,
     Res,
@@ -73,9 +72,9 @@ export class UserController {
     async adminUpdate(
         @Res()  res: Response,
         @Param('id') id: string,
-        @Body() dto: AdminUpdateUserDto,
+        @Body() body: AdminUpdateUserDto,
     ) {
-        return this.usersService.update(res, id, dto);
+        return this.usersService.update(res, id, body);
     }
 
     @Patch(':id/activate')
