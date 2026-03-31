@@ -35,8 +35,6 @@ class UserSystemAccess extends Model<UserSystemAccess> {
         allowNull    : false
     })                                                                                              declare registration_status: 'pending' | 'active' | 'suspended' | 'rejected';
 
-    // Roles this user has within this specific system
-    @Column({ type: DataType.ARRAY(DataType.STRING), defaultValue: [], allowNull: false })          declare system_roles: string[];
     @Column({ type: DataType.DATE, allowNull: true })                                               declare granted_at: Date | null;
     @Column({ type: DataType.DATE, allowNull: true })                                               declare rejected_at: Date | null;
     @Column({ type: DataType.TEXT, allowNull: true })                                               declare rejected_reason: string | null;

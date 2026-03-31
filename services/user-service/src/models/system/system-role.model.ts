@@ -25,12 +25,34 @@ class SystemRole extends Model<SystemRole> {
     @ForeignKey(() => User) @Column({ type: DataType.UUID, allowNull: true })                       declare deleter_id: string | null;
 
     // ============================================================================================ Field
-    // Must match the Keycloak client role name exactly
-    @Column({ type: DataType.STRING(100), allowNull: false })                                       declare role_name: string;
-    @Column({ type: DataType.STRING(255), allowNull: true })                                        declare description: string | null;
+    @Column({ type: DataType.STRING(100), allowNull: false })                                       declare name_kh     : string;
+    @Column({ type: DataType.STRING(100), allowNull: false })                                       declare name_en     : string;
+ 
+    // Unique identifier per system — used internally (e.g. 'admin', 'user', 'officer')
+    @Column({ type: DataType.STRING(50),  allowNull: false })                                       declare slug        : string;
+ 
+    @Column({ type: DataType.STRING(100), allowNull: true  })                                       declare icon        : string | null;
+    @Column({ type: DataType.STRING(20),  allowNull: true  })                                       declare color       : string | null;
+    @Column({ type: DataType.TEXT,        allowNull: true  })                                       declare description : string | null;
+ 
+    // ═══════════════════════════════════════════════════ Status
+    @Column({ type: DataType.BOOLEAN, defaultValue: true,  allowNull: false })                      declare is_active   : boolean;
+ 
+    // Auto-assigned when granting a user access to this system
+    @Column({ type: DataType.BOOLEAN, defaultValue: false, allowNull: false })                      declare is_default  : boolean;
 
-    // If true, this role is auto-assigned when granting access to this system
-    @Column({ type: DataType.BOOLEAN, defaultValue: false, allowNull: false })                      declare is_default: boolean;
+    // realm  → Keycloak realm role  (only for platform system)
+    // client → Keycloak client role (for external Keycloak systems)
+    @Column({
+        type        : DataType.ENUM('realm', 'client'),
+        allowNull   : false,
+        defaultValue: 'client',
+    })
+    declare role_type: 'realm' | 'client';
+ 
+    // Exact role name in Keycloak. For realm type: 'admin' | 'user'.
+    // For client type: whatever name was created in that client.
+    @Column({ type: DataType.STRING(100), allowNull: true })                                        declare keycloak_role_name: string | null;
 
     @CreatedAt                                                                                      declare created_at: Date;
     @UpdatedAt                                                                                      declare updated_at: Date;

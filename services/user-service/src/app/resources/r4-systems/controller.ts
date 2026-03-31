@@ -3,15 +3,15 @@ import {
     Param, Body, Request, HttpCode, HttpStatus,
     UseGuards,
 } from '@nestjs/common';
-import { SystemService } from './service';
-import { CreateSystemDto, UpdateSystemDto, CreateSystemRoleDto } from './dto';
-import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
-import { RolesGuard } from '../../core/guards/roles.guard';
-import { Roles } from '../../core/decorators/roles.decorator';
+import { SystemService }     from './service';
+import { CreateSystemDto, UpdateSystemDto, CreateSystemRoleDto, UpdateSystemRoleDto } from './dto';
+import { JwtAuthGuard }      from '../../core/guards/jwt-auth.guard';
+import { RolesGuard }        from '../../core/guards/roles.guard';
+import { Roles }             from '../../core/decorators/roles.decorator';
 
 @Controller()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('platform-admin')
+@Roles('admin')
 export class SystemController {
 
     constructor(private readonly systemService: SystemService) {}
@@ -34,11 +34,7 @@ export class SystemController {
     }
 
     @Patch(':id')
-    async update(
-        @Param('id') id: string,
-        @Body() dto: UpdateSystemDto,
-        @Request() req: any,
-    ) {
+    async update(@Param('id') id: string, @Body() dto: UpdateSystemDto, @Request() req: any) {
         return this.systemService.update(id, dto, req.user.sub);
     }
 
@@ -48,7 +44,7 @@ export class SystemController {
         await this.systemService.remove(id, req.user.sub);
     }
 
-    // ─── System roles ─────────────────────────────────────────────────────────
+    // ─── System Roles ─────────────────────────────────────────────────────────
 
     @Get(':id/roles')
     async findRoles(@Param('id') id: string) {
@@ -64,13 +60,23 @@ export class SystemController {
         return this.systemService.createRole(id, dto, req.user.sub);
     }
 
-    @Delete(':id/roles/:role_name')
-    @HttpCode(HttpStatus.NO_CONTENT)
-    async removeRole(
-        @Param('id')        id       : string,
-        @Param('role_name') role_name: string,
+    @Patch(':id/roles/:slug')
+    async updateRole(
+        @Param('id')   id  : string,
+        @Param('slug') slug: string,
+        @Body() dto: UpdateSystemRoleDto,
         @Request() req: any,
     ) {
-        await this.systemService.removeRole(id, role_name, req.user.sub);
+        return this.systemService.updateRole(id, slug, dto, req.user.sub);
+    }
+
+    @Delete(':id/roles/:slug')
+    @HttpCode(HttpStatus.NO_CONTENT)
+    async removeRole(
+        @Param('id')   id  : string,
+        @Param('slug') slug: string,
+        @Request() req: any,
+    ) {
+        await this.systemService.removeRole(id, slug, req.user.sub);
     }
 }

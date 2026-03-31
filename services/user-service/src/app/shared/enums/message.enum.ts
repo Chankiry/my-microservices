@@ -78,3 +78,42 @@ export const ERROR_MESSAGE = {
     INVALID_ACTION                  : new BaseTranslate('Invalid action.'),
     INVALID_DATE                  : new BaseTranslate('Invalid date.'),
 };
+
+export const PROFILE_MESSAGE = {
+    UPDATE_SUCCESS              : new BaseTranslate('កែប្រែប្រវត្តិរូបបានជោគជ័យ', 'Update successfully'),
+    CHANGE_PASSWORD_SUCCESS     : new BaseTranslate('ប្ដូរពាក្យសម្ងាត់បានជោគជ័យ', 'Password changed successfully'),
+    CHANGE_EMAIL_SUCCESS        : new BaseTranslate('ប្ដូរអ៊ីមែលបានជោគជ័យ', 'Email changed successfully'),
+    CHANGE_PHONE_SUCCESS        : new BaseTranslate('ប្ដូរទូរស័ព្ទបានជោគជ័យ', 'Phone number changed successfully'),
+}; 
+
+export const PROFILE_ERROR_MESSAGE = {
+    CURRENT_PASSWORD_INCORRECT  : new BaseTranslate('ពាក្យសម្ងាត់បច្ចុប្បន្នមិនត្រឹមត្រូវ', 'Current password is incorrect. Please check and try again.'),
+    EMAIL_ALREADY_REGISTERED    : new BaseTranslate('អ៊ីមែលនេះបានចុះឈ្មោះរួចហើយ', 'This email address is already registered. Please use a different email.'),
+    PHONE_ALREADY_REGISTERED    : new BaseTranslate('លេខទូរស័ព្ទនេះបានចុះឈ្មោះរួចហើយ', 'This phone number is already registered. Please use a different phone number.'),
+};
+
+export const SYSTEM_MESSAGE = {
+    CONNECT_SUCCESS             : new BaseTranslate('ភ្ជាប់ប្រព័ន្ធបានជោគជ័យ', 'System connected successfully'),
+    DISCONNECT_SUCCESS          : new BaseTranslate('ដាច់ភ្ជាប់ប្រព័ន្ធបានជោគជ័យ', 'System disconnected successfully'),
+};
+
+export const SYSTEM_ERROR_MESSAGE = {
+    SYSTEM_NOT_FOUND            : new BaseTranslate('ប្រព័ន្ធនេះមិនមាន', 'System not found. Please check the details and try again.'),
+    SYSTEM_INACTIVE             : new BaseTranslate('ប្រព័ន្ធនេះមិនមានសកម្ម', 'System is inactive. Please check the details and try again.'),
+    INVALID_CREDENTIALS         : new BaseTranslate('សមត្ថកិច្ចដែលផ្ដល់មិនត្រឹមត្រូវ', 'Invalid credentials provided. Please check and try again.'),
+    CONNECTION_FAILED           : new BaseTranslate('មិនអាចភ្ជាប់ប្រព័ន្ធបាន សូមព្យាយាមម្ដងទៀត', 'Failed to connect to the system. Please check the details and try again.'),
+    SYSTEM_ALREADY_CONNECTED    : new BaseTranslate('អ្នកបានភ្ជាប់ប្រព័ន្ធនេះរួចហើយ', 'You have already connected to this system.'),
+    SYSTEM_DISCONNECTION_FAILED : new BaseTranslate('ការដាច់ភ្ជាប់បរាជ័យ', 'Failed to disconnect from the system. Please check the details and try again.'),
+    SYSTEM_NOT_ALLOW_CONNECTION : new BaseTranslate('ប្រព័ន្ធនេះមិនគាំទ្រការភ្ជាប់ដោយលេខសំងាត់', 'This system does not allow connection with the provided credentials.'),
+};
+
+export const AUTH_MESSAGE = {
+    REGISTRATION_SUCCESS        : new BaseTranslate('ការចុះឈ្មោះបានជោគជ័យ។ សូមចូលប្រព័ន្ធ', 'Registration successful. Please log in.'),
+    LOGIN_SUCCESS               : new BaseTranslate('ចូលប្រព័ន្ធបានជោគជ័យ', 'Login successful.'),
+    LOGOUT_SUCCESS              : new BaseTranslate('ចេញពីប្រព័ន្ធបានជោគជ័យ', 'Logout successful.'),
+    TOKEN_REFRESH_SUCCESS       : new BaseTranslate('បង្កើត token ថ្មីបានជោគជ័យ', 'Token refreshed successfully.'),
+}
+
+export const AUTH_ERROR_MESSAGE = {
+    INVALID_CREDENTIALS         : new BaseTranslate('ឈ្មោះអ្នកប្រើ ឬ ពាក្យសម្ងាត់មិនត្រឹមត្រូវ', 'Invalid credentials provided. Please check and try again.'),
+};

@@ -3,11 +3,13 @@ import {
     Headers, HttpCode, HttpStatus,
     UseGuards, Request,
     UnauthorizedException,
+    Res,
 } from '@nestjs/common';
 import { AuthService }       from './service';
-import { LoginDto, RefreshDto } from './dto';
+import { LoginDto, RefreshDto, RegisterDto } from './dto';
 import { JwtAuthGuard }      from '../../../core/guards/jwt-auth.guard';
 import { ProfileService }    from '../a2-profile/service';
+import { Response } from 'express';
 
 @Controller()
 export class AuthController {
@@ -18,6 +20,15 @@ export class AuthController {
     ) {}
 
     // ─── Public endpoints ─────────────────────────────────────────────────────
+
+    @Post('register')
+    @HttpCode(HttpStatus.OK)
+    async register(
+        @Res()  res: Response,
+        @Body() body: RegisterDto
+    ) {
+        return this.authService.register(res, body);
+    }
 
     @Post('login')
     @HttpCode(HttpStatus.OK)

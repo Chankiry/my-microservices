@@ -103,6 +103,14 @@ export class ResourceAuthService {
         this._pendingRedirect = params;
     }
 
+    // ─── GET /account/profile/me ─────────────────────────────────────────────
+    // Lightweight call — returns user fields + platform_roles[].
+    // Used after login to determine navigation target.
+
+    getMe(): Observable<any> {
+        return this._http.get<any>(`${this.PROFILE_BASE}/me`);
+    }
+
     getPendingRedirect(): RedirectParams | null {
         return this._pendingRedirect;
     }

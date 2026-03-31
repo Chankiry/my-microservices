@@ -26,8 +26,6 @@ import {
     setCurrentAccount, getCurrentAccountPhone,
 } from '../saved-account.interface';
 import { jwtDecode } from 'jwt-decode';
-import { ConfirmDialogComponent } from './confirm-dialog.component';
-import { MatDialog } from '@angular/material/dialog';
 
 type ViewState =
     | 'account-picker'
@@ -80,7 +78,6 @@ export class AuthSignInComponent implements OnInit {
         private _router             : Router,
         private _snackBarService    : SnackbarService,
         private _errorHandleService : ErrorHandleService,
-        private _dialog             : MatDialog,
     ) {}
 
     ngOnInit(): void {
@@ -174,28 +171,23 @@ export class AuthSignInComponent implements OnInit {
         this.viewState = this.savedAccounts.length ? 'account-picker' : 'new-account';
     }
 
-    removeAccount(account: SavedAccount, event: MouseEvent): void {
+    askRemoveAccount(account: SavedAccount, event: MouseEvent): void {
         event.stopPropagation();
+        this.confirmRemovePhone = account.phone;
+    }
 
-        const dialogRef = this._dialog.open(ConfirmDialogComponent, {
-            width: '400px',
-            data: {
-                title: 'ដកចេញគណនី',
-                message: `តើលោកអ្នកពិតប្រាកដថាចង់ដកចេញគណនី ${account.name}?`,
-                confirmLabel: 'ដកចេញ',
-                cancelLabel: 'បោះបង់',
-                confirmColor: 'warn',
-            }
-        });
+    confirmRemove(event: MouseEvent): void {
+        event.stopPropagation();
+        if (!this.confirmRemovePhone) return;
+        removeAccount(this.confirmRemovePhone);
+        this.confirmRemovePhone = null;
+        this.savedAccounts = getSavedAccounts();
+        if (!this.savedAccounts.length) this.viewState = 'new-account';
+    }
 
-        dialogRef.afterClosed().subscribe(result => {
-            if (result) {
-                removeAccount(account.phone);
-                this.savedAccounts = getSavedAccounts();
-                if (!this.savedAccounts.length) this.viewState = 'new-account';
-                this._snackBarService.openSnackBar('គណនីត្រូវបានដកចេញ', GlobalConstants.success);
-            }
-        });
+    cancelRemove(event: MouseEvent): void {
+        event.stopPropagation();
+        this.confirmRemovePhone = null;
     }
 
     // ─── Login — new account ──────────────────────────────────────────────────
@@ -305,7 +297,17 @@ export class AuthSignInComponent implements OnInit {
             return;
         }
 
-        this._router.navigate(['/admin/dashboard']);
+        // Read platform_roles from /me — source of truth for role-based navigation
+        this._authService.getMe().subscribe({
+            next: me => {
+                const slugs: string[] = (me?.platform_roles ?? []).map((r: any) => r.slug);
+                const target = slugs.includes('admin') ? '/admin/dashboard' : '/profile/my-profile';
+                this._router.navigateByUrl(target);
+            },
+            error: () => {
+                this._router.navigateByUrl('/profile/my-profile');
+            },
+        });
     }
 
     onEnterKeyPress(event: KeyboardEvent): void {

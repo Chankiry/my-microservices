@@ -9,15 +9,17 @@ import { CacheModule }       from '@app/infra/cache/cache.module';
 import { SystemsModule }     from '../../r4-systems/module';
 import UserSystemAccess      from '../../../../models/user/user-system-access.model';
 import UserExternalLinks     from '../../../../models/user/user-external-links.model';
+import UserSystemRole from '../../../../models/user/user-system-role.model';
+import SystemRole from '../../../../models/system/system-role.model';
 
 @Module({
     imports: [
-        SequelizeModule.forFeature([UserSystemAccess, UserExternalLinks]),
+        SequelizeModule.forFeature([UserSystemAccess, UserExternalLinks, UserSystemRole, SystemRole]),
         UserModule,
         KeycloakModule,
         AuthModule,
         CacheModule,
-        SystemsModule,  // provides SystemService for findById + findRoleNames
+        SystemsModule,
     ],
     controllers: [ProfileController],
     providers  : [ProfileService],

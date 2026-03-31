@@ -1,83 +1,106 @@
 import {
-    BadRequestException,
-    ConflictException,
     Injectable, Logger, UnauthorizedException,
+    ConflictException, BadRequestException,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { createHash, createPublicKey } from 'crypto';
-import axios from 'axios';
-import * as jwt from 'jsonwebtoken';
-import { RedisService } from '@app/infra/cache/redis.service';
-import { JwtPayload } from '@app/shared/interfaces/jwt-payload.interface';
-import { RegisterDto } from './dto';
-import { UserService } from '@app/resources/r2-user/service';
+import { ConfigService }    from '@nestjs/config';
+import { createPublicKey }  from 'crypto';
+import axios                from 'axios';
+import * as jwt             from 'jsonwebtoken';
+import { RedisService }     from '@app/infra/cache/redis.service';
 import { KeycloakAdminService } from '@app/communications/keycloak/keycloak-admin.service';
+import { ProfileService }  from '../a2-profile/service';
+import { UserService }      from '@app/resources/r2-user/service';
+import { JwtPayload } from '@app/shared/interfaces/jwt-payload.interface';
+import { Response } from 'express';
+import { AUTH_MESSAGE, PROFILE_ERROR_MESSAGE } from '@app/shared/enums/message.enum';
+import { Sequelize } from 'sequelize';
+import { RegisterDto } from './dto';
+import { ResponseUtil } from '@app/shared/interfaces/base.interface';
 
 @Injectable()
 export class AuthService {
-    private readonly logger       = new Logger(AuthService.name);
-    private readonly keycloakUrl  : string;
-    private readonly realm        : string;
+    private readonly logger           = new Logger(AuthService.name);
+    private readonly keycloakUrl      : string;
+    private readonly realm            : string;
     private readonly loginClientId    : string;
     private readonly loginClientSecret: string;
 
     private jwksKeys     : any[]  = [];
     private jwksLastFetch: number = 0;
-    private readonly jwksCacheTTL = 3_600_000; // 1 hour
+    private readonly jwksCacheTTL = 3_600_000;
 
     constructor(
-        private readonly configService: ConfigService,
-        private readonly redisService : RedisService,
-        private readonly keycloakAdmin : KeycloakAdminService,
-        private readonly userService   : UserService,
+        private readonly configService  : ConfigService,
+        private readonly redisService   : RedisService,
+        private readonly keycloakAdmin  : KeycloakAdminService,
+        private readonly userService    : UserService,
+        private readonly profileService : ProfileService,
+        private readonly sequelize      : Sequelize,
+        
     ) {
-        this.keycloakUrl       = this.configService.get('KEYCLOAK_URL',  'http://keycloak:8080');
-        this.realm             = this.configService.get('KEYCLOAK_REALM', 'microservices-platform');
-        this.loginClientId     = this.configService.get('KEYCLOAK_LOGIN_CLIENT_ID',     'kong-gateway');
-        this.loginClientSecret = this.configService.get('KEYCLOAK_LOGIN_CLIENT_SECRET', '');
+        this.keycloakUrl        = this.configService.get('KEYCLOAK_URL',  'http://keycloak:8080');
+        this.realm              = this.configService.get('KEYCLOAK_REALM', 'microservices-platform');
+        this.loginClientId      = this.configService.get('KEYCLOAK_LOGIN_CLIENT_ID',     'kong-gateway');
+        this.loginClientSecret  = this.configService.get('KEYCLOAK_LOGIN_CLIENT_SECRET', '');
     }
 
-        // ─── Register ─────────────────────────────────────────────────────────────
- 
-    async register(dto: RegisterDto): Promise<{ message: string }> {
-        try {
+    // ─── Register ─────────────────────────────────────────────────────────────
+
+    async register(
+        res: Response,
+        body: RegisterDto
+    ): Promise<any> {
+        const tx = await this.sequelize.transaction();
+        try{
             // Check phone uniqueness
-            const existingPhone = await this.userService.findByPhone(dto.phone);
+            const existingPhone = (await this.userService.findByPhone(res, body.phone)).data;
             if (existingPhone) {
                 throw new ConflictException('លេខទូរស័ព្ទនេះត្រូវបានប្រើប្រាស់រួចហើយ');
             }
-     
+    
             // Check email uniqueness
-            if (dto.email) {
-                const existingEmail = await this.userService.findByEmail(dto.email);
-                if (existingEmail) {
-                    throw new ConflictException('អ៊ីមែលនេះត្រូវបានប្រើប្រាស់រួចហើយ');
-                }
+            const existingEmail = (await this.userService.findByEmail(res, body.email)).data;
+            if (existingEmail) {
+                throw new ConflictException(PROFILE_ERROR_MESSAGE.EMAIL_ALREADY_REGISTERED);
             }
-     
+    
             // Create user in DB + Keycloak (without password — set separately)
-            const user = await this.userService.create({
-                first_name : dto.first_name,
-                last_name  : dto.last_name,
-                phone      : dto.phone,
-                email      : dto.email,
-                is_active  : true,
-            });
-     
+            const user = (await this.userService.create(
+                res,
+                {
+                    first_name : body.first_name,
+                    last_name  : body.last_name,
+                    phone      : body.phone,
+                    email      : body.email,
+                    is_active  : true,
+                }
+            )).data;
+    
             if (!user.keycloak_id) {
                 throw new BadRequestException('Failed to create identity account');
             }
-     
+    
             // Set password and clear required actions
-            await this.keycloakAdmin.setPassword(user.keycloak_id, dto.password);
+            await this.keycloakAdmin.setPassword(user.keycloak_id, body.password);
             await this.keycloakAdmin.clearRequiredActions(user.keycloak_id);
-     
-            this.logger.log(`User registered: ${user.id} phone: ${dto.phone}`);
-     
-            return { message: 'ការចុះឈ្មោះបានជោគជ័យ។ សូមចូលប្រព័ន្ធ' };
-        } catch (err) {
-            console.log(err);
-            throw err;
+    
+            // Assign the default platform 'user' role in user_system_roles
+            // so the /me endpoint returns the correct platform_roles[]
+            try {
+                await this.profileService.assignPlatformUserRole(res, user.id);
+            } catch (err: any) {
+                this.logger.warn(`Could not assign platform user role: ${err.message}`);
+            }
+
+            await tx.commit();
+    
+            this.logger.log(`User registered: ${user.id} phone: ${body.phone}`);
+    
+            return ResponseUtil.success(res, { success: true }, AUTH_MESSAGE.REGISTRATION_SUCCESS);
+        } catch(e){
+            console.log(e);
+            await tx.rollback();
+            throw new BadRequestException(e.message);
         }
     }
 
@@ -113,14 +136,14 @@ export class AuthService {
             };
         } catch (err: any) {
             const status = err.response?.status;
-            if (status === 401) throw new UnauthorizedException('Invalid phone or password');
+            if (status === 401) throw new UnauthorizedException('លេខទូរស័ព្ទ ឬ ពាក្យសម្ងាត់មិនត្រឹមត្រូវ');
             if (status === 400) throw new UnauthorizedException('Invalid login request');
             this.logger.error(`Keycloak login error: ${err.message}`);
             throw new UnauthorizedException('Login failed');
         }
     }
 
-    // ─── Refresh token ────────────────────────────────────────────────────────
+    // ─── Refresh ──────────────────────────────────────────────────────────────
 
     async refresh(refresh_token: string): Promise<{
         access_token : string;
@@ -161,9 +184,7 @@ export class AuthService {
             const decoded = jwt.decode(access_token) as any;
             const ttl     = decoded?.exp ? decoded.exp - Math.floor(Date.now() / 1000) : 86_400;
             await this.blacklistToken(access_token, Math.max(ttl, 0));
-        } catch {
-            // Non-critical
-        }
+        } catch { /* non-critical */ }
 
         if (refresh_token) {
             const revoke_url = `${this.keycloakUrl}/realms/${this.realm}/protocol/openid-connect/revoke`;
@@ -185,71 +206,25 @@ export class AuthService {
     }
 
     // ─── JWKS proxy ───────────────────────────────────────────────────────────
-    // External systems fetch Keycloak public keys here to verify tokens.
-    // They never need to know Keycloak's URL.
 
     async getJwks(): Promise<any> {
-        try {
-            const { data } = await axios.get(
-                `${this.keycloakUrl}/realms/${this.realm}/protocol/openid-connect/certs`
-            );
-            return data;
-        } catch (err: any) {
-            this.logger.error(`Failed to fetch JWKS: ${err.message}`);
-            throw new UnauthorizedException('Unable to fetch public keys');
+        const now = Date.now();
+        if (this.jwksKeys.length && (now - this.jwksLastFetch) < this.jwksCacheTTL) {
+            return { keys: this.jwksKeys };
         }
+
+        const url = `${this.keycloakUrl}/realms/${this.realm}/protocol/openid-connect/certs`;
+        const { data } = await axios.get(url);
+        this.jwksKeys      = data.keys;
+        this.jwksLastFetch = now;
+        return { keys: this.jwksKeys };
     }
 
-    // ─── Token verification (used by JwtStrategy + gRPC) ─────────────────────
+    // ─── OAuth2 code exchange ─────────────────────────────────────────────────
 
-    async verifyToken(token: string): Promise<JwtPayload> {
-        const isBlacklisted = await this.isTokenBlacklisted(token);
-        if (isBlacklisted) throw new UnauthorizedException('Token has been revoked');
-
-        try {
-            const decoded = jwt.decode(token, { complete: true });
-            if (!decoded || typeof decoded === 'string') {
-                throw new UnauthorizedException('Invalid token format');
-            }
-
-            const publicKey = await this.getPublicKey(decoded.header.kid!);
-
-            const payload = jwt.verify(token, publicKey, {
-                algorithms: ['RS256'],
-                issuer    : `${this.keycloakUrl}/realms/${this.realm}`,
-            }) as JwtPayload;
-
-            return payload;
-        } catch (error: any) {
-            this.logger.error(`Token verification failed: ${error.message}`);
-            if (error instanceof UnauthorizedException) throw error;
-            throw new UnauthorizedException('Invalid token');
-        }
-    }
-
-    async validateToken(token: string): Promise<{ valid: boolean; payload?: JwtPayload; error?: string }> {
-        try {
-            const payload = await this.verifyToken(token);
-            return { valid: true, payload };
-        } catch (error: any) {
-            return { valid: false, error: error.message };
-        }
-    }
-
-    async blacklistToken(token: string, expiresIn: number): Promise<void> {
-        const hash = this.hashToken(token);
-        await this.redisService.set(`blacklist:${hash}`, true, expiresIn);
-    }
-
-    async exchangeCodeForToken(code: string): Promise<{
-        access_token : string;
-        refresh_token: string;
-        expires_in   : number;
-        token_type   : string;
-    }> {
-        console.log('Exchanging code for token:', code);
-        const token_url    = `${this.keycloakUrl}/realms/${this.realm}/protocol/openid-connect/token`;
-        const redirect_uri = 'http://localhost:4444/callback';
+    async exchangeCodeForToken(code: string): Promise<any> {
+        const token_url   = `${this.keycloakUrl}/realms/${this.realm}/protocol/openid-connect/token`;
+        const redirectUri = this.configService.get('OAUTH2_REDIRECT_URI', 'http://localhost:4200/callback');
 
         try {
             const { data } = await axios.post(token_url, new URLSearchParams({
@@ -257,7 +232,7 @@ export class AuthService {
                 client_id    : this.loginClientId,
                 client_secret: this.loginClientSecret,
                 code,
-                redirect_uri,
+                redirect_uri : redirectUri,
             }), {
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             });
@@ -269,60 +244,35 @@ export class AuthService {
                 token_type   : data.token_type,
             };
         } catch (err: any) {
-            console.log(err)
             this.logger.error(`Code exchange failed: ${err.response?.data?.error_description || err.message}`);
-            throw new UnauthorizedException('Login failed');
+            throw new UnauthorizedException('Authorization code exchange failed');
         }
     }
 
-    // ─── Private helpers ──────────────────────────────────────────────────────
+    // ─── Helpers ──────────────────────────────────────────────────────────────
 
-    private async isTokenBlacklisted(token: string): Promise<boolean> {
-        const hash        = this.hashToken(token);
-        const blacklisted = await this.redisService.get(`blacklist:${hash}`);
-        return !!blacklisted;
+    async blacklistToken(token: string, ttl: number): Promise<void> {
+        const key = `blacklist:${token.substring(token.length - 20)}`;
+        await this.redisService.set(key, '1', ttl);
     }
 
-    private hashToken(token: string): string {
-        return createHash('sha256').update(token).digest('hex');
-    }
-
-    private async getPublicKey(kid: string): Promise<string> {
-        await this.ensureJwksCache();
-
-        let key = this.jwksKeys.find(k => k.kid === kid);
-        if (!key) {
-            await this.refreshJwks();
-            key = this.jwksKeys.find(k => k.kid === kid);
+    async verifyToken(token: string): Promise<any> {
+        const keys = await this.getJwks();
+        for (const key of keys.keys) {
+            try {
+                const pub = createPublicKey({ key, format: 'jwk' });
+                return jwt.verify(token, pub, { algorithms: ['RS256'] });
+            } catch { /* try next key */ }
         }
-
-        if (!key) throw new UnauthorizedException('Unable to find signing key');
-        return this.jwkToPem(key);
+        throw new UnauthorizedException('Token verification failed');
     }
-
-    private async ensureJwksCache(): Promise<void> {
-        if (this.jwksKeys.length > 0 && Date.now() - this.jwksLastFetch < this.jwksCacheTTL) return;
-        await this.refreshJwks();
-    }
-
-    private async refreshJwks(): Promise<void> {
+    
+    async validateToken(token: string): Promise<{ valid: boolean; payload?: JwtPayload; error?: string }> {
         try {
-            const { data } = await axios.get(
-                `${this.keycloakUrl}/realms/${this.realm}/protocol/openid-connect/certs`,
-            );
-            this.jwksKeys      = data.keys;
-            this.jwksLastFetch = Date.now();
+            const payload = await this.verifyToken(token);
+            return { valid: true, payload };
         } catch (error: any) {
-            this.logger.error(`Failed to fetch JWKS: ${error.message}`);
-            throw new UnauthorizedException('Unable to verify token');
+            return { valid: false, error: error.message };
         }
-    }
-
-    private jwkToPem(jwk: any): string {
-        const publicKey = createPublicKey({
-            key   : { kty: 'RSA', n: jwk.n, e: jwk.e },
-            format: 'jwk',
-        });
-        return publicKey.export({ type: 'spki', format: 'pem' }) as string;
     }
 }

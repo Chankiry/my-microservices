@@ -35,6 +35,13 @@ export interface StreamResponse<T = any> {
     results     : T
 }
 
+export interface Pagination {
+    total_items: number;
+    total_pages: number;
+    page: number;
+    per_page: number;
+}
+
 // USAGE : return ResponseUtil.success(res, data);
 // USAGE : return ResponseUtil.error(res, ERROR_MESSAGE.USER_NOT_FOUND)
 export class ResponseUtil {
@@ -44,6 +51,16 @@ export class ResponseUtil {
             success: 1,
             message,
             data
+        })
+    }
+
+    static listSuccess<T>(res: Response, data: T, pagination: Pagination, message = MESSAGE.SUCCESS, status_code = 200): Response {
+        return res.status(status_code).json({
+            status_code: status_code,
+            success: 1,
+            message,
+            data,
+            pagination
         })
     }
   

@@ -1,86 +1,81 @@
 import { inject }            from '@angular/core';
 import { Router }            from '@angular/router';
-import { HttpClient }        from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom }    from 'rxjs';
 import { NavigationService } from 'app/core/navigation/navigation.service';
 import { UserService }       from 'app/core/user/user.service';
 import { AuthService }       from './core/auth/auth.service';
-import { RoleEnum }          from 'helper/enums/role.enum';
-import { jwtDecode }         from 'jwt-decode';
 
 export const initialDataResolver = () => {
 
-    // ─── All inject() calls MUST happen before any await ─────────────────────
-    const router       = inject(Router);
-    const authService  = inject(AuthService);
-    const http         = inject(HttpClient);
-    const userService  = inject(UserService);
-    const navService   = inject(NavigationService);
+    // ─── All inject() calls MUST be before any await ──────────────────────────
+    const router      = inject(Router);
+    const authService = inject(AuthService);
+    const http        = inject(HttpClient);
+    const userService = inject(UserService);
+    const navService  = inject(NavigationService);
 
-    // Return a promise — injection context is no longer needed after this point
     return (async () => {
         const token = authService.accessToken;
-
-        if (!token) {
-            return router.navigateByUrl('/auth');
-        }
+        if (!token) return router.navigateByUrl('/auth');
 
         try {
-            // ─── Step 1: decode token only to get role slug ───────────────
-            const payload: any = jwtDecode(token);
-            let roleSlug: 'admin' | 'user' | null = null;
+            const data = await firstValueFrom(
+                http.get<any>('http://localhost:8000/api/v1/account/profile/me')
+            );
 
-            if (payload.iss?.includes('realms')) {
-                // Keycloak JWT
-                const roles: string[] = [
-                    ...(payload.resource_access?.plt?.roles || []),
-                    ...(Array.isArray(payload.plt_roles) ? payload.plt_roles : []),
-                    ...(payload.realm_access?.roles        || []),
-                ];
-                if (roles.includes('admin'))     roleSlug = 'admin';
-                else if (roles.includes('user')) roleSlug = 'user';
-            } else {
-                // PLT JWT
-                const roles = payload.user?.roles || [];
-                roleSlug = roles.find((r: any) => r.slug === 'admin' || r.name_en === 'Admin')
-                    ? 'admin' : 'user';
-            }
+            const me = data?.data;
+
+            userService.user = {
+                id            : me.id,
+                phone         : me.phone,
+                email         : me.email          ?? null,
+                first_name    : me.first_name      ?? null,
+                last_name     : me.last_name       ?? null,
+                avatar        : me.avatar          ?? null,
+                gender        : me.gender          ?? null,
+                is_active     : me.is_active       ?? true,
+                created_at    : me.created_at,
+                platform_roles: me.platform_roles  ?? [],
+            };
+
+            const roles: string[] = (me.platform_roles ?? []).map((r: any) => r.slug);
+            let roleSlug: 'admin' | 'user' | null = null;
+            if      (roles.includes('admin')) roleSlug = 'admin';
+            else if (roles.includes('user'))  roleSlug = 'user';
 
             if (!roleSlug) {
+                // Token valid but no platform role assigned yet
                 return router.navigateByUrl('/auth');
             }
 
-            // ─── Step 2: fetch profile from backend ───────────────────────
-            const profile = await firstValueFrom(
-                http.get<any>('http://localhost:8000/api/v1/account/profile')
-            );
-
-            // ─── Step 3: set user ─────────────────────────────────────────
-            userService.user = {
-                id        : profile.id,
-                phone     : profile.phone,
-                email     : profile.email     ?? null,
-                first_name: profile.first_name ?? null,
-                last_name : profile.last_name  ?? null,
-                avatar    : profile.avatar     ?? null,
-                gender    : profile.gender     ?? null,
-                is_active : profile.is_active  ?? true,
-                created_at: profile.created_at,
-            };
-
-            // ─── Step 4: set navigation ───────────────────────────────────
+            const platformRole = me.platform_roles.find((r: any) => r.slug === roleSlug);
             navService.navigations = {
                 id        : 0,
-                name_en   : roleSlug === 'admin' ? 'Admin' : 'User',
-                name_kh   : roleSlug === 'admin' ? RoleEnum.ADMIN : 'អ្នកប្រើប្រាស់',
+                name_en   : platformRole?.name_en ?? roleSlug,
+                name_kh   : platformRole?.name_kh ?? roleSlug,
                 slug      : roleSlug,
-                icon      : '',
+                icon      : platformRole?.icon    ?? '',
                 is_default: true,
             };
 
-        } catch (error) {
-            console.error('initialDataResolver error:', error);
-            return router.navigateByUrl('/auth');
+        } catch (err) {
+            if (err instanceof HttpErrorResponse) {
+                if (err.status === 401 || err.status === 403) {
+                    // Token rejected by server — clear it and go to login
+                    authService.accessToken  = '';
+                    authService.refreshToken = '';
+                    return router.navigateByUrl('/auth');
+                }
+
+                // 0 = network down, 502/503/504 = gateway/service down
+                // Navigate to a dedicated error page that has NO guard/resolver
+                // to break the redirect loop
+                return router.navigateByUrl('/service-down');
+            }
+
+            // Unknown JS error — go to service-down to break any possible loop
+            return router.navigateByUrl('/service-down');
         }
     })();
 };

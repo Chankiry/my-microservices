@@ -2,6 +2,7 @@ import {
     Controller, Get, Patch, Post, Delete,
     Body, Param, Request, Headers,
     UseGuards, HttpCode, HttpStatus,
+    Res,
 } from '@nestjs/common';
 import { ProfileService }   from './service';
 import {
@@ -10,6 +11,7 @@ import {
     SsoNavigateDto, ValidateRedirectDto, RedirectLinkDto,
 } from './dto';
 import { JwtAuthGuard }     from '../../../core/guards/jwt-auth.guard';
+import { Response } from 'express';
 
 @Controller()
 @UseGuards(JwtAuthGuard)
@@ -17,53 +19,88 @@ export class ProfileController {
 
     constructor(private readonly profileService: ProfileService) {}
 
+    @Get('me')
+    async getMe(
+        @Res()      res: Response,
+        @Request()  req: any
+    ) {
+        return this.profileService.getMe(res, req.user.sub);
+    }
+
     // ─── Profile ──────────────────────────────────────────────────────────────
 
     @Get()
-    async getProfile(@Request() req: any) {
-        return this.profileService.getProfile(req.user.sub);
+    async getProfile(
+        @Res()      res: Response,
+        @Request()  req: any
+    ) {
+        return this.profileService.getProfile(res, req.user.sub);
     }
 
     @Patch()
-    async updateProfile(@Request() req: any, @Body() dto: UpdateProfileDto) {
-        return this.profileService.updateProfile(req.user.sub, dto);
+    async updateProfile(
+        @Res()      res: Response,
+        @Request()  req: any, @Body() 
+        body: UpdateProfileDto
+    ) {
+        return this.profileService.updateProfile(res, req.user.sub, body);
     }
 
     @Patch('change-password')
-    async changePassword(@Request() req: any, @Body() dto: ChangePasswordDto) {
-        return this.profileService.changePassword(req.user.sub, dto);
+    async changePassword(
+        @Res()      res: Response,
+        @Request()  req: any, 
+        @Body()     body: ChangePasswordDto
+    ) {
+        return this.profileService.changePassword(res, req.user.sub, body);
     }
 
     @Patch('change-email')
-    async changeEmail(@Request() req: any, @Body() dto: ChangeEmailDto) {
-        return this.profileService.changeEmail(req.user.sub, dto);
+    async changeEmail(
+        @Res()      res: Response,
+        @Request()  req: any, 
+        @Body()     body: ChangeEmailDto
+    ) {
+        return this.profileService.changeEmail(res, req.user.sub, body);
     }
 
     @Patch('change-phone')
-    async changePhone(@Request() req: any, @Body() dto: ChangePhoneDto) {
-        return this.profileService.changePhone(req.user.sub, dto);
+    async changePhone(
+        @Res()      res: Response,
+        @Request()  req: any,
+        @Body()     body: ChangePhoneDto
+    ) {
+        return this.profileService.changePhone(res, req.user.sub, body);
     }
 
     // ─── System connection ────────────────────────────────────────────────────
 
     @Get('systems/available')
-    async getAvailableSystems(@Request() req: any) {
-        return this.profileService.getAvailableSystems(req.user.sub);
+    async getAvailableSystems(
+        @Res()      res: Response,
+        @Request()  req: any
+    ) {
+        return this.profileService.getAvailableSystems(res, req.user.sub);
     }
 
     @Post('systems/connect')
     @HttpCode(HttpStatus.CREATED)
-    async connectSystem(@Request() req: any, @Body() dto: ConnectSystemDto) {
-        return this.profileService.connectSystem(req.user.sub, dto);
+    async connectSystem(
+        @Res()      res: Response,
+        @Request()  req: any, 
+        @Body()     body: ConnectSystemDto
+    ) {
+        return this.profileService.connectSystem(res, req.user.sub, body);
     }
 
     @Delete('systems/:system_id/disconnect')
     @HttpCode(HttpStatus.OK)
     async disconnectSystem(
-        @Request() req: any,
+        @Res()              res: Response,
+        @Request()          req: any,
         @Param('system_id') system_id: string,
     ) {
-        return this.profileService.disconnectSystem(req.user.sub, system_id);
+        return this.profileService.disconnectSystem(res, req.user.sub, system_id);
     }
 
 
@@ -72,12 +109,13 @@ export class ProfileController {
     @Post('systems/sso-navigate')
     @HttpCode(HttpStatus.OK)
     async ssoNavigate(
-        @Request() req: any,
-        @Headers('authorization') authHeader: string,
-        @Body() dto: SsoNavigateDto,
+        @Res()                      res: Response,
+        @Request()                  req: any,
+        @Headers('authorization')   authHeader: string,
+        @Body()                     body: SsoNavigateDto,
     ) {
         const access_token = authHeader?.replace(/^Bearer\s+/i, '').trim();
-        return this.profileService.getSsoNavigateUrl(req.user.sub, dto.system_id, access_token);
+        return this.profileService.getSsoNavigateUrl(res, req.user.sub, body.system_id, access_token);
     }
 
 
@@ -86,16 +124,18 @@ export class ProfileController {
     @Post('redirect/validate')
     @HttpCode(HttpStatus.OK)
     async validateRedirect(
-        @Request() req: any,
-        @Headers('authorization') authHeader: string,
-        @Body() dto: ValidateRedirectDto,
+        @Res()                      res: Response,
+        @Request()                  req: any,
+        @Headers('authorization')   authHeader: string,
+        @Body()                     body: ValidateRedirectDto,
     ) {
         const access_token = authHeader?.replace(/^Bearer\s+/i, '').trim();
         return this.profileService.validateRedirectLogin(
+            res,
             req.user.sub,
-            dto.system_id,
-            dto.redirect_uri,
-            dto.action,
+            body.system_id,
+            body.redirect_uri,
+            body.action,
             access_token,
         );
     }
@@ -104,15 +144,17 @@ export class ProfileController {
     @Post('redirect/link')
     @HttpCode(HttpStatus.OK)
     async redirectLink(
-        @Request() req: any,
-        @Body() dto: RedirectLinkDto,
+        @Res()      res: Response,
+        @Request()  req: any,
+        @Body()     body: RedirectLinkDto,
     ) {
         return this.profileService.redirectLinkAccount(
+            res,
             req.user.sub,
-            dto.system_id,
-            dto.redirect_uri,
-            dto.username,
-            dto.password,
+            body.system_id,
+            body.redirect_uri,
+            body.username,
+            body.password,
         );
     }
 
@@ -121,10 +163,11 @@ export class ProfileController {
     @Post('logout')
     @HttpCode(HttpStatus.OK)
     async logout(
-        @Request() req: any,
-        @Headers('authorization') authHeader: string,
+        @Res()                      res: Response,
+        @Request()                  req: any,
+        @Headers('authorization')   authHeader: string,
     ) {
         const token = authHeader?.replace(/^Bearer\s+/i, '').trim();
-        return this.profileService.logout(req.user.sub, token);
+        return this.profileService.logout(res, req.user.sub, token);
     }
 }

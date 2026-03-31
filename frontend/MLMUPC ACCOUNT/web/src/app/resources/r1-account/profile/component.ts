@@ -222,4 +222,98 @@ export class ProfileComponent implements OnInit, OnDestroy {
             s => s.registration_status === 'active'
         ).length || 0;
     }
+
+  backgroundImage = 'images/background/background-side.JPG';
+  profileImage = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-M9UBTShaFJNXnvb5nubvN8VDoW0t6R.png';
+
+  profileName = 'កាក់ សុខ័ត';
+  profileNameEN = 'KAK SOKY';
+  phone = '099 888 777';
+  email = 'kak.soky@gmail.com';
+
+  services: any[] = [
+    {
+      title: 'ពិគ្រោះយោបល់ជ័ន្តុប្បាសន្នៈ',
+      description: 'ប្រទានសេវាឧទ្ធរណ៍ដល់អតិថិជនលើបញ្ហាច្បាប់ក្នុងវិស័យផ្សេងៗ',
+      icon: 'user-icon',
+      color: 'blue'
+    },
+    {
+      title: 'សម្ងាត់របស់វិស័យក្រុម!',
+      description: 'លក្ខណៈលម្អិតសម្រាប់ឯកសារយល់ដឹងលម្អិតនៃពាក្យបច្ចេកទេស',
+      icon: 'check-icon',
+      color: 'green'
+    },
+    {
+      title: 'ផលប័ត្របង្ហាញលក្ខណៈ QR',
+      description: 'ប្រទានសេវាឧទ្ធរណ៍ដល់អតិថិជនលើបញ្ហាច្បាប់ក្នុងវិស័យផ្សេងៗ',
+      icon: 'qr-icon',
+      color: 'yellow'
+    }
+  ];
+
+  systems: any[] = [
+    { name: 'ដូបផែនការ', icon: '🏛️' },
+    { name: 'ដូបផែនការ', icon: '🤝' },
+    { name: 'ដូបផែនការ', icon: '⚡' },
+    { name: 'ដូបផែនការ', icon: '👥' },
+    { name: 'ដូបផែនការ', icon: '🎁' },
+    { name: 'ដូបផែនការ', icon: '🏢' },
+    { name: 'ដូបផែនការ', icon: '⏰' },
+    { name: 'ដូបផែនការ', icon: '📚' },
+    { name: 'ដូបផែនការ', icon: '👨‍👩‍👧' },
+    { name: 'ដូបផែនការ', icon: '⛪' },
+    { name: 'ដូបផែនការ', icon: '🌐' },
+    { name: 'ដូបផែនការ', icon: '⚖️' }
+  ];
+
+  devices: any[] = [
+    {
+      name: 'Window',
+      model: 'ខ្ចាស់អក្សរ, ក្រុម',
+      carrier: 'Express, CIS',
+      status: 'active'
+    },
+    {
+      name: 'iPhone 16',
+      model: 'ខ្ចាស់អក្សរ, ក្រុម',
+      carrier: 'LR, PSS',
+      count: '5 ឧបករណ៍',
+      status: 'active'
+    },
+    {
+      name: 'iPad',
+      model: 'ខ្ចាស់អក្សរ, ក្រុម',
+      carrier: 'Express, CIS',
+      count: '1 ឧបករណ៍',
+      status: 'active'
+    }
+  ];
+
+  getIconClass(icon: string): string {
+    const iconMap: { [key: string]: string } = {
+      'user-icon': 'icon-user',
+      'check-icon': 'icon-check',
+      'qr-icon': 'icon-qr'
+    };
+    return iconMap[icon] || icon;
+  }
+
+  getColorClass(color: string): string {
+    const colorMap: { [key: string]: string } = {
+      'blue': 'icon-blue',
+      'green': 'icon-green',
+      'yellow': 'icon-yellow'
+    };
+    return colorMap[color] || color;
+  }
+
+  getDeviceIcon(deviceName: string): string {
+    const iconMap: { [key: string]: string } = {
+      'Window': '🖥️',
+      'iPhone 16': '📱',
+      'iPad': '📱'
+    };
+    return iconMap[deviceName] || '';
+  }
 }

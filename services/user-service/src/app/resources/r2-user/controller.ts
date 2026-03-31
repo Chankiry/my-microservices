@@ -13,12 +13,14 @@ import {
     ForbiddenException,
     Patch,
     Post,
+    Res,
 } from '@nestjs/common';
 import { UserService } from './service';
 import { AdminUpdateUserDto, CreateUserDto, UpdateUserDto } from './dto';
 import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
 import { RolesGuard } from '../../core/guards/roles.guard';
 import { Roles } from '../../core/decorators/roles.decorator';
+import { Response } from 'express';
 
 @Controller()
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -30,54 +32,77 @@ export class UserController {
 
     @Get()
     @Roles('admin')
-    async findAll(@Query() query: any) {
-        return this.usersService.findAll({
-            page     : query.page,
-            limit    : query.limit,
-            search   : query.search,
-            is_active: query.is_active,
-        });
+    async findAll(
+        @Res()                  res: Response
+        , @Query("key")         key?: string
+        , @Query("page")        page?: number
+        , @Query("per_page")    per_page?: number
+        , @Query("is_active")   is_active?: boolean
+    ) {
+        const parsedPage = page || 1;
+        const parsedPerPage = per_page || 10;
+        return this.usersService.findAll(
+            res, 
+            key,
+            parsedPage,
+            parsedPerPage,
+            is_active,
+        );
     }
     
     @Post()
     @Roles('admin')
     async create(
-        @Body() dto: CreateUserDto,
+        @Res()  res: Response,
+        @Body() body: CreateUserDto,
     ) {
-        return this.usersService.create(dto);
+        return this.usersService.create(res, body);
     }
 
     @Get(':id')
     @Roles('admin')
-    async findOne(@Param('id') id: string) {
-        return this.usersService.findById(id);
+    async findOne(
+        @Res()  res: Response,
+        @Param('id') id: string
+    ) {
+        return this.usersService.findById(res, id);
     }
 
     @Put(':id')
     @Roles('admin')
     async adminUpdate(
+        @Res()  res: Response,
         @Param('id') id: string,
         @Body() dto: AdminUpdateUserDto,
     ) {
-        return this.usersService.update(id, dto);
+        return this.usersService.update(res, id, dto);
     }
 
     @Patch(':id/activate')
     @Roles('admin')
-    async activate(@Param('id') id: string) {
-        return this.usersService.updateStatus(id, true);
+    async activate(
+        @Res()  res: Response,
+        @Param('id') id: string
+    ) {
+        return this.usersService.updateStatus(res, id, true);
     }
 
     @Patch(':id/deactivate')
     @Roles('admin')
-    async deactivate(@Param('id') id: string) {
-        return this.usersService.updateStatus(id, false);
+    async deactivate(
+        @Res()  res: Response,
+        @Param('id') id: string
+    ) {
+        return this.usersService.updateStatus(res, id, false);
     }
 
     @Delete(':id')
     @Roles('admin')
     @HttpCode(HttpStatus.NO_CONTENT)
-    async remove(@Param('id') id: string) {
-        await this.usersService.remove(id);
+    async remove(
+        @Res()  res: Response,
+        @Param('id') id: string
+    ) {
+        await this.usersService.remove(res, id);
     }
 }

@@ -1,7 +1,10 @@
 import {
     IsString, IsArray, IsOptional,
-    IsIn, MaxLength,
+    IsIn, MaxLength, IsEmail,
+    IsBoolean, IsUUID,
 } from 'class-validator';
+
+// ─── Access Management ────────────────────────────────────────────────────────
 
 export class GrantAccessDto {
     @IsString()
@@ -10,15 +13,9 @@ export class GrantAccessDto {
     @IsString()
     @IsIn(['public', 'managed', 'internal'])
     account_type!: 'public' | 'managed' | 'internal';
-
-    @IsArray() @IsString({ each: true }) @IsOptional()
-    system_roles?: string[];
 }
 
 export class UpdateAccessDto {
-    @IsArray() @IsString({ each: true }) @IsOptional()
-    system_roles?: string[];
-
     @IsString() @IsOptional()
     @IsIn(['active', 'suspended'])
     registration_status?: 'active' | 'suspended';
@@ -29,13 +26,42 @@ export class RejectAccessDto {
     reason?: string;
 }
 
-// Called by external systems to notify user-service that a
-// user's platform role changed inside their own system.
-// The user is identified by their external_id (the calling system's own PK).
+// Called by external systems to notify user-service of a role change.
 export class ExternalRoleChangeDto {
     @IsString()
-    external_id!: string;          // the user's ID in the calling system
+    external_id!: string;
 
     @IsArray() @IsString({ each: true })
-    system_roles!: string[];       // the new full set of roles (replaces old)
+    role_slugs!: string[];  // slugs of the new full set of roles
+}
+
+// ─── User Role Management ─────────────────────────────────────────────────────
+
+export class AssignUserRoleDto {
+    @IsUUID()
+    role_id!: string;  // SystemRole.id — must exist in system_roles table
+}
+
+// ─── Admin User Creation ──────────────────────────────────────────────────────
+
+export class CreatePlatformUserDto {
+    @IsString() @MaxLength(20)
+    phone!: string;
+
+    @IsEmail() @IsOptional()
+    email?: string;
+
+    @IsString() @IsOptional() @MaxLength(100)
+    first_name?: string;
+
+    @IsString() @IsOptional() @MaxLength(100)
+    last_name?: string;
+
+    @IsString() @MaxLength(100)
+    password!: string;
+
+    // Slug of the platform role to assign — defaults to 'user'
+    @IsString() @IsOptional()
+    @IsIn(['admin', 'user'])
+    platform_role?: 'admin' | 'user';
 }

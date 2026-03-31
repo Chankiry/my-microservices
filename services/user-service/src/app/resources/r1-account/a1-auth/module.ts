@@ -11,18 +11,24 @@ import { SystemsModule }      from '../../r4-systems/module';
 import UserSystemAccess       from '../../../../models/user/user-system-access.model';
 import UserExternalLinks      from '../../../../models/user/user-external-links.model';
 import { ProfileService }     from '../a2-profile/service';
-
+import UserSystemRole from '@models/user/user-system-role.model';
+import SystemRole from '@models/system/system-role.model';
+ 
 @Module({
-    imports  : [
+    imports: [
         CacheModule,
         ConfigModule,
         UserModule,
         KeycloakModule,
         SystemsModule,
-        SequelizeModule.forFeature([UserSystemAccess, UserExternalLinks]),
+        SequelizeModule.forFeature([
+            UserSystemAccess, UserExternalLinks,
+            UserSystemRole,   SystemRole,
+        ]),
     ],
     controllers: [AuthController],
     providers  : [AuthService, ProfileService, JwtStrategy],
     exports    : [AuthService],
 })
 export class AuthModule {}
+ 

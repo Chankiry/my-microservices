@@ -1,22 +1,25 @@
 import {
     Controller, Get, Post, Patch, Delete,
-    Param, Body, Query, Request,
-    HttpCode, HttpStatus, UseGuards,
+    Param, Body, Request, Query, HttpCode, HttpStatus,
+    UseGuards,
 } from '@nestjs/common';
-import { ManagementService } from './service';
-import { GrantAccessDto, UpdateAccessDto, RejectAccessDto, ExternalRoleChangeDto } from './dto';
-import { JwtAuthGuard } from '../../core/guards/jwt-auth.guard';
-import { RolesGuard } from '../../core/guards/roles.guard';
-import { Roles } from '../../core/decorators/roles.decorator';
+import { ManagementService }   from './service';
+import { JwtAuthGuard }        from '../../core/guards/jwt-auth.guard';
+import { RolesGuard }          from '../../core/guards/roles.guard';
+import { Roles }               from '../../core/decorators/roles.decorator';
+import {
+    GrantAccessDto, UpdateAccessDto, RejectAccessDto,
+    ExternalRoleChangeDto, AssignUserRoleDto, CreatePlatformUserDto,
+} from './dto';
 
 @Controller()
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles('platform-admin')
+@Roles('admin')
 export class ManagementController {
 
     constructor(private readonly managementService: ManagementService) {}
 
-    // ─── Users overview ───────────────────────────────────────────────────────
+    // ─── Users ────────────────────────────────────────────────────────────────
 
     @Get('users')
     async findAllUsers(@Query() query: any) {
@@ -27,16 +30,52 @@ export class ManagementController {
         });
     }
 
-    @Get('users/:user_id')
-    async findUserDetail(@Param('user_id') user_id: string) {
-        return this.managementService.findUserDetail(user_id);
+    @Post('users')
+    async createPlatformUser(@Body() dto: CreatePlatformUserDto, @Request() req: any) {
+        return this.managementService.createPlatformUser(dto, req.user.sub);
     }
 
-    @Get('users/:user_id/logins')
-    async findLoginHistory(
-        @Param('user_id')  user_id   : string,
+    @Get('users/:user_id')
+    async findUser(@Param('user_id') user_id: string) {
+        return this.managementService.findUserById(user_id);
+    }
+
+    // ─── User Role Management ─────────────────────────────────────────────────
+
+    @Get('users/:user_id/roles')
+    async getUserRoles(
+        @Param('user_id') user_id  : string,
         @Query('system_id') system_id?: string,
-        @Query('limit')    limit?    : number,
+    ) {
+        return this.managementService.getUserRoles(user_id, system_id);
+    }
+
+    @Post('users/:user_id/roles')
+    async assignRole(
+        @Param('user_id') user_id: string,
+        @Body() dto: AssignUserRoleDto,
+        @Request() req: any,
+    ) {
+        return this.managementService.assignRoleToUser(user_id, dto, req.user.sub);
+    }
+
+    @Delete('users/:user_id/roles/:role_id')
+    @HttpCode(HttpStatus.NO_CONTENT)
+    async revokeRole(
+        @Param('user_id') user_id: string,
+        @Param('role_id') role_id: string,
+        @Request() req: any,
+    ) {
+        await this.managementService.revokeRoleFromUser(user_id, role_id, req.user.sub);
+    }
+
+    // ─── Login History ────────────────────────────────────────────────────────
+
+    @Get('users/:user_id/login-history')
+    async getLoginHistory(
+        @Param('user_id')   user_id   : string,
+        @Query('system_id') system_id?: string,
+        @Query('limit')     limit?    : number,
     ) {
         return this.managementService.findLoginHistory(user_id, system_id, limit);
     }
@@ -44,14 +83,9 @@ export class ManagementController {
     // ─── System-scoped views ──────────────────────────────────────────────────
 
     @Get('systems/:system_id/users')
-    async findSystemUsers(
-        @Param('system_id') system_id: string,
-        @Query() query: any,
-    ) {
+    async findSystemUsers(@Param('system_id') system_id: string, @Query() query: any) {
         return this.managementService.findSystemUsers(system_id, {
-            page  : query.page,
-            limit : query.limit,
-            status: query.status,
+            page: query.page, limit: query.limit, status: query.status,
         });
     }
 
@@ -60,22 +94,20 @@ export class ManagementController {
         return this.managementService.findPendingApprovals(system_id);
     }
 
+    // External system notifies user-service that a user's roles changed
     @Patch('systems/:system_id/external-roles')
-    @Roles('system-connector')    // service account role — not platform-admin
+    @Roles('system-connector')
     async updateExternalRoles(
         @Param('system_id') system_id: string,
         @Body() dto: ExternalRoleChangeDto,
         @Request() req: any,
     ) {
         return this.managementService.updateSystemRolesFromExternal(
-            system_id,
-            dto.external_id,
-            dto.system_roles,
-            req.user.sub,
+            system_id, dto.external_id, dto.role_slugs, req.user.sub,
         );
     }
 
-    // ─── Grant / revoke ───────────────────────────────────────────────────────
+    // ─── Access CRUD ──────────────────────────────────────────────────────────
 
     @Post('users/:user_id/access')
     async grantAccess(
@@ -105,8 +137,6 @@ export class ManagementController {
     ) {
         await this.managementService.revokeAccess(user_id, system_id, req.user.sub);
     }
-
-    // ─── Approval workflow ────────────────────────────────────────────────────
 
     @Post('users/:user_id/access/:system_id/approve')
     async approveAccess(

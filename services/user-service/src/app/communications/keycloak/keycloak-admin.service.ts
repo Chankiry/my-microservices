@@ -126,36 +126,48 @@ export class KeycloakAdminService implements OnModuleInit {
 
     // ─── Realm roles (platform-wide) ─────────────────────────────────────────
 
-    async assignRealmRole(keycloak_id: string, role_name: string): Promise<void> {
+    async assignRealmRole(keycloak_user_id: string, role_name: string): Promise<void> {
         await this.ensureAuth();
-        const role = await this.client.roles.findOneByName({
-            realm: this.realm,
-            name : role_name,
-        });
-        if (!role?.id) throw new Error(`Realm role '${role_name}' not found`);
-
-        await this.client.users.addRealmRoleMappings({
-            realm : this.realm,
-            id    : keycloak_id,
-            roles : [{ id: role.id, name: role.name! }],
-        });
-        this.logger.log(`Realm role '${role_name}' assigned to ${keycloak_id}`);
+        try {
+            const role = await this.client.roles.findOneByName({
+                realm: this.realm,
+                name : role_name,
+            });
+            if (!role?.id) throw new Error(`Realm role '${role_name}' not found in Keycloak`);
+ 
+            await this.client.users.addRealmRoleMappings({
+                realm: this.realm,
+                id   : keycloak_user_id,
+                roles: [{ id: role.id, name: role.name! }],
+            });
+            this.logger.log(`Assigned realm role '${role_name}' → user '${keycloak_user_id}'`);
+        } catch (err: any) {
+            this.logger.error(`assignRealmRole failed: ${err.message}`);
+            throw err;
+        }
     }
-
-    async revokeRealmRole(keycloak_id: string, role_name: string): Promise<void> {
+ 
+    async revokeRealmRole(keycloak_user_id: string, role_name: string): Promise<void> {
         await this.ensureAuth();
-        const role = await this.client.roles.findOneByName({
-            realm: this.realm,
-            name : role_name,
-        });
-        if (!role?.id) return; // role doesn't exist — nothing to revoke
-
-        await this.client.users.delRealmRoleMappings({
-            realm : this.realm,
-            id    : keycloak_id,
-            roles : [{ id: role.id, name: role.name! }],
-        });
-        this.logger.log(`Realm role '${role_name}' revoked from ${keycloak_id}`);
+        try {
+            const role = await this.client.roles.findOneByName({
+                realm: this.realm,
+                name : role_name,
+            });
+            if (!role?.id) {
+                this.logger.warn(`Realm role '${role_name}' not found — skipping revoke`);
+                return;
+            }
+            await this.client.users.delRealmRoleMappings({
+                realm: this.realm,
+                id   : keycloak_user_id,
+                roles: [{ id: role.id, name: role.name! }],
+            });
+            this.logger.log(`Revoked realm role '${role_name}' ← user '${keycloak_user_id}'`);
+        } catch (err: any) {
+            this.logger.error(`revokeRealmRole failed: ${err.message}`);
+            throw err;
+        }
     }
 
     // ─── Client roles (per-app) ───────────────────────────────────────────────

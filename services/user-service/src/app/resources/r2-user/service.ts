@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger, NotFoundException, Body, Res } from '@nestjs/common';
 import { InjectModel, InjectConnection } from '@nestjs/sequelize';
 import { ConfigService } from '@nestjs/config';
 import { Op, literal, Sequelize } from 'sequelize';
@@ -8,6 +8,8 @@ import { KeycloakAdminService } from '../../communications/keycloak/keycloak-adm
 import { OutboxService } from '../../outbox/outbox.service';
 import { RedisService } from '@app/infra/cache/redis.service';
 import User from '../../../models/user/user.model';
+import { Response } from 'express';
+import { Pagination, ResponseUtil } from '@app/shared/interfaces/base.interface';
 
 @Injectable()
 export class UserService {
@@ -30,86 +32,131 @@ export class UserService {
 
     // ─── Read ─────────────────────────────────────────────────────────────────
 
-    async findById(id: string): Promise<User> {
-        const cached = await this.redisService.get<any>(`user:profile:${id}`);
-        if (cached) {
-            // Cache hit — re-fetch to return a proper Sequelize instance
+    async findById(
+        res: Response, 
+        id: string
+    ): Promise<any> {
+        try{
+            const cached = await this.redisService.get<any>(`user:profile:${id}`);
+            if (cached) {
+                // Cache hit — re-fetch to return a proper Sequelize instance
+                const user = await this.userModel.findOne({ where: { id } });
+                if (!user) throw new NotFoundException(`User ${id} not found`);
+                return user;
+            }
+    
             const user = await this.userModel.findOne({ where: { id } });
             if (!user) throw new NotFoundException(`User ${id} not found`);
-            return user;
+    
+            await this.redisService.set(`user:profile:${id}`, user.toJSON(), this.CACHE_TTL);
+            return ResponseUtil.success(res, user);
+        } catch(e){
+            console.log(e);
+            throw new BadRequestException(e.message);
         }
-
-        const user = await this.userModel.findOne({ where: { id } });
-        if (!user) throw new NotFoundException(`User ${id} not found`);
-
-        await this.redisService.set(`user:profile:${id}`, user.toJSON(), this.CACHE_TTL);
-        return user;
     }
 
-    async findByKeycloakId(keycloak_id: string): Promise<User | null> {
-        const cached = await this.redisService.get<any>(`user:keycloak:${keycloak_id}`);
-        if (cached) {
-            // Cache hit — re-fetch to return a proper Sequelize instance
-            return this.userModel.findOne({ where: { keycloak_id } });
-        }
-
-        const user = await this.userModel.findOne({ where: { keycloak_id } });
-        if (user) await this.redisService.set(`user:keycloak:${keycloak_id}`, user.toJSON(), this.CACHE_TTL);
-        return user;
+    async findByKeycloakId(
+        res: Response, 
+        keycloak_id: string
+    ): Promise<any> {
+        try {
+            const cached = await this.redisService.get<any>(`user:keycloak:${keycloak_id}`);
+            if (cached) {
+                // Cache hit — re-fetch to return a proper Sequelize instance
+                return this.userModel.findOne({ where: { keycloak_id } });
+            }
+    
+            const user = await this.userModel.findOne({ where: { keycloak_id } });
+            if (user) await this.redisService.set(`user:keycloak:${keycloak_id}`, user.toJSON(), this.CACHE_TTL);
+            return ResponseUtil.success(res, user);
+        } catch(e) {
+            console.log(e);
+            throw new BadRequestException(e.message);
+        };
     }
 
-    async findByEmail(email: string): Promise<User | null> {
-        const cached = await this.redisService.get<any>(`user:email:${email}`);
-        if (cached) {
-            return this.userModel.findOne({ where: { email } });
-        }
+    async findByEmail(
+        res: Response, 
+        email: string
+    ): Promise<any> {
+        try{
 
-        const user = await this.userModel.findOne({ where: { email } });
-        if (user) await this.redisService.set(`user:email:${email}`, user.toJSON(), this.CACHE_TTL);
-        return user;
+            const cached = await this.redisService.get<any>(`user:email:${email}`);
+            if (cached) {
+                return this.userModel.findOne({ where: { email } });
+            }
+    
+            const user = await this.userModel.findOne({ where: { email } });
+            if (user) await this.redisService.set(`user:email:${email}`, user.toJSON(), this.CACHE_TTL);
+            return ResponseUtil.success(res, user);
+        } catch(e) {
+            console.log(e);
+            throw new BadRequestException(e.message);
+        };
     }
 
-    async findByPhone(phone: string): Promise<User | null> {
-        const cached = await this.redisService.get<any>(`user:phone:${phone}`);
-        if (cached) {
-            return this.userModel.findOne({ where: { phone } });
-        }
-
-        const user = await this.userModel.findOne({ where: { phone } });
-        if (user) await this.redisService.set(`user:phone:${phone}`, user.toJSON(), this.CACHE_TTL);
-        return user;
+    async findByPhone(
+        res: Response, 
+        phone: string
+    ): Promise<any> {
+        try {
+            const cached = await this.redisService.get<any>(`user:phone:${phone}`);
+            if (cached) {
+                return this.userModel.findOne({ where: { phone } });
+            }
+    
+            const user = await this.userModel.findOne({ where: { phone } });
+            if (user) await this.redisService.set(`user:phone:${phone}`, user.toJSON(), this.CACHE_TTL);
+            return ResponseUtil.success(res, user);
+        } catch(e) {
+            console.log(e);
+            throw new BadRequestException(e.message);
+        };
     }
 
-    async findAll(query: {
-        page?     : number;
-        limit?    : number;
-        search?   : string;
-        is_active?: boolean;
-    }): Promise<{ data: User[]; total: number; page: number; limit: number }> {
-        const page   = query.page  || 1;
-        const limit  = query.limit || 10;
-        const offset = (page - 1) * limit;
-        const where: any = {};
+    async findAll(
+        res: Response
+        , key?: string
+        , page?: number
+        , per_page?: number
+        , is_active?: boolean
+    ): Promise<any> {
+        try{
 
-        if (query.search) {
-            where[Op.or] = [
-                { phone      : { [Op.iLike]: `%${query.search}%` } },
-                { email      : { [Op.iLike]: `%${query.search}%` } },
-                { first_name : { [Op.iLike]: `%${query.search}%` } },
-                { last_name  : { [Op.iLike]: `%${query.search}%` } },
-            ];
+            const offset = (page - 1) * per_page;
+            const where: any = {};
+    
+            if (key) {
+                where[Op.or] = [
+                    { phone      : { [Op.iLike]: `%${key}%` } },
+                    { email      : { [Op.iLike]: `%${key}%` } },
+                    { first_name : { [Op.iLike]: `%${key}%` } },
+                    { last_name  : { [Op.iLike]: `%${key}%` } },
+                ];
+            }
+    
+            if (is_active !== undefined) where.is_active = is_active;
+    
+            const { count, rows } = await this.userModel.findAndCountAll({
+                where,
+                limit: per_page,
+                offset,
+                order: [literal('"created_at" DESC')],
+            });
+
+            const pagination: Pagination = {
+                total_items: count,
+                total_pages: Math.ceil(count / per_page),
+                page: Math.ceil((offset + 1) / per_page),
+                per_page: per_page,
+            }
+    
+            return ResponseUtil.listSuccess(res, rows, pagination);
+        } catch(e){
+            console.log(e);
+            throw new BadRequestException(e.message);
         }
-
-        if (query.is_active !== undefined) where.is_active = query.is_active;
-
-        const { count, rows } = await this.userModel.findAndCountAll({
-            where,
-            limit,
-            offset,
-            order: [literal('"created_at" DESC')],
-        });
-
-        return { data: rows, total: count, page, limit };
     }
 
     async findActiveUsers(limit = 100): Promise<User[]> {
@@ -122,30 +169,35 @@ export class UserService {
 
     // ─── Write ────────────────────────────────────────────────────────────────
 
-    async create(dto: CreateUserDto): Promise<User> {
+    async create(
+        res: Response,
+        body: CreateUserDto
+    ): Promise<any> {
         const tx = await this.sequelize.transaction();
         try {
-            let keycloak_id = dto.keycloak_id || null;
+            let keycloak_id = body.keycloak_id || null;
 
             if (!keycloak_id) {
                 try {
                     keycloak_id = await this.keycloakAdmin.createUser({
-                        username   : dto.phone,
-                        email      : dto.email || undefined,
-                        first_name : dto.first_name,
-                        last_name  : dto.last_name,
-                        is_active  : dto.is_active ?? true,
+                        username   : body.phone,
+                        email      : body.email || undefined,
+                        first_name : body.first_name,
+                        last_name  : body.last_name,
+                        is_active  : body.is_active ?? true,
                     });
                     this.logger.log(`Keycloak user created: ${keycloak_id}`);
                 } catch (err: any) {
                     this.logger.warn(`Keycloak create failed, proceeding without keycloak_id: ${err.message}`);
+                    console.log(err);
+                    throw new BadRequestException(`Failed to create user in Keycloak: ${err.message}`);
                 }
             }
 
             const user = await this.userModel.create({
-                ...dto,
+                ...body,
                 keycloak_id,
-                creator_id: dto.creator_id || null,
+                creator_id: body.creator_id || null,
             } as any, { transaction: tx });
 
             await this.outboxService.saveToOutbox(tx, 'USER_CREATED', 'user', user.id, {
@@ -158,21 +210,27 @@ export class UserService {
 
             await tx.commit();
             this.logger.log(`User created: ${user.id} keycloak_id: ${keycloak_id}`);
-            return user;
+            return ResponseUtil.success(res, user);
         } catch (err) {
+            console.log(err);
             await tx.rollback();
-            throw err;
+            throw new BadRequestException(err.message);
         }
     }
 
-    async update(id: string, dto: UpdateUserDto, updater_id?: string): Promise<any> {
+    async update(
+        res: Response, 
+        id: string, 
+        body: UpdateUserDto, 
+        updater_id?: string
+    ): Promise<any> {
         const tx = await this.sequelize.transaction();
         try {
             const user = await this.userModel.findOne({ where: { id }, transaction: tx });
             if (!user) throw new NotFoundException(`User ${id} not found`);
 
-            const changes = this.getChanges(user, dto);
-            Object.assign(user, dto);
+            const changes = this.getChanges(user, body);
+            Object.assign(user, body);
             if (updater_id) user.updater_id = updater_id;
             await user.save({ transaction: tx });
 
@@ -183,14 +241,19 @@ export class UserService {
             await tx.commit();
             await this.invalidateUserCache(id, user);
             this.logger.log(`User updated: ${id}`);
-            return { data: user };
+            return ResponseUtil.success(res, user);
         } catch (err) {
+            console.log(err);
             await tx.rollback();
-            throw err;
+            throw new BadRequestException(err.message);
         }
     }
 
-    async remove(id: string, deleter_id?: string): Promise<any> {
+    async remove(
+        res: Response, 
+        id: string, 
+        deleter_id?: string
+    ): Promise<any> {
         const tx = await this.sequelize.transaction();
         try {
             const user = await this.userModel.findOne({ where: { id }, transaction: tx });
@@ -210,30 +273,41 @@ export class UserService {
             await tx.commit();
             await this.invalidateUserCache(id, user);
             this.logger.log(`User soft-deleted: ${id}`);
-            return { success: true };
+            return ResponseUtil.success(res, null);
         } catch (err) {
+            console.log(err);
             await tx.rollback();
-            throw err;
+            throw new BadRequestException(err.message);
         }
     }
 
     // ─── Targeted updates ─────────────────────────────────────────────────────
 
-    async updateStatus(id: string, is_active: boolean, updater_id?: string): Promise<User> {
-        const user = await this.userModel.findOne({ where: { id } });
-        if (!user) throw new NotFoundException(`User ${id} not found`);
-
-        if (user.keycloak_id) {
-            await this.keycloakAdmin.setEnabled(user.keycloak_id, is_active);
+    async updateStatus(
+        res: Response, 
+        id: string, 
+        is_active: boolean, 
+        updater_id?: string
+    ): Promise<any> {
+        try{
+            const user = await this.userModel.findOne({ where: { id } });
+            if (!user) throw new NotFoundException(`User ${id} not found`);
+    
+            if (user.keycloak_id) {
+                await this.keycloakAdmin.setEnabled(user.keycloak_id, is_active);
+            }
+    
+            user.is_active = is_active;
+            if (updater_id) user.updater_id = updater_id;
+            await user.save();
+    
+            await this.invalidateUserCache(id, user);
+            this.logger.log(`User ${id} is_active=${is_active}`);
+            return ResponseUtil.success(res, user);
+        } catch(e){
+            console.log(e);
+            throw new BadRequestException(e.message);
         }
-
-        user.is_active = is_active;
-        if (updater_id) user.updater_id = updater_id;
-        await user.save();
-
-        await this.invalidateUserCache(id, user);
-        this.logger.log(`User ${id} is_active=${is_active}`);
-        return user;
     }
 
     async updateKeycloakId(id: string, keycloak_id: string): Promise<User> {
@@ -272,20 +346,51 @@ export class UserService {
         this.logger.log(`Mirror fields updated for user ${id}`);
     }
 
-    async updateBusinessProfile(
-        id    : string,
-        fields: Partial<Pick<User, 'avatar' | 'gender'>>,
-    ): Promise<User> {
-        const user = await this.userModel.findOne({ where: { id } });
-        if (!user) throw new NotFoundException(`User ${id} not found`);
-
-        Object.assign(user, fields);
-        await user.save();
-
-        await this.redisService.del(`user:profile:${id}`);
-        this.logger.log(`Business profile updated for user ${id}`);
-        return user;
+    // ─── Create from Keycloak (Kafka sync path) ───────────────────────────────
+    // Called by UserSyncConsumer when Keycloak fires USER_REGISTERED or
+    // ADMIN_USER_CREATED. The user already exists in Keycloak — this only
+    // creates the DB row. Does NOT call KeycloakAdminService.createUser().
+ 
+    async createFromKeycloak(params: {
+        keycloak_id    : string;
+        phone          : string;
+        email?         : string | null;
+        first_name?    : string | null;
+        last_name?     : string | null;
+        is_active?     : boolean;
+        email_verified?: boolean;
+    }): Promise<User> {
+        const tx = await this.sequelize.transaction();
+        try {
+            const user = await this.userModel.create({
+                keycloak_id   : params.keycloak_id,
+                phone         : params.phone,
+                email         : params.email         ?? null,
+                first_name    : params.first_name    ?? null,
+                last_name     : params.last_name     ?? null,
+                is_active     : params.is_active     ?? true,
+                email_verified: params.email_verified ?? false,
+                creator_id    : null,
+            } as any, { transaction: tx });
+ 
+            await this.outboxService.saveToOutbox(tx, 'USER_CREATED', 'user', user.id, {
+                user_id   : user.id,
+                phone     : user.phone,
+                email     : user.email,
+                first_name: user.first_name,
+                last_name : user.last_name,
+            });
+ 
+            await tx.commit();
+            this.logger.log(`User created from Keycloak sync: ${user.id} keycloak_id: ${params.keycloak_id}`);
+            return user;
+        } catch (err) {
+            console.log(err);
+            await tx.rollback();
+            throw new BadRequestException(err.message);
+        }
     }
+
 
     // ─── Private helpers ──────────────────────────────────────────────────────
 

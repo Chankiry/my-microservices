@@ -5,6 +5,7 @@ import { NoAuthGuard }      from 'app/core/auth/guards/noAuth.guard';
 import { LayoutComponent }  from 'app/layout/layout.component';
 import { initialDataResolver } from './app.resolver';
 import { roleResolver }     from './core/auth/resolvers/role.resolver';
+import { ServiceDownComponent } from './shared/service-down.component';
 
 @Injectable({ providedIn: 'root' })
 export class RedirectGuard implements CanActivate {
@@ -32,6 +33,14 @@ export const appRoutes: Route[] = [
         component : LayoutComponent,
         data      : { layout: 'empty' },
         loadChildren: () => import('app/resources/r1-account/auth/auth.routes'),
+    },
+
+    // ─── Service down — NO guard, NO resolver ─────────────────────────────────
+    // This route must never trigger the resolver to avoid the infinite loop:
+    //   resolver fails → /auth → NoAuthGuard bounces back → resolver fails → ...
+    {
+        path     : 'service-down',
+        component: ServiceDownComponent,
     },
 
     // ─── Profile (authenticated, no navigation) ────────────────────────────────
