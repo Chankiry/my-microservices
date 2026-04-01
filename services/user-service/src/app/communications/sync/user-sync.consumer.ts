@@ -263,7 +263,7 @@ export class UserSyncConsumer implements OnModuleInit, OnModuleDestroy {
             this.logger.warn(`User not found for deletion: ${event.userId}`);
             return;
         }
-        await this.userService.remove(user.id);
+        await this.userService._removeInternal(user.id);
         this.logger.log(`User deleted from Keycloak: ${event.userId}`);
     }
 

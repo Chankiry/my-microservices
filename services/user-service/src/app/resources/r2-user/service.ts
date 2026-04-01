@@ -10,7 +10,6 @@ import { RedisService } from '@app/infra/cache/redis.service';
 import { ERROR_MESSAGE, MESSAGE } from '@app/shared/enums/message.enum';
 import {
     CustomCreateOptions,
-    CustomSaveOptions,
     CustomDestroyOptions,
     CustomUpdateOptions,
 } from '@app/shared/interfaces/custom-option.interface';
@@ -39,16 +38,16 @@ export class UserService {
 
     // ─── Read ─────────────────────────────────────────────────────────────────
 
-    async findById(res: Response, id: string): Promise<any> {
+    async findById(id: string): Promise<any> {
         try {
             const cached = await this.redisService.get<any>(`user:profile:${id}`);
-            if (cached) return ResponseUtil.success(res, cached);
+            if (cached) return { data: cached };
 
             const user = await this.userModel.findOne({ where: { id } });
             if (!user) throw new NotFoundException(ERROR_MESSAGE.USER_NOT_FOUND);
 
             await this.redisService.set(`user:profile:${id}`, user.toJSON(), this.CACHE_TTL);
-            return ResponseUtil.success(res, user);
+            return { data: user };
         } catch (err) {
             if (err instanceof HttpException) throw err;
             this.logger.error(`[findById] ${err.message}`, err.stack);
@@ -56,14 +55,14 @@ export class UserService {
         }
     }
 
-    async findByKeycloakId(res: Response, keycloak_id: string): Promise<any> {
+    async findByKeycloakId(keycloak_id: string): Promise<any> {
         try {
             const cached = await this.redisService.get<any>(`user:keycloak:${keycloak_id}`);
-            if (cached) return ResponseUtil.success(res, cached);
+            if (cached) return { data: cached };
 
             const user = await this.userModel.findOne({ where: { keycloak_id } });
             if (user) await this.redisService.set(`user:keycloak:${keycloak_id}`, user.toJSON(), this.CACHE_TTL);
-            return ResponseUtil.success(res, user);
+            return { data: user };
         } catch (err) {
             if (err instanceof HttpException) throw err;
             this.logger.error(`[findByKeycloakId] ${err.message}`, err.stack);
@@ -71,14 +70,14 @@ export class UserService {
         }
     }
 
-    async findByEmail(res: Response, email: string): Promise<any> {
+    async findByEmail(email: string): Promise<any> {
         try {
             const cached = await this.redisService.get<any>(`user:email:${email}`);
-            if (cached) return ResponseUtil.success(res, cached);
+            if (cached) return { data: cached };
 
             const user = await this.userModel.findOne({ where: { email } });
             if (user) await this.redisService.set(`user:email:${email}`, user.toJSON(), this.CACHE_TTL);
-            return ResponseUtil.success(res, user);
+            return { data: user };
         } catch (err) {
             if (err instanceof HttpException) throw err;
             this.logger.error(`[findByEmail] ${err.message}`, err.stack);
@@ -86,14 +85,14 @@ export class UserService {
         }
     }
 
-    async findByPhone(res: Response, phone: string): Promise<any> {
+    async findByPhone(phone: string): Promise<any> {
         try {
             const cached = await this.redisService.get<any>(`user:phone:${phone}`);
-            if (cached) return ResponseUtil.success(res, cached);
+            if (cached) return { data: cached };
 
             const user = await this.userModel.findOne({ where: { phone } });
             if (user) await this.redisService.set(`user:phone:${phone}`, user.toJSON(), this.CACHE_TTL);
-            return ResponseUtil.success(res, user);
+            return { data: user };
         } catch (err) {
             if (err instanceof HttpException) throw err;
             this.logger.error(`[findByPhone] ${err.message}`, err.stack);
@@ -153,9 +152,25 @@ export class UserService {
         });
     }
 
+    async view(res: Response, id: string): Promise<any> {
+        try {
+            const user = (await this.findById(id)).data;
+            if (!user) throw new NotFoundException(ERROR_MESSAGE.USER_NOT_FOUND);
+
+            return ResponseUtil.success(res, user);
+        } catch (err) {
+            if (err instanceof HttpException) throw err;
+            this.logger.error(`[findById] ${err.message}`, err.stack);
+            throw new InternalServerErrorException(ERROR_MESSAGE.SOMETHING_WRONG);
+        }
+    }
+
     // ─── Write ────────────────────────────────────────────────────────────────
 
-    async create(res: Response, body: CreateUserDto): Promise<any> {
+    async create(
+        res: Response, 
+        body: CreateUserDto
+    ): Promise<any> {
         const tx = await this.sequelize.transaction();
         try {
             let keycloak_id = body.keycloak_id || null;
@@ -242,11 +257,18 @@ export class UserService {
         }
     }
 
+
     async remove(
         res: Response,
         id: string,
         deleter_id?: string,
     ): Promise<any> {
+        await this._removeInternal(id, deleter_id);   // ← call internal
+        return ResponseUtil.success(res, null, MESSAGE.DELETE_SUCCESS);
+    }
+
+    // New internal method - reusable from anywhere
+    async _removeInternal(id: string, deleter_id?: string): Promise<void> {
         const tx = await this.sequelize.transaction();
         try {
             const user = await this.userModel.findOne({ where: { id }, transaction: tx });
@@ -266,7 +288,6 @@ export class UserService {
             await tx.commit();
             await this.invalidateUserCache(id, user);
             this.logger.log(`User soft-deleted: ${id}`);
-            return ResponseUtil.success(res, null, MESSAGE.DELETE_SUCCESS);
         } catch (err) {
             await tx.rollback();
             if (err instanceof HttpException) throw err;
@@ -310,7 +331,7 @@ export class UserService {
         }
     }
 
-    async updateKeycloakId(id: string, keycloak_id: string): Promise<User> {
+    async updateKeycloakId(id: string, keycloak_id: string): Promise<any> {
         const tx = await this.sequelize.transaction();
         try {
             const user = await this.userModel.findOne({ where: { id }, transaction: tx });
@@ -321,7 +342,7 @@ export class UserService {
 
             await tx.commit();
             await this.invalidateUserCache(id, user);
-            return user;
+            return { data: user };
         } catch (err) {
             await tx.rollback();
             if (err instanceof HttpException) throw err;
@@ -395,7 +416,7 @@ export class UserService {
         last_name?     : string | null;
         is_active?     : boolean;
         email_verified?: boolean;
-    }): Promise<User> {
+    }): Promise<any> {
         const tx = await this.sequelize.transaction();
         try {
             const user = await this.userModel.create(
@@ -425,7 +446,9 @@ export class UserService {
 
             await tx.commit();
             this.logger.log(`User created from Keycloak sync: ${user.id} keycloak_id: ${params.keycloak_id}`);
-            return user;
+            return {
+                data: user,
+            };
         } catch (err) {
             await tx.rollback();
             if (err instanceof HttpException) throw err;

@@ -6,8 +6,8 @@ import {
 } from 'sequelize-typescript';
 import {
     CustomCreateOptions,
-    CustomSaveOptions,
     CustomDestroyOptions,
+    CustomUpdateOptions,
 } from '@app/shared/interfaces/custom-option.interface';
 import User from './user/user.model';
 
@@ -38,7 +38,7 @@ export class BaseModel<T extends {} = any> extends Model<T> {
     }
 
     @BeforeUpdate
-    static async setUpdaterId(instance: BaseModel, options: CustomSaveOptions) {
+    static async setUpdaterId(instance: BaseModel, options: CustomUpdateOptions) {
         if (options.user_id) {
             instance.updater_id = options.user_id;
         }

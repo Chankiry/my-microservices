@@ -56,7 +56,7 @@ export class ProfileService {
         keycloak_id: string
     ) {
         try {
-            const user = (await this.userService.findByKeycloakId(res, keycloak_id)).data;
+            const user = (await this.userService.findByKeycloakId(keycloak_id)).data;
             if (!user) throw new NotFoundException('User not found');
     
             const userRoles = await this.userSystemRoleModel.findAll({
@@ -94,7 +94,7 @@ export class ProfileService {
         keycloak_id: string
     ) {
         try {
-            const user = (await this.userService.findByKeycloakId(res, keycloak_id)).data;
+            const user = (await this.userService.findByKeycloakId(keycloak_id)).data;
             if (!user) throw new NotFoundException('User not found');
     
             const system_access = await this.accessModel.findAll({
@@ -137,7 +137,7 @@ export class ProfileService {
     ) {
         const tx = await this.sequelize.transaction();
         try {
-            const user = (await this.userService.findByKeycloakId(res, keycloak_id)).data;
+            const user = (await this.userService.findByKeycloakId(keycloak_id)).data;
             if (!user) throw new NotFoundException('User not found');
     
             // ── Sync name to Keycloak if changed ──────────────────────────────────
@@ -182,7 +182,7 @@ export class ProfileService {
     ) {
         const tx = await this.sequelize.transaction();
         try {
-            const user = (await this.userService.findByKeycloakId(res, keycloak_id)).data;
+            const user = (await this.userService.findByKeycloakId(keycloak_id)).data;
             if (!user?.keycloak_id) throw new BadRequestException('User not linked to identity provider');
             await this.keycloakAdmin.setPassword(user.keycloak_id, body.new_password);
             await tx.commit();
@@ -204,7 +204,7 @@ export class ProfileService {
     ) {
         const tx = await this.sequelize.transaction();
         try {
-            const user = (await this.userService.findByKeycloakId(res, keycloak_id)).data;
+            const user = (await this.userService.findByKeycloakId(keycloak_id)).data;
             if (!user?.keycloak_id) throw new BadRequestException('User not linked to identity provider');
     
             await this.keycloakAdmin.setEmail(user.keycloak_id, body.new_email);
@@ -227,7 +227,7 @@ export class ProfileService {
     ) {
         const tx = await this.sequelize.transaction();
         try {
-            const user = (await this.userService.findByKeycloakId(res, keycloak_id)).data;
+            const user = (await this.userService.findByKeycloakId(keycloak_id)).data;
             if (!user?.keycloak_id) throw new BadRequestException('User not linked to identity provider');
 
             await this.keycloakAdmin.updateUsername(user.keycloak_id, body.new_phone);
@@ -248,7 +248,7 @@ export class ProfileService {
         keycloak_id: string
     ) {
         try {
-            const user = (await this.userService.findByKeycloakId(res, keycloak_id)).data;
+            const user = (await this.userService.findByKeycloakId(keycloak_id)).data;
             if (!user) throw new NotFoundException('User not found');
     
             const connected = await this.accessModel.findAll({
@@ -283,7 +283,7 @@ export class ProfileService {
     ) {
         const tx = await this.sequelize.transaction();
         try {
-            const user   = (await this.userService.findByKeycloakId(res, keycloak_id)).data;
+            const user   = (await this.userService.findByKeycloakId(keycloak_id)).data;
             if (!user) throw new NotFoundException('User not found');
     
             const system = await this.systemService.findById(body.system_id);
@@ -390,7 +390,7 @@ export class ProfileService {
     ): Promise<any> {
         const tx = await this.sequelize.transaction();
         try{
-            const user   = (await this.userService.findByKeycloakId(res, keycloak_id)).data;
+            const user   = (await this.userService.findByKeycloakId(keycloak_id)).data;
             if (!user) throw new NotFoundException('User not found');
     
             const access = await this.accessModel.findOne({
@@ -481,7 +481,7 @@ export class ProfileService {
         system_id: string, 
         access_token: string
     ) {
-        const user = (await this.userService.findByKeycloakId(res, keycloak_id)).data;
+        const user = (await this.userService.findByKeycloakId(keycloak_id)).data;
         if (!user) throw new NotFoundException('User not found');
 
         const access = await this.accessModel.findOne({
@@ -528,7 +528,7 @@ export class ProfileService {
         action       : 'login' | 'link',
         access_token : string,
     ): Promise<{ redirect_url: string }> {
-        const user   = (await this.userService.findByKeycloakId(res, keycloak_id)).data;
+        const user   = (await this.userService.findByKeycloakId(keycloak_id)).data;
         if (!user) throw new NotFoundException('User not found');
 
         const system = await this.systemService.findById(system_id);
@@ -615,7 +615,7 @@ export class ProfileService {
     ): Promise<any> {
         try{
 
-            const user   = (await this.userService.findByKeycloakId(res, keycloak_id)).data;
+            const user   = (await this.userService.findByKeycloakId(keycloak_id)).data;
             if (!user) throw new NotFoundException('User not found');
     
             const system = await this.systemService.findById(system_id);

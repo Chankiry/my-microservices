@@ -1,4 +1,4 @@
-import { CustomCreateOptions, CustomDestroyOptions, CustomSaveOptions } from '@app/shared/interfaces/custom-option.interface';
+import { CustomCreateOptions, CustomDestroyOptions, CustomUpdateOptions } from '@app/shared/interfaces/custom-option.interface';
 import { BaseModel } from '@models/baseModel';
 import {
     Table, Model, Column, DataType,
@@ -59,7 +59,7 @@ class User extends Model<User> {
     }
 
     @BeforeUpdate
-    static async setUpdaterId(instance: BaseModel, options: CustomSaveOptions) {
+    static async setUpdaterId(instance: BaseModel, options: CustomUpdateOptions) {
         if (options.user_id) {
             instance.updater_id = options.user_id;
         }

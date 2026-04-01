@@ -53,13 +53,13 @@ export class AuthService {
         const tx = await this.sequelize.transaction();
         try{
             // Check phone uniqueness
-            const existingPhone = (await this.userService.findByPhone(res, body.phone)).data;
+            const existingPhone = (await this.userService.findByPhone(body.phone)).data;
             if (existingPhone) {
                 throw new ConflictException('លេខទូរស័ព្ទនេះត្រូវបានប្រើប្រាស់រួចហើយ');
             }
     
             // Check email uniqueness
-            const existingEmail = (await this.userService.findByEmail(res, body.email)).data;
+            const existingEmail = (await this.userService.findByEmail(body.email)).data;
             if (existingEmail) {
                 throw new ConflictException(PROFILE_ERROR_MESSAGE.EMAIL_ALREADY_REGISTERED);
             }

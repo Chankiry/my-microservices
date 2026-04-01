@@ -60,11 +60,11 @@ export class UserController {
 
     @Get(':id')
     @Roles('admin')
-    async findOne(
+    async view(
         @Res()  res: Response,
         @Param('id') id: string
     ) {
-        return this.usersService.findById(res, id);
+        return this.usersService.view(res, id);
     }
 
     @Put(':id')

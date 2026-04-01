@@ -20,13 +20,12 @@ export class UserGrpcService {
     // ─────────────────────────────────────────
 
     @GrpcMethod('UserService', 'GetUser')
-    async getUser(
-        res: Response, 
+    async getUser( 
         data: { id: string }
     ) {
         this.logger.log(`gRPC GetUser: ${data.id}`);
         try {
-            const user = (await this.userService.findById(res, data.id)).data;
+            const user = (await this.userService.findById(data.id)).data;
             return this.toProto(user);
         } catch (error: any) {
             throw new RpcException({
@@ -38,11 +37,10 @@ export class UserGrpcService {
 
     @GrpcMethod('UserService', 'GetUserByEmail')
     async getUserByEmail(
-        res: Response, 
         data: { email: string }
     ) {
         this.logger.log(`gRPC GetUserByEmail: ${data.email}`);
-        const user = (await this.userService.findByEmail(res, data.email)).data;
+        const user = (await this.userService.findByEmail(data.email)).data;
         if (!user) {
             throw new RpcException({
                 code:    status.NOT_FOUND,
@@ -58,7 +56,7 @@ export class UserGrpcService {
         data: { phone: string }
     ) {
         this.logger.log(`gRPC GetUserByPhone: ${data.phone}`);
-        const user = (await this.userService.findByPhone(res, data.phone)).data;
+        const user = (await this.userService.findByPhone(data.phone)).data;
         if (!user) {
             throw new RpcException({
                 code:    status.NOT_FOUND,
@@ -155,7 +153,6 @@ export class UserGrpcService {
 
     @GrpcMethod('UserService', 'ValidateToken')
     async validateToken(
-        res: Response,
         data: { token: string }
     ) {
         this.logger.log('gRPC ValidateToken');
@@ -164,7 +161,7 @@ export class UserGrpcService {
             if (!result.valid || !result.payload) {
                 return { valid: false, user: null, error: result.error ?? 'Invalid token' };
             }
-            const user = await this.userService.findById(res, result.payload.sub);
+            const user = (  await this.userService.findById(result.payload.sub)).data;
             return { valid: true, user: this.toProto(user), error: '' };
         } catch (error: any) {
             return { valid: false, user: null, error: error.message };
@@ -172,14 +169,14 @@ export class UserGrpcService {
     }
 
     @GrpcMethod('UserService', 'CheckUserExists')
-    async checkUserExists(res: Response, data: any) {
+    async checkUserExists(data: any) {
         this.logger.log('gRPC CheckUserExists');
         try {
             let user: User | null = null;
 
-            if (data.id)       user = (await this.userService.findById(res, data.id).catch(() => null)).data;
-            else if (data.email)    user = await this.userService.findByEmail(res, data.email);
-            else if (data.phone) user = await this.userService.findByPhone(res, data.phone);
+            if (data.id)       user = (await this.userService.findById(data.id).catch(() => null)).data;
+            else if (data.email)    user = (await this.userService.findByEmail(data.email)).data;
+            else if (data.phone) user = (await this.userService.findByPhone(data.phone)).data;
 
             return { exists: !!user, user_id: user?.id ?? '' };
         } catch {
