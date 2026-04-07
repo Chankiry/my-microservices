@@ -60,6 +60,80 @@ export class ProfileComponent implements OnInit, OnDestroy {
     public FILE_URL = env.FILE_BASE_URL;
     private _unsubscribeAll = new Subject<any>();
 
+
+    backgroundImage = 'images/background/background-side.JPG';
+    profileImage = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-M9UBTShaFJNXnvb5nubvN8VDoW0t6R.png';
+
+    profileName = 'កាក់ សុខគី';
+    profileNameEN = 'KAK SOKY';
+    phone = '099 888 777';
+    email = 'kak.soky@gmail.com';
+
+    services: any[] = [
+      {
+        title: 'ព័ត៌មានផ្ទាល់ខ្លួន',
+        description: 'គ្រប់គ្រងនិងធ្វើបច្ចុប្បន្នភាពព័ត៌មានផ្ទាល់ខ្លួនរបស់អ្នក',
+        icon: 'mdi:account-circle',
+        color: '#0C7EA5'
+      },
+      {
+        title: 'គណនីរបស់អ្នកមានសុវត្ថិភាពខ្ពស់!',
+        description: 'យើងបានពិនិត្យឃើញថាលោកអ្នកបានបំពេញលក្ខណៈសុវត្ថិភាព បានត្រឹមត្រូវ',
+        icon: 'mdi:shield-check',
+        color: '#0DA487'
+      },
+      {
+        title: 'ចូលគណនីដោយប្រើ QR',
+        description: 'បង្កើត QR ដើម្បីចូលប្រើប្រាស់កម្មវិធីទូរស័ព្ទដៃ',
+        icon: 'mdi:qrcode',
+        color: '#DDAD01'
+      }
+    ];
+
+    systems: any[] = [
+      { name: 'ដូបផែនការ', icon: '🏛️' },
+      { name: 'ដូបផែនការ', icon: '🤝' },
+      { name: 'ដូបផែនការ', icon: '⚡' },
+      { name: 'ដូបផែនការ', icon: '👥' },
+      { name: 'ដូបផែនការ', icon: '🎁' },
+      { name: 'ដូបផែនការ', icon: '🏢' },
+      { name: 'ដូបផែនការ', icon: '⏰' },
+      { name: 'ដូបផែនការ', icon: '📚' },
+      { name: 'ដូបផែនការ', icon: '👨‍👩‍👧' },
+      { name: 'ដូបផែនការ', icon: '⛪' },
+      { name: 'ដូបផែនការ', icon: '🌐' },
+      { name: 'ដូបផែនការ', icon: '🏢' },
+      { name: 'ដូបផែនការ', icon: '⏰' },
+      { name: 'ដូបផែនការ', icon: '📚' },
+      { name: 'ដូបផែនការ', icon: '👨‍👩‍👧' },
+      { name: 'ដូបផែនការ', icon: '⛪' },
+      { name: 'ដូបផែនការ', icon: '🌐' },
+      { name: 'ដូបផែនការ', icon: '⚖️' }
+    ];
+
+    devices: any[] = [
+      {
+        name: 'Window',
+        model: 'ខ្ចាស់អក្សរ, ក្រុម',
+        carrier: 'Express, CIS',
+        status: 'active'
+      },
+      {
+        name: 'iPhone 16',
+        model: 'ខ្ចាស់អក្សរ, ក្រុម',
+        carrier: 'LR, PSS',
+        count: '5 ឧបករណ៍',
+        status: 'active'
+      },
+      {
+        name: 'iPad',
+        model: 'ខ្ចាស់អក្សរ, ក្រុម',
+        carrier: 'Express, CIS',
+        count: '1 ឧបករណ៍',
+        status: 'active'
+      }
+    ];
+
     constructor(
         private _profileService     : ProfileResourceService,
         private _snackBarService    : SnackbarService,
@@ -141,8 +215,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
             username : this.connectForm.value.username,
             password : this.connectForm.value.password,
         }).subscribe({
-            next: () => {
-                this._snackBarService.openSnackBar('ភ្ជាប់ប្រព័ន្ធបានជោគជ័យ', GlobalConstants.success);
+            next: res => {
+                this._snackBarService.openSnackBar(res.message, GlobalConstants.success);
                 this.closeConnectDialog();
                 this._loadProfile();
             },
@@ -163,8 +237,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
         this._changeDetectorRef.markForCheck();
 
         this._profileService.disconnectSystem(access.system_id).subscribe({
-            next: () => {
-                this._snackBarService.openSnackBar('បានផ្ដាច់ការភ្ជាប់', GlobalConstants.success);
+            next: res => {
+                this._snackBarService.openSnackBar(res.message, GlobalConstants.success);
                 this.disconnectingId = null;
                 this._loadProfile();
             },
@@ -223,97 +297,4 @@ export class ProfileComponent implements OnInit, OnDestroy {
         ).length || 0;
     }
 
-  backgroundImage = 'images/background/background-side.JPG';
-  profileImage = 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-M9UBTShaFJNXnvb5nubvN8VDoW0t6R.png';
-
-  profileName = 'កាក់ សុខ័ត';
-  profileNameEN = 'KAK SOKY';
-  phone = '099 888 777';
-  email = 'kak.soky@gmail.com';
-
-  services: any[] = [
-    {
-      title: 'ពិគ្រោះយោបល់ជ័ន្តុប្បាសន្នៈ',
-      description: 'ប្រទានសេវាឧទ្ធរណ៍ដល់អតិថិជនលើបញ្ហាច្បាប់ក្នុងវិស័យផ្សេងៗ',
-      icon: 'user-icon',
-      color: 'blue'
-    },
-    {
-      title: 'សម្ងាត់របស់វិស័យក្រុម!',
-      description: 'លក្ខណៈលម្អិតសម្រាប់ឯកសារយល់ដឹងលម្អិតនៃពាក្យបច្ចេកទេស',
-      icon: 'check-icon',
-      color: 'green'
-    },
-    {
-      title: 'ផលប័ត្របង្ហាញលក្ខណៈ QR',
-      description: 'ប្រទានសេវាឧទ្ធរណ៍ដល់អតិថិជនលើបញ្ហាច្បាប់ក្នុងវិស័យផ្សេងៗ',
-      icon: 'qr-icon',
-      color: 'yellow'
-    }
-  ];
-
-  systems: any[] = [
-    { name: 'ដូបផែនការ', icon: '🏛️' },
-    { name: 'ដូបផែនការ', icon: '🤝' },
-    { name: 'ដូបផែនការ', icon: '⚡' },
-    { name: 'ដូបផែនការ', icon: '👥' },
-    { name: 'ដូបផែនការ', icon: '🎁' },
-    { name: 'ដូបផែនការ', icon: '🏢' },
-    { name: 'ដូបផែនការ', icon: '⏰' },
-    { name: 'ដូបផែនការ', icon: '📚' },
-    { name: 'ដូបផែនការ', icon: '👨‍👩‍👧' },
-    { name: 'ដូបផែនការ', icon: '⛪' },
-    { name: 'ដូបផែនការ', icon: '🌐' },
-    { name: 'ដូបផែនការ', icon: '⚖️' }
-  ];
-
-  devices: any[] = [
-    {
-      name: 'Window',
-      model: 'ខ្ចាស់អក្សរ, ក្រុម',
-      carrier: 'Express, CIS',
-      status: 'active'
-    },
-    {
-      name: 'iPhone 16',
-      model: 'ខ្ចាស់អក្សរ, ក្រុម',
-      carrier: 'LR, PSS',
-      count: '5 ឧបករណ៍',
-      status: 'active'
-    },
-    {
-      name: 'iPad',
-      model: 'ខ្ចាស់អក្សរ, ក្រុម',
-      carrier: 'Express, CIS',
-      count: '1 ឧបករណ៍',
-      status: 'active'
-    }
-  ];
-
-  getIconClass(icon: string): string {
-    const iconMap: { [key: string]: string } = {
-      'user-icon': 'icon-user',
-      'check-icon': 'icon-check',
-      'qr-icon': 'icon-qr'
-    };
-    return iconMap[icon] || icon;
-  }
-
-  getColorClass(color: string): string {
-    const colorMap: { [key: string]: string } = {
-      'blue': 'icon-blue',
-      'green': 'icon-green',
-      'yellow': 'icon-yellow'
-    };
-    return colorMap[color] || color;
-  }
-
-  getDeviceIcon(deviceName: string): string {
-    const iconMap: { [key: string]: string } = {
-      'Window': '🖥️',
-      'iPhone 16': '📱',
-      'iPad': '📱'
-    };
-    return iconMap[deviceName] || '';
-  }
 }

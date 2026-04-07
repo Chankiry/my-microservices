@@ -3,8 +3,22 @@ class GlobalConstants {
         throw new Error('Method not implemented.');
     }
     //Message
-    public static genericError: string = 'Something went wrong. Please try again later';
-    public static genericResponse: string = 'Your request has been processed successfully';
+
+    public static genericError: {
+        name_kh: string;
+        name_en: string;
+    } = {
+        name_kh: 'មានបញ្ហាអ្វីមួយកើតឡើង។ សូមព្យាយាមម្តងទៀតនៅពេលក្រោយ',
+        name_en: 'Something went wrong. Please try again later'
+    };
+
+    public static genericResponse: {
+        name_kh: string;
+        name_en: string;
+    } = {
+        name_kh: 'សំណើរបស់អ្នកត្រូវបានដំណើរការជោគជ័យ',
+        name_en: 'Your request has been processed successfully'
+    }
 
     //Regex
     public static emailRegex: string = '[A-Za-z0-9._%-]+@[A-Za-z0-9._%-]+\\.[a-z]{2,3}';

@@ -23,16 +23,16 @@ export class UserService {
 
     // ─── Convenience helpers ──────────────────────────────────────────────────
 
-    get platformRoleSlugs(): string[] {
-        return (this._user.getValue()?.platform_roles ?? []).map(r => r.slug);
+    get roleSlugs(): string[] {
+        return (this._user.getValue()?.roles ?? []).map(r => r.slug);
     }
 
     get isAdmin(): boolean {
-        return this.platformRoleSlugs.includes('admin');
+        return this.roleSlugs.includes('admin');
     }
 
     get isUser(): boolean {
-        return this.platformRoleSlugs.includes('user');
+        return this.roleSlugs.includes('user');
     }
 
     get displayName(): string {

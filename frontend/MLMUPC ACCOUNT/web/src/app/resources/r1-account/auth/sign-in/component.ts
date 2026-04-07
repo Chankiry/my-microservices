@@ -210,23 +210,23 @@ export class AuthSignInComponent implements OnInit {
 
     // ─── Login — saved account password confirm ───────────────────────────────
 
-    confirmPassword(): void {
-        if (this.passwordForm.invalid || this.isLoading || !this.selectedAccount) return;
-        this.isLoading = true;
-        this.passwordForm.disable();
+  confirmPassword(): void {
+      if (this.passwordForm.invalid || this.isLoading || !this.selectedAccount) return;
+      this.isLoading = true;
+      this.passwordForm.disable();
 
-        this._authService.login({
-            phone   : this.selectedAccount.phone,
-            password: this.passwordForm.value.password,
-        }).subscribe({
-            next : res => this._saveAndProceed(res, this.selectedAccount!.phone),
-            error: err => {
-                this.isLoading = false;
-                this.passwordForm.enable();
-                this._errorHandleService.handleHttpError(err);
-            },
-        });
-    }
+      this._authService.login({
+          phone   : this.selectedAccount.phone,
+          password: this.passwordForm.value.password,
+      }).subscribe({
+          next : res => this._saveAndProceed(res, this.selectedAccount!.phone),
+          error: err => {
+              this.isLoading = false;
+              this.passwordForm.enable();
+              this._errorHandleService.handleHttpError(err);
+          },
+      });
+  }
 
     // ─── Link account (Phase 8) ───────────────────────────────────────────────
 
@@ -243,7 +243,7 @@ export class AuthSignInComponent implements OnInit {
         }).subscribe({
             next: res => {
                 this._authService.clearPendingRedirect();
-                this._snackBarService.openSnackBar('ភ្ជាប់គណនីបានជោគជ័យ', GlobalConstants.success);
+                this._snackBarService.openSnackBar(res.message, GlobalConstants.success);
                 window.location.href = res.redirect_url;
             },
             error: err => {
@@ -256,7 +256,7 @@ export class AuthSignInComponent implements OnInit {
 
     cancelLink(): void {
         this._authService.clearPendingRedirect();
-        this._router.navigate(['/admin/dashboard']);
+        this._router.navigate(['/admin/home']);
     }
 
     // ─── Post-login ───────────────────────────────────────────────────────────
@@ -270,7 +270,7 @@ export class AuthSignInComponent implements OnInit {
         } catch {
             saveAccount({ phone, name: phone, email: '', avatar: '', last_used: Date.now() });
         }
-        this._snackBarService.openSnackBar('ចូលប្រព័ន្ធជោគជ័យ', GlobalConstants.success);
+        this._snackBarService.openSnackBar({name_kh: 'ចូលប្រព័ន្ធជោគជ័យ', name_en: 'Login successful'}, GlobalConstants.success);
         this._afterLogin();
     }
 
@@ -297,11 +297,11 @@ export class AuthSignInComponent implements OnInit {
             return;
         }
 
-        // Read platform_roles from /me — source of truth for role-based navigation
+        // Read roles from /me — source of truth for role-based navigation
         this._authService.getMe().subscribe({
             next: me => {
-                const slugs: string[] = (me?.platform_roles ?? []).map((r: any) => r.slug);
-                const target = slugs.includes('admin') ? '/admin/dashboard' : '/profile/my-profile';
+                const slugs: string[] = (me?.roles ?? []).map((r: any) => r.slug);
+                const target = slugs.includes('admin') ? '/admin/home' : '/user/home';
                 this._router.navigateByUrl(target);
             },
             error: () => {

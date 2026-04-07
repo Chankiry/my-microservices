@@ -26,14 +26,11 @@
 
     "Navigation": {
         "Home": "Home",
-        "Operation": "Operation",
-        "Invoice": "Invoice",
-        "Sale": "Sale List",
-        "Price": "Price",
-        "Price.Indicator": "Indicator",
-        "Price.Setting": "Setting",
-        "Price.English": "English",
-        "User": "User"
+        "Account": "Account",
+        "System": "System",
+        "New_Knowledge": "New Knowledge",
+        "Security": "Security",
+        "Settings": "Settings"
     },
 
     "Version": "Version",

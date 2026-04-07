@@ -54,34 +54,34 @@ export class ProfileResourceService {
 
     constructor(private _http: HttpClient) {}
 
-    getProfile(): Observable<UserProfile> {
-        return this._http.get<UserProfile>(this.BASE);
+    getProfile(): Observable<any> {
+        return this._http.get<any>(this.BASE);
     }
 
-    updateProfile(payload: Partial<{ first_name: string; last_name: string; avatar?: string }>): Observable<UserProfile> {
-        return this._http.patch<UserProfile>(this.BASE, payload);
+    updateProfile(payload: Partial<any>): Observable<any> {
+        return this._http.patch<any>(this.BASE, payload);
     }
 
-    changePassword(new_password: string): Observable<{ success: boolean }> {
-        return this._http.patch<{ success: boolean }>(`${this.BASE}/password`, { new_password });
+    changePassword(new_password: string): Observable<any> {
+        return this._http.patch<any>(`${this.BASE}/password`, { new_password });
     }
 
     getAvailableSystems(): Observable<{ data: SystemInfo[] }> {
         return this._http.get<{ data: SystemInfo[] }>(`${this.BASE}/systems/available`);
     }
 
-    connectSystem(payload: ConnectPayload): Observable<SystemAccess> {
-        return this._http.post<SystemAccess>(`${this.BASE}/systems/connect`, payload);
+    connectSystem(payload: ConnectPayload): Observable<any> {
+        return this._http.post<any>(`${this.BASE}/systems/connect`, payload);
     }
 
-    disconnectSystem(system_id: string): Observable<{ success: boolean }> {
-        return this._http.delete<{ success: boolean }>(
+    disconnectSystem(system_id: string): Observable<any> {
+        return this._http.delete<any>(
             `${this.BASE}/systems/${system_id}/disconnect`
         );
     }
 
-    ssoNavigate(system_id: string): Observable<{ url: string }> {
-        return this._http.post<{ url: string }>(`${this.BASE}/systems/sso-navigate`, { system_id });
+    ssoNavigate(system_id: string): Observable<any> {
+        return this._http.post<any>(`${this.BASE}/systems/sso-navigate`, { system_id });
     }
 
 }

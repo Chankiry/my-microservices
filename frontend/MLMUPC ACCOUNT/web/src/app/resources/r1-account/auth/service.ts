@@ -63,8 +63,8 @@ export class ResourceAuthService {
         );
     }
 
-    register(payload: RegisterPayload): Observable<RegisterResponse> {
-        return this._http.post<RegisterResponse>(`${this.AUTH_BASE}/register`, payload);
+    register(payload: RegisterPayload): Observable<any> {
+        return this._http.post<any>(`${this.AUTH_BASE}/register`, payload);
     }
 
     refresh(refresh_token: string): Observable<TokenResponse> {
@@ -76,8 +76,8 @@ export class ResourceAuthService {
         );
     }
 
-    logout(refresh_token?: string): Observable<{ success: boolean }> {
-        return this._http.post<{ success: boolean }>(`${this.AUTH_BASE}/logout`, { refresh_token });
+    logout(refresh_token?: string): Observable<any> {
+        return this._http.post<any>(`${this.AUTH_BASE}/logout`, { refresh_token });
     }
 
     exchangeCode(code: string): Observable<TokenResponse> {
@@ -104,7 +104,7 @@ export class ResourceAuthService {
     }
 
     // ─── GET /account/profile/me ─────────────────────────────────────────────
-    // Lightweight call — returns user fields + platform_roles[].
+    // Lightweight call — returns user fields + roles[].
     // Used after login to determine navigation target.
 
     getMe(): Observable<any> {
@@ -123,8 +123,8 @@ export class ResourceAuthService {
         return !!this._pendingRedirect;
     }
 
-    validateRedirect(params: RedirectParams): Observable<{ redirect_url: string }> {
-        return this._http.post<{ redirect_url: string }>(
+    validateRedirect(params: RedirectParams): Observable<any> {
+        return this._http.post<any>(
             `${this.PROFILE_BASE}/redirect/validate`,
             {
                 system_id   : params.system_id,
@@ -139,8 +139,8 @@ export class ResourceAuthService {
         redirect_uri: string;
         username    : string;
         password    : string;
-    }): Observable<{ redirect_url: string }> {
-        return this._http.post<{ redirect_url: string }>(
+    }): Observable<any> {
+        return this._http.post<any>(
             `${this.PROFILE_BASE}/redirect/link`, params
         );
     }

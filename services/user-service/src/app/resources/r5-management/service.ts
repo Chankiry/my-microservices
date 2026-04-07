@@ -16,12 +16,13 @@ import {
     GrantAccessDto, UpdateAccessDto, RejectAccessDto,
     ExternalRoleChangeDto, AssignUserRoleDto, CreatePlatformUserDto,
 } from './dto';
-
-const PLATFORM_SYSTEM_ID = 'platform';
+import { ConfigService } from '@nestjs/config';
+import { UserSystemAccessRegistrationStatusEnum } from '@app/shared/enums/System.enum';
 
 @Injectable()
 export class ManagementService {
     private readonly logger = new Logger(ManagementService.name);
+    private readonly system_id      : string;
 
     constructor(
         @InjectModel(UserSystemAccess)
@@ -35,7 +36,10 @@ export class ManagementService {
         private readonly userService         : UserService,
         private readonly systemService       : SystemService,
         private readonly keycloakAdmin       : KeycloakAdminService,
-    ) {}
+        private readonly configService       : ConfigService,
+    ) {
+        this.system_id  = this.configService.get('SYSTEM_ID', 'mlmupc-account-system');
+    }
 
     // ─── Private Helpers ──────────────────────────────────────────────────────
 
@@ -50,7 +54,7 @@ export class ManagementService {
         if (!user) throw new NotFoundException('User not found');
 
         const adminRole = await this.systemRoleModel.findOne({
-            where: { system_id: PLATFORM_SYSTEM_ID, slug: 'admin', is_active: true },
+            where: { system_id: this.system_id, slug: 'admin', is_active: true },
         });
         if (!adminRole) throw new ForbiddenException('Platform admin role not configured');
 
@@ -94,7 +98,7 @@ export class ManagementService {
         const user = await this.userService.findById(user_id);
 
         const platformRoles = await this.userSystemRoleModel.findAll({
-            where  : { user_id, system_id: PLATFORM_SYSTEM_ID },
+            where  : { user_id, system_id: this.system_id },
             include: [{ model: SystemRole, as: 'role' }],
         });
 
@@ -141,13 +145,13 @@ export class ManagementService {
         // Assign platform role
         const roleSlug = dto.platform_role || 'user';
         const role = await this.systemRoleModel.findOne({
-            where: { system_id: PLATFORM_SYSTEM_ID, slug: roleSlug, is_active: true },
+            where: { system_id: this.system_id, slug: roleSlug, is_active: true },
         });
 
         if (role) {
             await this.userSystemRoleModel.create({
                 user_id   : user.id,
-                system_id : PLATFORM_SYSTEM_ID,
+                system_id : this.system_id,
                 role_id   : role.id,
                 granted_by: requester_id,
                 granted_at: new Date(),
@@ -405,7 +409,7 @@ export class ManagementService {
             throw new BadRequestException(`Access is '${access.registration_status}', not pending`);
         }
 
-        access.registration_status = 'active';
+        access.registration_status = UserSystemAccessRegistrationStatusEnum.ACTIVE;
         access.granted_by          = approver_id;
         access.granted_at          = new Date();
         access.updater_id          = approver_id;
@@ -455,7 +459,7 @@ export class ManagementService {
             throw new BadRequestException(`Access is '${access.registration_status}', not pending`);
         }
 
-        access.registration_status = 'rejected';
+        access.registration_status = UserSystemAccessRegistrationStatusEnum.REJECTED;
         access.rejected_by         = rejecter_id;
         access.rejected_at         = new Date();
         access.rejected_reason     = dto.reason || null;

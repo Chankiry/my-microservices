@@ -36,8 +36,8 @@ export class ErrorHandleService {
         this._snackbarService.openSnackBar(message, GlobalConstants.error);
     }
 
-    
-    handleError(message: string): void {
+
+    handleError(message: { name_kh: string; name_en: string; }): void {
         this._snackbarService.openSnackBar(message, GlobalConstants.error);
     }
 }

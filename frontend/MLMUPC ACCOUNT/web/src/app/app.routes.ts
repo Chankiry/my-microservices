@@ -11,7 +11,7 @@ import { ServiceDownComponent } from './shared/service-down.component';
 export class RedirectGuard implements CanActivate {
     constructor(private router: Router) {}
     canActivate(): boolean {
-        this.router.navigate(['/admin/dashboard']);
+        this.router.navigate(['/admin/home']);
         return false;
     }
 }
@@ -53,6 +53,16 @@ export const appRoutes: Route[] = [
         loadChildren: () => import('app/resources/r1-account/profile/routes'),
     },
 
+    // ─── User (authenticated, no navigation) ────────────────────────────────
+    {
+        path        : 'user',
+        canActivate : [AuthGuard],
+        component   : LayoutComponent,
+        data        : { layout: 'header' },
+        resolve     : { initialData: initialDataResolver },
+        loadChildren: () => import('app/resources/r3-user/route'),
+    },
+
     // ─── Authenticated routes ──────────────────────────────────────────────────
     {
         path      : '',
@@ -64,11 +74,6 @@ export const appRoutes: Route[] = [
                 path   : 'admin',
                 resolve: { role: roleResolver(['admin']) },
                 loadChildren: () => import('app/resources/r2-admin/route'),
-            },
-            {
-                path   : 'user',
-                resolve: { role: roleResolver(['user']) },
-                loadChildren: () => import('app/resources/r3-user/route'),
             },
             {
                 path     : '404-not-found',

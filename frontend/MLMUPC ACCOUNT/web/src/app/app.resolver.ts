@@ -36,10 +36,10 @@ export const initialDataResolver = () => {
                 gender        : me.gender          ?? null,
                 is_active     : me.is_active       ?? true,
                 created_at    : me.created_at,
-                platform_roles: me.platform_roles  ?? [],
+                roles: me.roles  ?? [],
             };
 
-            const roles: string[] = (me.platform_roles ?? []).map((r: any) => r.slug);
+            const roles: string[] = (me.roles ?? []).map((r: any) => r.slug);
             let roleSlug: 'admin' | 'user' | null = null;
             if      (roles.includes('admin')) roleSlug = 'admin';
             else if (roles.includes('user'))  roleSlug = 'user';
@@ -49,13 +49,16 @@ export const initialDataResolver = () => {
                 return router.navigateByUrl('/auth');
             }
 
-            const platformRole = me.platform_roles.find((r: any) => r.slug === roleSlug);
+            console.log('User Roles:', me.roles);
+
+            const role = me.roles.find((r: any) => r.slug === roleSlug);
             navService.navigations = {
-                id        : 0,
-                name_en   : platformRole?.name_en ?? roleSlug,
-                name_kh   : platformRole?.name_kh ?? roleSlug,
+                id        : role?.id ?? '',
+                name_en   : role?.name_en ?? roleSlug,
+                name_kh   : role?.name_kh ?? roleSlug,
                 slug      : roleSlug,
-                icon      : platformRole?.icon    ?? '',
+                icon      : role?.icon    ?? '',
+                color     : role?.color   ?? '',
                 is_default: true,
             };
 

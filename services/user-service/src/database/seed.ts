@@ -4,103 +4,81 @@ import * as readlineSync from 'readline-sync';
 import { Sequelize } from 'sequelize-typescript';
 
 // ================================================================>> Custom Library
-import { SchemaEnum } from "../app/shared/enums/schema.enum";
-import sequelizeConfig from "../config/sequelize.config";
-import { appConfig } from "../config/app.config";
+import sequelizeConfig from '@config/sequelize.config';
+import { appConfig } from "@config/app.config";
+import { SetupSeeder } from "./seed/setup/setup.seed";
+import { UserSeeder } from "./seed/user/user.seed";
 
 class SeederInitializer {
-    // private readonly logger = new LoggerService(SeederInitializer.name);
+
     private sequelize: Sequelize;
-    private schemas: string[] = Object.values(SchemaEnum);
 
     constructor() {
         this.sequelize = new Sequelize(sequelizeConfig);
     }
 
-    public async createSchemas() {
-        const queryInterface = this.sequelize.getQueryInterface();
-        const existingSchemas = Object.keys(await queryInterface.showAllSchemas());
-        for (const schema of this.schemas) {
-            if (!existingSchemas.includes(schema)) {
-                await queryInterface.createSchema(schema);
-                console.log(`- Schema '${schema}' created.`.green);
-            }
-        }
-    }
-
     private async confirmSeeding(): Promise<boolean> {
         const tableNames = await this.sequelize.getQueryInterface().showAllTables();
         if (tableNames.length > 0) {
-            const projectName = 'HRM_API';
-            
-            if (!readlineSync.keyInYNStrict('This will drop and seed again. Are you sure you want to proceed?')) {
-                return false;
-            }
-    
-            // CONFIRM IN PROD ENV
-            if(['uat', 'prod'].includes(appConfig.ENV.toLocaleLowerCase())) {
-                if (!readlineSync.keyInYNStrict('Have you backed up the database?')) {
-                    return false;
-                }
-    
-                if (!readlineSync.keyInYNStrict('Are you sure you backed up the database?')) {
-                    return false;
-                }
-    
-                const inputProjectName = readlineSync.question(`Please type project name before processing this hard seeding (${projectName}): `);
-                if (inputProjectName.trim() !== projectName) {
-                    console.log('Incorrect project name! Seeding aborted.');
-                    return false;
-                }
-            }
-    
-            return true;
+            const message = 'This will drop and seed again. Are you sure you want to proceed?'.yellow;
+            return readlineSync.keyInYNStrict(message);
         }
-
         return true;
     }
 
-    private async seedData() {
-        
-
+    private async dropAndSyncDatabase() {
+        await this.sequelize.sync({ force: true });
     }
 
-    private async handleSeedingError(error: any) {
+    private async seedData() {
+        //===================== setup data
+        await SetupSeeder.seed();
+        //===================== user data
+        await UserSeeder.seed();
+
+        // After all seeding is done, update creator_id
+        // await this.updateCreatorId();
+    }
+
+    private async updateCreatorId() {
+        const tablesToUpdate = [
+            'user',
+        ];
+
+        for (const tableName of tablesToUpdate) {
+            await this.sequelize.getQueryInterface().bulkUpdate(tableName, {
+                creator_id: 1,
+                updater_id: 1
+            }, {
+                creator_id: null // or whatever condition suits your needs
+            });
+        }
+    }
+
+    private async handleSeedingError(error: Error) {
         await this.sequelize.sync({ force: true });
         console.log('\x1b[31m%s\x1b[0m', error.message);
         process.exit(0);
     }
 
-    private async resetSequences() {
-        await this.sequelize.query(`
-            SELECT setval('data.department_id_seq', (SELECT MAX(id) FROM data.department));
-            SELECT setval('user.user_id_seq', (SELECT MAX(id) FROM "user"."user"));
-            SELECT setval('public.file_id_seq', (SELECT MAX(id) FROM "public"."file"));
-        `);
-    }
-
     public async startSeeding() {
         try {
-            if( ['local', 'dev'].includes(appConfig.ENV.toLocaleLowerCase())) {
+            if(appConfig.ENV === 'LOCAL' || appConfig.ENV === 'DEV' || appConfig.ENV === 'UAT') {
                 const confirmation = await this.confirmSeeding();
                 if (!confirmation) {
                     console.log('\nSeeders have been cancelled.'.cyan);
                     process.exit(0);
                 }
-
-                // :: DROP AND CREATE ::
-                await this.createSchemas();
-                await this.sequelize.drop({ cascade: true });
-                await this.sequelize.sync({ force: true });
+    
+                await this.dropAndSyncDatabase();
                 await this.seedData();
-                await this.resetSequences();
-                console.log('\nSeed completed.'.green);
-
+                console.log('\nSeeding completed successfully.'.green);
+            
             } else {
-                console.log(`\nSeed have been suspend for your current ENV: ${appConfig.ENV}.`.green);
+                console.log("\nSeeding isn't allowed in your environment: [" + appConfig.ENV + "].".red);
+
             }
             process.exit(0);
-
         } catch (error) {
             await this.handleSeedingError(error);
         }

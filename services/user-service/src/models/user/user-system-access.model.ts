@@ -6,6 +6,7 @@ import {
 import User   from './user.model';
 import System from '../system/system.model';
 import { BaseModel } from '@models/baseModel';
+import { UserSystemAccessAccountTypeEnum, UserSystemAccessRegistrationStatusEnum } from '@app/shared/enums/System.enum';
 
 @Table({
     tableName : 'user_system_access',
@@ -26,12 +27,15 @@ class UserSystemAccess extends BaseModel<UserSystemAccess> {
     @ForeignKey(() => User) @Column({ type: DataType.UUID, allowNull: true })                       declare rejected_by: string | null;
     
     // ============================================================================================ Field
-    @Column({ type: DataType.ENUM('public', 'managed', 'internal'), allowNull : false})             declare account_type: 'public' | 'managed' | 'internal';
     @Column({ 
-        type: DataType.ENUM('pending', 'active', 'suspended', 'rejected'), 
+        type: DataType.ENUM(...Object.values(UserSystemAccessAccountTypeEnum)), 
+        allowNull : false
+    })                                                                                              declare account_type: UserSystemAccessAccountTypeEnum;
+    @Column({ 
+        type: DataType.ENUM(...Object.values(UserSystemAccessRegistrationStatusEnum)), 
         defaultValue : 'pending', 
         allowNull    : false
-    })                                                                                              declare registration_status: 'pending' | 'active' | 'suspended' | 'rejected';
+    })                                                                                              declare registration_status: UserSystemAccessRegistrationStatusEnum;
 
     @Column({ type: DataType.DATE, allowNull: true })                                               declare granted_at: Date | null;
     @Column({ type: DataType.DATE, allowNull: true })                                               declare rejected_at: Date | null;

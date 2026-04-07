@@ -3,12 +3,12 @@ import { Routes }                                              from "@angular/ro
 
 // ================================================================================>> Custom Library
 // ===>> Member
-import { UserDashboardComponent }                                  from "./u1-dashboard/component";
+import { UserHomeComponent }                                  from "./u1-home/component";
 
 
 export default [
     {
-        path: 'dashboard',
-        component: UserDashboardComponent,
+        path: 'home',
+        component: UserHomeComponent,
     },
 ] as Routes;

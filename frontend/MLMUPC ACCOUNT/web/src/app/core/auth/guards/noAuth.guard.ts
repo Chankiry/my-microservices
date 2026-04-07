@@ -29,7 +29,7 @@ export const NoAuthGuard: CanActivateFn | CanActivateChildFn = (
         return of(true);
     }
 
-    // Normal case — if already logged in with valid token, go to dashboard
+    // Normal case — if already logged in with valid token, go to home
     if (token) {
         try {
             const payload: any = jwtDecode(token);

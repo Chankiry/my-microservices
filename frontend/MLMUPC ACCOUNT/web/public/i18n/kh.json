@@ -26,14 +26,11 @@
 
     "Navigation": {
         "Home": "ទំព័រដើម",
-        "Operation": "ប្រតិបត្តិការ",
-        "Invoice": "វិក័យប័ត្រ",
-        "Sale": "បញ្ជីលក់",
-        "Price": "តម្លៃលេខ",
-        "Price.Indicator": "សូចនាករ",
-        "Price.Setting": "ការកំណត់",
-        "Price.English": "ភាសារអង់គ្លេស",
-        "User": "អ្នកប្រើប្រាស់"
+        "Account": "គណនី",
+        "System": "ប្រព័ន្ធឌីជីថល",
+        "New_Knowledge": "ចំណេះដឹងថ្មីៗ",
+        "Security": "សុវត្ថិភាព",
+        "Settings": "ការកំណត់"
     },
 
     "Version": "ជំនាន់",

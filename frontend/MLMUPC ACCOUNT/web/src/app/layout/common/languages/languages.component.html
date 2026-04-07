@@ -6,7 +6,7 @@
 </button>
 
 <!-- Language menu -->
-<mat-menu [xPosition]="'before'" #languages="matMenu">
+<mat-menu [xPosition]="'before'" #languages="matMenu" class="bg-white">
     @for (lang of availableLangs; track trackByFn($index, lang)) {
         <button mat-menu-item (click)="setActiveLang(lang.id)">
             <span class="flex items-center">

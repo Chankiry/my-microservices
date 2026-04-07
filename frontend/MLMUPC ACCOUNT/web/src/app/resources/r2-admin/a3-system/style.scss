@@ -1,0 +1,101 @@
+.section {
+    width: 100%;
+    height: calc(100dvh - 3.5rem) !important;
+    @apply flex flex-col gap-6 p-6 overflow-auto #{'!important'};
+}
+
+.data {
+
+    overflow: hidden;
+    overflow-x: auto;
+
+    .mat-mdc-header-cell {
+        border: none !important;
+        font-size: 1rem !important;
+        z-index: 10 !important;
+        padding: 0.5rem !important;
+    }
+
+    .mat-mdc-cell {
+        padding: 0.5rem !important;
+        border: none !important;
+    }
+
+    .mat-column-no {
+        min-width: 4rem;
+        width: 4rem;
+        max-width: 4rem;
+        text-align: center;
+    }
+
+    .mat-column-name {
+        min-width: 16rem;
+        text-align: left;
+    }
+
+    .mat-column-checking {
+        min-width: 8rem;
+        width: 8rem;
+        max-width: 8rem;
+        text-align: right;
+    }
+
+    .mat-column-return {
+        min-width: 8rem;
+        width: 8rem;
+        max-width: 8rem;
+        text-align: right;
+    }
+
+    .mat-column-approve {
+        min-width: 8rem;
+        width: 8rem;
+        max-width: 8rem;
+        text-align: right;
+    }
+
+    .mat-column-reject {
+        padding-right: 1.5rem !important;
+        min-width: 8rem;
+        width: 8rem;
+        max-width: 8rem;
+        text-align: right;
+    }
+
+}
+.bg-gradient-green {
+    background: linear-gradient(-45deg, #10b981, #6ee7b7, #10b981, #6ee7b7);
+    background-size: 400% 400%;
+}
+
+.bg-gradient-blue {
+    background: linear-gradient(-45deg, #3b82f6, #93c5fd, #3b82f6, #93c5fd);
+    background-size: 400% 400%;
+}
+
+.bg-gradient-orange {
+    background: linear-gradient(-45deg, #f97316, #fdba74, #f97316, #fdba74);
+    background-size: 400% 400%;
+}
+
+.bg-gradient-red {
+    background: linear-gradient(-45deg, #ef4444, #fca5a5, #ef4444, #fca5a5);
+    background-size: 400% 400%;
+}
+
+/* Moving background animation */
+.animate-moving-gradient {
+    animation: moving-gradient 3s ease infinite;
+}
+
+@keyframes moving-gradient {
+    0% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
+}

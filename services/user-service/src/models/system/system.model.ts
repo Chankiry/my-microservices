@@ -2,9 +2,13 @@ import {
     Table, Model, Column, DataType,
     ForeignKey, BelongsTo,
     CreatedAt, UpdatedAt, DeletedAt,
+    HasMany,
+    BelongsToMany,
 } from 'sequelize-typescript';
 import User from '../user/user.model';
 import { BaseModel } from '@models/baseModel';
+import UserSystemAccess from '@models/user/user-system-access.model';
+import SystemRole from './system-role.model';
 
 @Table({
     tableName : 'systems',
@@ -21,9 +25,13 @@ class System extends BaseModel<System> {
     // ============================================================================================ Foreign Keys
 
     // ============================================================================================ Fields
-    @Column({ type: DataType.STRING(100), allowNull: false })                                       declare name: string;
+    @Column({ type: DataType.STRING(100), allowNull: false })                                       declare name_kh: string;
+    @Column({ type: DataType.STRING(100), allowNull: false })                                       declare name_en: string;
+    @Column({ type: DataType.STRING(50), allowNull: false })                                        declare abbre: string;
     @Column({ type: DataType.STRING(500), allowNull: true })                                        declare logo: string | null;
-    @Column({ type: DataType.TEXT,        allowNull: true })                                        declare description: string | null;
+    @Column({ type: DataType.STRING(500), allowNull: true })                                        declare cover: string | null;
+    @Column({ type: DataType.TEXT,        allowNull: true })                                        declare description_kh: string | null;
+    @Column({ type: DataType.TEXT,        allowNull: true })                                        declare description_en: string | null;
     @Column({ type: DataType.BOOLEAN, defaultValue: false, allowNull: false })                      declare allow_self_register: boolean;
     @Column({ type: DataType.BOOLEAN, defaultValue: false, allowNull: false })                      declare require_approval: boolean;
     @Column({ type: DataType.BOOLEAN, defaultValue: false, allowNull: false })                      declare is_internal: boolean;
@@ -41,6 +49,13 @@ class System extends BaseModel<System> {
     @Column({ type: DataType.STRING(500), allowNull: true })                                        declare base_url: string | null;
 
     // ============================================================================================ Many to One
+
+    // ============================================================================================ One to Many
+    @HasMany(() => UserSystemAccess, 'system_id')                                                   declare access_users: UserSystemAccess[];
+    @HasMany(() => SystemRole, 'system_id')                                                         declare roles: SystemRole[];
+    
+    // ============================================================================================ Many to Many
+
 }
 
 export default System;

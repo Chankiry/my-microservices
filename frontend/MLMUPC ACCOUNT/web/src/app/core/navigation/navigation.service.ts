@@ -3,22 +3,14 @@ import { HelperNavigationItem } from 'helper/components/navigation';
 import { RoleEnum }             from 'helper/enums/role.enum';
 import { Observable, ReplaySubject } from 'rxjs';
 import { navigationData }       from './navigation.data';
-
-export interface RoleInfo {
-    id        : number;
-    name_en   : string;
-    name_kh   : string;
-    slug      : string;
-    icon      : string;
-    is_default: boolean;
-}
+import { Role } from '../user/user.types';
 
 @Injectable({ providedIn: 'root' })
 export class NavigationService {
 
     private _navigation = new ReplaySubject<HelperNavigationItem[]>(1);
 
-    set navigations(role: RoleInfo) {
+    set navigations(role: Role) {
         switch (role.slug) {
             case 'admin': this._navigation.next(navigationData.admin); break;
             default     : this._navigation.next([]);                   break;

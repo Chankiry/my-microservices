@@ -27,17 +27,17 @@ import { ErrorHandleService }                                                   
 import { DialogConfigService }                                                        from 'app/shared/dialog-config.service';
 
 // ===>> Local
-import { AdminDashboardService }                                                      from './service';
+import { AdminSystemService }                                                      from './service';
 
 @Component({
-    selector    : 'admin-dashboard',
+    selector    : 'admin-system',
     standalone  : true,
     templateUrl : './template.html',
     styleUrl    : './style.scss',
     providers   : [{ provide: LocationStrategy, useClass: HashLocationStrategy }],
     imports     : [ ],
 })
-export class DashboardComponent implements OnInit, OnDestroy {
+export class AdminSystemComponent implements OnInit, OnDestroy {
 
     // ===>> Prevent Memory Leaks
     private _unsubscribeAll: Subject<any> = new Subject<any>();
@@ -46,7 +46,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         private _changeDetectorRef   : ChangeDetectorRef,
         private _userService         : UserService,
         private _snackBarService     : SnackbarService,
-        private _service             : AdminDashboardService,
+        private _service             : AdminSystemService,
         private _errorHandleService  : ErrorHandleService,
         private _dialogConfigService : DialogConfigService
     ) { }

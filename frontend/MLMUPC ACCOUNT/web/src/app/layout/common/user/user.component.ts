@@ -11,6 +11,8 @@ import { User }                 from 'app/core/user/user.types';
 import { env }                  from 'envs/env';
 import { Subject, takeUntil }   from 'rxjs';
 import { TranslocoModule }      from '@ngneat/transloco';
+import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
+import { SwitchRoleComponent } from './switch-role/switch-role.component';
 
 @Component({
     selector   : 'user',
@@ -36,6 +38,7 @@ export class UserComponent implements OnInit, OnDestroy {
         private _authService       : AuthService,
         private _userService       : UserService,
         private _router            : Router,
+        private readonly _matDialog: MatDialog,
     ) {}
 
     ngOnInit(): void {
@@ -63,6 +66,28 @@ export class UserComponent implements OnInit, OnDestroy {
 
     goToProfile(): void {
         this._router.navigateByUrl('/profile/my-profile');
+    }
+
+    handleSwitchRole(): void {
+        const dialogRef = this._matDialog.open(SwitchRoleComponent, {
+            autoFocus           : false,
+            height              : '100%',
+            width               : '400px',
+            maxWidth            : '100vw',
+            maxHeight           : '100vh',
+            position            : { right: '0px', top: '0px' },
+            enterAnimationDuration: '0s',
+            panelClass          : 'side-dialog',
+            data                : { roles: this.user?.roles ?? [] }, // ← pass roles
+        });
+
+        // Handle selected role
+        dialogRef.afterClosed().subscribe((selectedRole) => {
+            if (selectedRole) {
+              if (selectedRole.slug === 'admin') this._router.navigateByUrl('/admin/home');
+              else this._router.navigateByUrl('/user/home');
+            }
+        });
     }
 
     signOut(): void {

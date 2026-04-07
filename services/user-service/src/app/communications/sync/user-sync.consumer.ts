@@ -8,10 +8,9 @@ import SystemRole             from '@models/system/system-role.model';
 import UserSystemRole         from '@models/user/user-system-role.model';
 import System                 from '@models/system/system.model';
 
-// ─── Keycloak event shape ─────────────────────────────────────────────────────
 interface KeycloakUserEvent {
     eventType      : string;
-    userId         : string;   // Keycloak UUID
+    userId         : string;
     keycloakId?    : string;
     email?         : string;
     username?      : string;
@@ -20,21 +19,21 @@ interface KeycloakUserEvent {
     enabled?       : boolean;
     emailVerified? : boolean;
     timestamp      : number;
-    representation?: string;   // raw JSON from admin events
-    // For role events (admin events):
-    resourceType?  : string;   // 'REALM_ROLE_MAPPING' | 'CLIENT_ROLE_MAPPING'
-    resourcePath?  : string;   // e.g. 'users/{userId}/role-mappings/realm'
+    representation?: string;
+    resourceType?  : string;
+    resourcePath?  : string;
     roles?         : Array<{ id: string; name: string }>;
-    clientId?      : string;   // for client role events
+    clientId?      : string;
 }
 
-const PLATFORM_SYSTEM_ID = 'platform';
 
 @Injectable()
 export class UserSyncConsumer implements OnModuleInit, OnModuleDestroy {
     private readonly logger = new Logger(UserSyncConsumer.name);
+    private readonly system_id      : string;
     private consumer        : Consumer;
     private kafka           : Kafka;
+
 
     constructor(
         @InjectModel(SystemRole)
@@ -46,9 +45,9 @@ export class UserSyncConsumer implements OnModuleInit, OnModuleDestroy {
         private readonly userService         : UserService,
         private readonly idempotencyService  : IdempotencyService,
         private readonly configService       : ConfigService,
-    ) {}
-
-    // ─── Lifecycle ────────────────────────────────────────────────────────────
+    ) {
+        this.system_id  = this.configService.get('SYSTEM_ID', 'mlmupc-account-system');
+    }
 
     async onModuleInit(): Promise<void> {
         const brokers = this.configService
@@ -82,8 +81,6 @@ export class UserSyncConsumer implements OnModuleInit, OnModuleDestroy {
         }
     }
 
-    // ─── Message dispatcher ───────────────────────────────────────────────────
-
     private async handleMessage({ message }: EachMessagePayload): Promise<void> {
         if (!message.value) return;
 
@@ -113,71 +110,52 @@ export class UserSyncConsumer implements OnModuleInit, OnModuleDestroy {
 
         try {
             switch (event.eventType) {
-
-                // ── User lifecycle ─────────────────────────────────────────
                 case 'USER_REGISTERED':
                 case 'ADMIN_USER_CREATED':
                     await this.handleUserCreated(event);
                     break;
-
                 case 'USER_UPDATED':
                 case 'EMAIL_UPDATED':
                 case 'ADMIN_USER_UPDATED':
                     await this.handleUserUpdated(event);
                     break;
-
                 case 'USER_DELETED':
                 case 'ADMIN_USER_DELETED':
                     await this.handleUserDeleted(event);
                     break;
-
                 case 'USER_LOGIN':
                     await this.handleUserLogin(event);
                     break;
-
-                // ── Role sync from Keycloak admin UI ───────────────────────
-                // Fired when an admin directly assigns / removes roles in the
-                // Keycloak Admin Console. We mirror the change to user_system_roles
-                // so our DB stays authoritative.
-
                 case 'ADMIN_REALM_ROLE_ASSIGNED':
                 case 'REALM_ROLE_ASSIGNED':
                     await this.handleRoleAssigned(event, 'realm');
                     break;
-
                 case 'ADMIN_REALM_ROLE_REMOVED':
                 case 'REALM_ROLE_REMOVED':
                     await this.handleRoleRevoked(event, 'realm');
                     break;
-
                 case 'ADMIN_CLIENT_ROLE_ASSIGNED':
                 case 'CLIENT_ROLE_ASSIGNED':
                     await this.handleRoleAssigned(event, 'client');
                     break;
-
                 case 'ADMIN_CLIENT_ROLE_REMOVED':
                 case 'CLIENT_ROLE_REMOVED':
                     await this.handleRoleRevoked(event, 'client');
                     break;
-
                 default:
                     this.logger.debug(`Unhandled event type: ${event.eventType}`);
-                    return; // don't mark as processed
+                    return;
             }
 
             await this.idempotencyService.markProcessed(eventId, event.eventType);
             this.logger.log(`Event processed: ${eventId}`);
         } catch (error: any) {
             this.logger.error(`Failed to process ${event.eventType} for ${event.userId}: ${error.message}`);
-            throw error; // re-throw so Kafka retries
+            throw error;
         }
     }
 
-    // ─── Normalizer ───────────────────────────────────────────────────────────
-    // Admin events embed userId in resourcePath, user events put it directly.
-
     private normalizeEvent(event: KeycloakUserEvent): KeycloakUserEvent {
-        // Admin event shape: resourcePath = 'users/{keycloakId}/...'
         if (!event.userId && event.resourcePath) {
             const match = event.resourcePath.match(/users\/([a-f0-9-]{36})/);
             if (match) event.userId = match[1];
@@ -185,8 +163,6 @@ export class UserSyncConsumer implements OnModuleInit, OnModuleDestroy {
         if (!event.userId && event.keycloakId) {
             event.userId = event.keycloakId;
         }
-
-        // Parse representation JSON if present
         if (typeof event.representation === 'string') {
             try {
                 const rep = JSON.parse(event.representation);
@@ -195,18 +171,24 @@ export class UserSyncConsumer implements OnModuleInit, OnModuleDestroy {
                 event.email        = event.email        ?? rep.email;
                 event.enabled      = event.enabled      ?? rep.enabled;
                 event.emailVerified= event.emailVerified ?? rep.emailVerified;
-                // For role events the representation is an array of role objects
                 if (Array.isArray(rep)) event.roles = rep;
-            } catch { /* ignore parse errors */ }
+            } catch { /* ignore */ }
         }
-
         return event;
+    }
+
+    // ─── Private helper — always use this to get a User from keycloak_id ──────
+    // Unwraps the { data: User } wrapper that UserService always returns.
+
+    private async findUser(keycloakId: string) {
+        const result = await this.userService.findByKeycloakId(keycloakId);
+        return result?.data ?? null;  // ← unwrap here, once, in one place
     }
 
     // ─── User Created ─────────────────────────────────────────────────────────
 
     private async handleUserCreated(event: KeycloakUserEvent): Promise<void> {
-        const existing = await this.userService.findByKeycloakId(event.userId);
+        const existing = await this.findUser(event.userId); // ✅ now null when not found
         if (existing) {
             this.logger.debug(`User already exists for keycloak_id: ${event.userId}`);
             return;
@@ -228,7 +210,7 @@ export class UserSyncConsumer implements OnModuleInit, OnModuleDestroy {
     // ─── User Updated ─────────────────────────────────────────────────────────
 
     private async handleUserUpdated(event: KeycloakUserEvent): Promise<void> {
-        const user = await this.userService.findByKeycloakId(event.userId);
+        const user = await this.findUser(event.userId); // ✅ real User or null
         if (!user) {
             this.logger.warn(`User not found for update: ${event.userId} — creating`);
             await this.handleUserCreated(event);
@@ -250,7 +232,7 @@ export class UserSyncConsumer implements OnModuleInit, OnModuleDestroy {
         if (event.emailVerified !== undefined) updates.email_verified = event.emailVerified;
 
         if (Object.keys(updates).length > 0) {
-            await this.userService.updateMirrorFields(user.id, updates);
+            await this.userService.updateMirrorFields(user.id, updates); // ✅ user.id is valid
             this.logger.log(`User updated from Keycloak: ${event.userId}`);
         }
     }
@@ -258,7 +240,7 @@ export class UserSyncConsumer implements OnModuleInit, OnModuleDestroy {
     // ─── User Deleted ─────────────────────────────────────────────────────────
 
     private async handleUserDeleted(event: KeycloakUserEvent): Promise<void> {
-        const user = await this.userService.findByKeycloakId(event.userId);
+        const user = await this.findUser(event.userId); // ✅
         if (!user) {
             this.logger.warn(`User not found for deletion: ${event.userId}`);
             return;
@@ -271,7 +253,7 @@ export class UserSyncConsumer implements OnModuleInit, OnModuleDestroy {
 
     private async handleUserLogin(event: KeycloakUserEvent): Promise<void> {
         try {
-            const user = await this.userService.findByKeycloakId(event.userId);
+            const user = await this.findUser(event.userId); // ✅
             if (!user) return;
             await this.userService.updateLastLogin(user.id);
         } catch (error: any) {
@@ -279,24 +261,17 @@ export class UserSyncConsumer implements OnModuleInit, OnModuleDestroy {
         }
     }
 
-    // ─── Role Assigned (from Keycloak admin UI) ───────────────────────────────
-    // Mirrors a role assignment that happened in Keycloak directly into
-    // user_system_roles. Identifies the matching SystemRole by:
-    //   realm type  → system_id = 'platform', keycloak_role_name = role.name
-    //   client type → finds system by keycloak_client_id = event.clientId
+    // ─── Role Assigned ────────────────────────────────────────────────────────
 
     private async handleRoleAssigned(
         event    : KeycloakUserEvent,
         roleType : 'realm' | 'client',
     ): Promise<void> {
-        const user = await this.userService.findByKeycloakId(event.userId);
+        const user = await this.findUser(event.userId); // ✅
         if (!user) {
             this.logger.warn(`Role assign ignored — user not found: ${event.userId}`);
             return;
         }
-
-        console.log('Roles in event:', event);
-        console.log('Role type:', roleType);
 
         const roles = event.roles ?? [];
         if (!roles.length) return;
@@ -317,7 +292,7 @@ export class UserSyncConsumer implements OnModuleInit, OnModuleDestroy {
                     user_id   : user.id,
                     system_id : systemRole.system_id,
                     role_id   : systemRole.id,
-                    granted_by: null,  // assigned from Keycloak admin — no platform user reference
+                    granted_by: null,
                     granted_at: new Date(),
                     creator_id: null,
                     created_at: new Date(),
@@ -328,13 +303,13 @@ export class UserSyncConsumer implements OnModuleInit, OnModuleDestroy {
         }
     }
 
-    // ─── Role Revoked (from Keycloak admin UI) ────────────────────────────────
+    // ─── Role Revoked ─────────────────────────────────────────────────────────
 
     private async handleRoleRevoked(
         event    : KeycloakUserEvent,
         roleType : 'realm' | 'client',
     ): Promise<void> {
-        const user = await this.userService.findByKeycloakId(event.userId);
+        const user = await this.findUser(event.userId); // ✅
         if (!user) return;
 
         const roles = event.roles ?? [];
@@ -358,22 +333,16 @@ export class UserSyncConsumer implements OnModuleInit, OnModuleDestroy {
     // ─── Helper: find SystemRole by Keycloak role name ────────────────────────
 
     private async findSystemRoleByKeycloak(
-        keycloak_role_name: string,
-        role_type         : 'realm' | 'client',
+        keycloak_role_name : string,
+        role_type          : 'realm' | 'client',
         keycloak_client_id?: string,
     ): Promise<SystemRole | null> {
         if (role_type === 'realm') {
-            // Realm roles belong to the platform system
             return this.systemRoleModel.findOne({
-                where: {
-                    system_id         : PLATFORM_SYSTEM_ID,
-                    role_type         : 'realm',
-                    keycloak_role_name,
-                },
+                where: { system_id: this.system_id, role_type: 'realm', keycloak_role_name },
             });
         }
 
-        // Client role — find system by keycloak_client_id
         if (!keycloak_client_id) return null;
 
         const system = await this.systemModel.findOne({
@@ -382,11 +351,7 @@ export class UserSyncConsumer implements OnModuleInit, OnModuleDestroy {
         if (!system) return null;
 
         return this.systemRoleModel.findOne({
-            where: {
-                system_id         : system.id,
-                role_type         : 'client',
-                keycloak_role_name,
-            },
+            where: { system_id: system.id, role_type: 'client', keycloak_role_name },
         });
     }
 }

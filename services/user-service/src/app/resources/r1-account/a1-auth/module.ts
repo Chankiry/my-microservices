@@ -13,6 +13,7 @@ import UserExternalLinks      from '../../../../models/user/user-external-links.
 import { ProfileService }     from '../a2-profile/service';
 import UserSystemRole from '@models/user/user-system-role.model';
 import SystemRole from '@models/system/system-role.model';
+import System from '@models/system/system.model';
  
 @Module({
     imports: [
@@ -23,7 +24,7 @@ import SystemRole from '@models/system/system-role.model';
         SystemsModule,
         SequelizeModule.forFeature([
             UserSystemAccess, UserExternalLinks,
-            UserSystemRole,   SystemRole,
+            UserSystemRole,   SystemRole, System
         ]),
     ],
     controllers: [AuthController],

@@ -2,7 +2,7 @@ import {
     Injectable, Logger, UnauthorizedException,
     NotFoundException, BadRequestException, ConflictException,
 } from '@nestjs/common';
-import { InjectModel }          from '@nestjs/sequelize';
+import { InjectConnection, InjectModel }          from '@nestjs/sequelize';
 import { Op, Sequelize, Transaction }                   from 'sequelize';
 import axios                    from 'axios';
 import { KeycloakAdminService } from '../../../communications/keycloak/keycloak-admin.service';
@@ -24,12 +24,13 @@ import System               from '../../../../models/system/system.model';
 import { Response } from 'express';
 import { ResponseUtil } from '@app/shared/interfaces/base.interface';
 import { AUTH_ERROR_MESSAGE, PROFILE_MESSAGE, SYSTEM_ERROR_MESSAGE } from '@app/shared/enums/message.enum';
-
-const PLATFORM_SYSTEM_ID = 'platform';
+import { ConfigService } from '@nestjs/config';
+import { UserSystemAccessAccountTypeEnum, UserSystemAccessRegistrationStatusEnum } from '@app/shared/enums/System.enum';
 
 @Injectable()
 export class ProfileService {
     private readonly logger = new Logger(ProfileService.name);
+    private readonly system_id      : string;
 
     constructor(
         @InjectModel(UserSystemAccess)
@@ -40,12 +41,18 @@ export class ProfileService {
         private readonly userSystemRoleModel    : typeof UserSystemRole,
         @InjectModel(SystemRole)
         private readonly systemRoleModel        : typeof SystemRole,
+        @InjectModel(System)
+        private readonly systemModel            : typeof System,
         private readonly userService            : UserService,
         private readonly systemService          : SystemService,
         private readonly keycloakAdmin          : KeycloakAdminService,
         private readonly redisService           : RedisService,
+        @InjectConnection() 
         private readonly sequelize              : Sequelize,
-    ) {}
+        private readonly configService          : ConfigService,
+    ) {
+        this.system_id  = this.configService.get('SYSTEM_ID', 'mlmupc-account-system');
+    }
 
     // ─── GET /profile/me ─────────────────────────────────────────────────────
     // Lightweight response for the frontend resolver + guards.
@@ -60,7 +67,7 @@ export class ProfileService {
             if (!user) throw new NotFoundException('User not found');
     
             const userRoles = await this.userSystemRoleModel.findAll({
-                where  : { user_id: user.id, system_id: PLATFORM_SYSTEM_ID },
+                where  : { user_id: user.id, system_id: this.system_id },
                 include: [{ model: SystemRole, as: 'role' }],
                 order  : [['created_at', 'ASC']],
             });
@@ -68,8 +75,16 @@ export class ProfileService {
             const userData = typeof user.toJSON === 'function' ? user.toJSON() : { ...user };
     
             const data = {
-                ...userData,
-                platform_roles: userRoles.map(ur => ({
+                id        : user.id,
+                avatar    : user.avatar,
+                cover     : user.cover,
+                first_name: user.first_name,
+                last_name : user.last_name,
+                name_kh   : user.name_kh,
+                name_en   : user.name_en,
+                email     : user.email,
+                phone     : user.phone,
+                roles: userRoles.map(ur => ({
                     id     : ur.role.id,
                     slug   : ur.role.slug,
                     name_kh: ur.role.name_kh,
@@ -98,9 +113,32 @@ export class ProfileService {
             if (!user) throw new NotFoundException('User not found');
     
             const system_access = await this.accessModel.findAll({
-                where  : { user_id: user.id },
+                where  : { user_id: user.id, system_id: { [Op.ne]: this.system_id } },
                 include: [{ model: System, as: 'system' }],
                 order  : [['created_at', 'ASC']],
+            });
+
+            const systems = await this.systemModel.findAll({
+                where: { id: { [Op.ne]: this.system_id } },
+                include: [
+                    {
+                        model: UserSystemAccess,
+                        as: 'access_users',
+                        where: { user_id: user.id },
+                        required: true,
+                    },
+                    {
+                        model: SystemRole,
+                        as: 'roles',
+                        include: [{
+                            model: UserSystemRole,
+                            as: 'user_system_roles',
+                            where: { user_id: user.id },
+                            required: true,
+                        }],
+                    }
+                ],
+                order: [['created_at', 'ASC']],
             });
     
             // Attach roles to each system access
@@ -112,14 +150,52 @@ export class ProfileService {
                     });
                     const plain = typeof access.toJSON === 'function' ? access.toJSON() : { ...access };
                     return {
-                        ...plain,
-                        roles: roles.map(ur => ur.role),
+                        id: access.system.id,
+                        name_kh: access.system.name_kh,
+                        name_en: access.system.name_en,
+                        logo : access.system.logo,
+                        cover: access.system.cover,
+                        base_url: access.system.base_url,
+                        registration_status: access.registration_status,
+                        roles: roles.map(ur => ({
+                            id     : ur.role.id,
+                            slug   : ur.role.slug,
+                            name_kh: ur.role.name_kh,
+                            name_en: ur.role.name_en,
+                            icon   : ur.role.icon,
+                            color  : ur.role.color,
+                        })),
                     };
                 }),
             );
-    
-            const userData = typeof user.toJSON === 'function' ? user.toJSON() : { ...user };
-            const data = { ...userData, system_access: accessWithRoles };
+            const data = { 
+                id        : user.id,
+                avatar    : user.avatar,
+                cover     : user.cover,
+                first_name: user.first_name,
+                last_name : user.last_name,
+                name_kh   : user.name_kh,
+                name_en   : user.name_en,
+                email     : user.email,
+                phone     : user.phone, 
+                system_accesses: systems.map(s => ({
+                    id: s.id,
+                    name_kh: s.name_kh,
+                    name_en: s.name_en,
+                    logo : s.logo,
+                    cover: s.cover,
+                    base_url: s.base_url,
+                    registration_status: s.access_users[0].registration_status,
+                    roles: s.roles.map(ur => ({
+                        id     : ur.id,
+                        slug   : ur.slug,
+                        name_kh: ur.name_kh,
+                        name_en: ur.name_en,
+                        icon   : ur.icon,
+                        color  : ur.color,
+                    })),
+                })),
+            };
             return ResponseUtil.success(res, data);
         } catch (e) {
             console.log(e);
@@ -135,7 +211,7 @@ export class ProfileService {
         keycloak_id: string, 
         body: UpdateProfileDto
     ) {
-        const tx = await this.sequelize.transaction();
+        const tx = await this.accessModel.sequelize.transaction();
         try {
             const user = (await this.userService.findByKeycloakId(keycloak_id)).data;
             if (!user) throw new NotFoundException('User not found');
@@ -259,10 +335,10 @@ export class ProfileService {
     
             const systems = await System.findAll({
                 where: {
-                    id       : { [Op.notIn]: [...connected_ids, PLATFORM_SYSTEM_ID] },
+                    id       : { [Op.notIn]: [...connected_ids, this.system_id] },
                     is_active: true,
                 },
-                order: [['name', 'ASC']],
+                order: [['created_at', 'ASC']],
             });
     
             return ResponseUtil.success(res, systems);
@@ -326,8 +402,8 @@ export class ProfileService {
             const access = await this.accessModel.create({
                     user_id            : user.id,
                     system_id          : body.system_id,
-                    account_type       : 'internal',
-                    registration_status: auto_approve ? 'active' : 'pending',
+                    account_type       : UserSystemAccessAccountTypeEnum.INTERNAL,
+                    registration_status: auto_approve ? UserSystemAccessRegistrationStatusEnum.ACTIVE : UserSystemAccessRegistrationStatusEnum.PENDING,
                     granted_by         : auto_approve ? user.id  : null,
                     granted_at         : auto_approve ? new Date() : null,
                     creator_id         : user.id,
@@ -444,11 +520,10 @@ export class ProfileService {
     // ─── Assign Platform User Role (called on registration) ──────────────────
 
     async assignPlatformUserRole(
-        res: Response,
         user_id: string
     ): Promise<void> {
         const platformUserRole = await this.systemRoleModel.findOne({
-            where: { system_id: PLATFORM_SYSTEM_ID, slug: 'user', is_active: true },
+            where: { system_id: this.system_id, slug: 'user', is_active: true },
         });
         if (!platformUserRole) {
             this.logger.warn('Platform user role not found — skipping assignment');
@@ -462,7 +537,7 @@ export class ProfileService {
 
         await this.userSystemRoleModel.create({
             user_id,
-            system_id : PLATFORM_SYSTEM_ID,
+            system_id : this.system_id,
             role_id   : platformUserRole.id,
             granted_by: user_id,
             granted_at: new Date(),
@@ -481,6 +556,8 @@ export class ProfileService {
         system_id: string, 
         access_token: string
     ) {
+        let responseData = {};
+
         const user = (await this.userService.findByKeycloakId(keycloak_id)).data;
         if (!user) throw new NotFoundException('User not found');
 
@@ -493,7 +570,8 @@ export class ProfileService {
         if (!system.base_url) throw new BadRequestException('ប្រព័ន្ធនេះមិនមានអាស័យដ្ឋាន URL');
 
         if (system.keycloak_client_id) {
-            return { url: `${system.base_url}?platform_token=${encodeURIComponent(access_token)}` };
+            responseData = { url: `${system.base_url}?platform_token=${encodeURIComponent(access_token)}` };
+            return ResponseUtil.success(res, responseData);
         }
 
         if (system.auth_callback_url) {
@@ -506,7 +584,8 @@ export class ProfileService {
 
                 const system_token = data.token || data.access_token;
                 if (!system_token) throw new Error('No token in SSO response');
-                return { url: `${system.base_url}?token=${encodeURIComponent(system_token)}` };
+                responseData = { url: `${system.base_url}?token=${encodeURIComponent(system_token)}` };
+                return ResponseUtil.success(res, responseData);
             } catch (err: any) {
                 this.logger.error(`SSO exchange failed: ${err.message}`);
                 throw new BadRequestException('មិនអាចភ្ជាប់ប្រព័ន្ធបាន');
@@ -527,54 +606,65 @@ export class ProfileService {
         redirect_uri : string,
         action       : 'login' | 'link',
         access_token : string,
-    ): Promise<{ redirect_url: string }> {
-        const user   = (await this.userService.findByKeycloakId(keycloak_id)).data;
-        if (!user) throw new NotFoundException('User not found');
+    ): Promise<any> {
+        try {
 
-        const system = await this.systemService.findById(system_id);
-        if (!system.is_active) throw new BadRequestException('ប្រព័ន្ធនេះមិនមានសកម្ម');
-
-        if (!system.base_url) throw new BadRequestException('ប្រព័ន្ធនេះមិនមានការកំណត់ redirect URL');
-
-        const normalizedBase = system.base_url.replace(/\/+$/, '');
-        if (!redirect_uri.replace(/\/+$/, '').startsWith(normalizedBase)) {
-            throw new BadRequestException('redirect_uri មិនត្រូវនឹងប្រព័ន្ធដែលបានចុះឈ្មោះ');
-        }
-
-        if (action === 'login') {
-            const access = await this.accessModel.findOne({
-                where: { user_id: user.id, system_id, registration_status: 'active' },
-            });
-            if (!access) throw new BadRequestException('អ្នកមិនទាន់ភ្ជាប់ប្រព័ន្ធនេះ');
-
-            let token = access_token;
-            if (!system.keycloak_client_id && system.auth_callback_url) {
-                try {
-                    const sso_url  = system.auth_callback_url.replace('/auth/validate', '/auth/sso');
-                    const { data } = await axios.post(sso_url, {
-                        platform_user_id: user.id,
-                        platform_token  : access_token,
-                    }, { timeout: 10_000 });
-                    token = data.token || data.access_token || access_token;
-                } catch (err: any) {
-                    this.logger.warn(`Token exchange failed, using platform token: ${err.message}`);
-                }
+            let responseData = {};
+            const user   = (await this.userService.findByKeycloakId(keycloak_id)).data;
+            if (!user) throw new NotFoundException('User not found');
+    
+            const system = await this.systemService.findById(system_id);
+            if (!system.is_active) throw new BadRequestException('ប្រព័ន្ធនេះមិនមានសកម្ម');
+    
+            if (!system.base_url) throw new BadRequestException('ប្រព័ន្ធនេះមិនមានការកំណត់ redirect URL');
+    
+            const normalizedBase = system.base_url.replace(/\/+$/, '');
+            if (!redirect_uri.replace(/\/+$/, '').startsWith(normalizedBase)) {
+                throw new BadRequestException('redirect_uri មិនត្រូវនឹងប្រព័ន្ធដែលបានចុះឈ្មោះ');
             }
-
-            const crypto     = await import('crypto');
-            const code       = crypto.randomBytes(32).toString('hex');
-            await this.redisService.set(`redirect:code:${code}`, {
-                token, user_id: user.id, system_id,
-            }, 300);
-
+    
+            if (action === 'login') {
+                const access = await this.accessModel.findOne({
+                    where: { user_id: user.id, system_id, registration_status: 'active' },
+                });
+                if (!access) throw new BadRequestException('អ្នកមិនទាន់ភ្ជាប់ប្រព័ន្ធនេះ');
+    
+                let token = access_token;
+                if (!system.keycloak_client_id && system.auth_callback_url) {
+                    try {
+                        const sso_url  = system.auth_callback_url.replace('/auth/validate', '/auth/sso');
+                        const { data } = await axios.post(sso_url, {
+                            platform_user_id: user.id,
+                            platform_token  : access_token,
+                        }, { timeout: 10_000 });
+                        token = data.token || data.access_token || access_token;
+                    } catch (err: any) {
+                        this.logger.warn(`Token exchange failed, using platform token: ${err.message}`);
+                    }
+                }
+    
+                const crypto     = await import('crypto');
+                const code       = crypto.randomBytes(32).toString('hex');
+                await this.redisService.set(`redirect:code:${code}`, {
+                    token, user_id: user.id, system_id,
+                }, 300);
+    
+                const sep = redirect_uri.includes('?') ? '&' : '?';
+                this.logger.log(`Redirect login code issued: user=${user.id} system=${system_id}`);
+                responseData = { redirect_url: `${redirect_uri}${sep}code=${encodeURIComponent(code)}` };
+    
+                return ResponseUtil.success(res, responseData);
+            }
+    
             const sep = redirect_uri.includes('?') ? '&' : '?';
-            this.logger.log(`Redirect login code issued: user=${user.id} system=${system_id}`);
-            return { redirect_url: `${redirect_uri}${sep}code=${encodeURIComponent(code)}` };
+            this.logger.log(`Redirect link ready: user=${user.id} system=${system_id}`);
+            responseData = { redirect_url: `${redirect_uri}${sep}status=ready&platform_user_id=${user.id}` };
+    
+            return ResponseUtil.success(res, responseData);
+        } catch(err){
+            console.log(err);
+            throw new BadRequestException(err.message);
         }
-
-        const sep = redirect_uri.includes('?') ? '&' : '?';
-        this.logger.log(`Redirect link ready: user=${user.id} system=${system_id}`);
-        return { redirect_url: `${redirect_uri}${sep}status=ready&platform_user_id=${user.id}` };
     }
 
     // ─── Exchange redirect code for token ─────────────────────────────────────
@@ -718,7 +808,7 @@ export class ProfileService {
                 }
             }
             await this.redisService.delPattern(`session:${keycloak_id}:*`);
-            return { success: true };
+            return ResponseUtil.success(res, {});
         } catch(e){
             console.log(e);
             throw new BadRequestException(e.message);

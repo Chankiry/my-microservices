@@ -9,6 +9,10 @@ import {
     BeforeDestroy,
     BeforeUpdate,
 } from 'sequelize-typescript';
+import Sex from './sex.model';
+import Department from './department.model';
+import Title from './title.model';
+import Position from './position.model';
 
 @Table({
     tableName : 'users',
@@ -23,21 +27,28 @@ class User extends Model<User> {
     @Column({ primaryKey: true, type: DataType.UUID, defaultValue: DataType.UUIDV4 })               declare id: string;
 
     // ============================================================================================ Foreign Keys
-    @ForeignKey(() => User) @Column({ type: DataType.UUID, allowNull: true })                       declare creator_id: string | null;
-    @ForeignKey(() => User) @Column({ type: DataType.UUID, allowNull: true })                       declare updater_id: string | null;
-    @ForeignKey(() => User) @Column({ type: DataType.UUID, allowNull: true })                       declare deleter_id: string | null;
+    @ForeignKey(() => User)       @Column({ type: DataType.UUID, allowNull: true })                 declare creator_id: string | null;
+    @ForeignKey(() => User)       @Column({ type: DataType.UUID, allowNull: true })                 declare updater_id: string | null;
+    @ForeignKey(() => User)       @Column({ type: DataType.UUID, allowNull: true })                 declare deleter_id: string | null;
+    @ForeignKey(() => Sex)        @Column({ type: DataType.UUID, allowNull: true })                 declare sex_id: string | null;
+    @ForeignKey(() => Department) @Column({ type: DataType.UUID, allowNull: true })                 declare department_id: string | null;
+    @ForeignKey(() => Title)      @Column({ type: DataType.UUID, allowNull: true })                 declare title_id: string | null;
+    @ForeignKey(() => Position)   @Column({ type: DataType.UUID, allowNull: true })                 declare position_id: string | null;
 
     // ============================================================================================ Fields
     @Column({ type: DataType.STRING(30),  allowNull: false })                                       declare phone: string;
     @Column({ type: DataType.STRING(255), allowNull: true })                                        declare email: string | null;
+    @Column({ type: DataType.STRING(500), allowNull: true })                                        declare avatar: string | null;
+    @Column({ type: DataType.STRING(500), allowNull: true })                                        declare cover: string | null;
     @Column({ type: DataType.STRING(100), allowNull: true })                                        declare first_name: string | null;
     @Column({ type: DataType.STRING(100), allowNull: true })                                        declare last_name: string | null;
+    @Column({ type: DataType.STRING(100), allowNull: true })                                        declare name_kh: string | null;
+    @Column({ type: DataType.STRING(100), allowNull: true })                                        declare name_en: string | null;
     @Column({ type: DataType.STRING,      allowNull: true })                                        declare keycloak_id: string | null;
     @Column({ type: DataType.BOOLEAN,     defaultValue: true })                                     declare is_active: boolean;
     @Column({ type: DataType.BOOLEAN,     defaultValue: false })                                    declare email_verified: boolean;
-    @Column({ type: DataType.STRING(500), allowNull: true })                                        declare avatar: string | null;
-    @Column({ type: DataType.STRING(10),  allowNull: true })                                        declare gender: string | null;
     @Column({ type: DataType.DATE,        allowNull: true })                                        declare last_login_at: Date | null;
+    @Column({ type: DataType.BOOLEAN,     defaultValue: false })                                    declare is_temporary_password: boolean;
 
     // ============================================================================================ Timestamps
     @CreatedAt                                                                                      declare created_at: Date;
@@ -45,13 +56,17 @@ class User extends Model<User> {
     @DeletedAt                                                                                      declare deleted_at: Date | null;
 
     // ============================================================================================ Many to One
-    @BelongsTo(() => User, { foreignKey: 'creator_id', as: 'creator' })                            declare creator: User;
-    @BelongsTo(() => User, { foreignKey: 'updater_id', as: 'updater' })                            declare updater: User;
-    @BelongsTo(() => User, { foreignKey: 'deleter_id', as: 'deleter' })                            declare deleter: User;
+    @BelongsTo(() => User,       { foreignKey: 'creator_id', as: 'creator' })                       declare creator: User;
+    @BelongsTo(() => User,       { foreignKey: 'updater_id', as: 'updater' })                       declare updater: User;
+    @BelongsTo(() => User,       { foreignKey: 'deleter_id', as: 'deleter' })                       declare deleter: User;
+    @BelongsTo(() => Sex,        { foreignKey: 'sex_id', as: 'sex' })                               declare sex: Sex;
+    @BelongsTo(() => Department, { foreignKey: 'department_id', as: 'department' })                 declare department: Department;
+    @BelongsTo(() => Title,      { foreignKey: 'title_id', as: 'title' })                           declare title: Title
+    @BelongsTo(() => Position,   { foreignKey: 'position_id', as: 'position' })                     declare position: Position;
 
     // ============================================================================================ Hooks
     @BeforeCreate
-    static async setCreatorId(instance: BaseModel, options: CustomCreateOptions) {
+    static async setCreatorId(instance: BaseModel<any>, options: CustomCreateOptions) {
         if (options.user_id) {
             instance.creator_id = options.user_id;
             instance.updater_id = options.user_id;
@@ -59,14 +74,14 @@ class User extends Model<User> {
     }
 
     @BeforeUpdate
-    static async setUpdaterId(instance: BaseModel, options: CustomUpdateOptions) {
+    static async setUpdaterId(instance: BaseModel<any>, options: CustomUpdateOptions) {
         if (options.user_id) {
             instance.updater_id = options.user_id;
         }
     }
 
     @BeforeDestroy
-    static async setDeleterId(instance: BaseModel, options: CustomDestroyOptions) {
+    static async setDeleterId(instance: BaseModel<any>, options: CustomDestroyOptions) {
         if (options.user_id) {
             instance.deleter_id = options.user_id;
             await instance.save({ transaction: options.transaction });

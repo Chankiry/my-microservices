@@ -39,6 +39,7 @@ import { ConfigModule as NestConfigModule, ConfigService } from '@nestjs/config'
     exports: [
         HttpModule,
         ClientsModule,
+        SequelizeModule,
     ]
 })
 

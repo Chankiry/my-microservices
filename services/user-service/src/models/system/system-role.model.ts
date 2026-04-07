@@ -2,10 +2,14 @@ import {
     Table, Model, Column, DataType,
     ForeignKey, BelongsTo,
     CreatedAt, UpdatedAt, DeletedAt,
+    BelongsToMany,
+    HasMany,
 } from 'sequelize-typescript';
 import System from './system.model';
 import User   from '../user/user.model';
 import { BaseModel } from '@models/baseModel';
+import { SystemRoleTypeEnum } from '@app/shared/enums/System.enum';
+import UserSystemRole from '@models/user/user-system-role.model';
 
 @Table({
     tableName : 'system_roles',
@@ -33,7 +37,6 @@ class SystemRole extends BaseModel<SystemRole> {
     @Column({ type: DataType.STRING(20),  allowNull: true  })                                       declare color       : string | null;
     @Column({ type: DataType.TEXT,        allowNull: true  })                                       declare description : string | null;
  
-    // ═══════════════════════════════════════════════════ Status
     @Column({ type: DataType.BOOLEAN, defaultValue: true,  allowNull: false })                      declare is_active   : boolean;
  
     // Auto-assigned when granting a user access to this system
@@ -42,11 +45,11 @@ class SystemRole extends BaseModel<SystemRole> {
     // realm  → Keycloak realm role  (only for platform system)
     // client → Keycloak client role (for external Keycloak systems)
     @Column({
-        type        : DataType.ENUM('realm', 'client'),
+        type        : DataType.ENUM(...Object.values(SystemRoleTypeEnum)),
         allowNull   : false,
-        defaultValue: 'client',
+        defaultValue: SystemRoleTypeEnum.CLIENT,
     })
-    declare role_type: 'realm' | 'client';
+    declare role_type: SystemRoleTypeEnum;
  
     // Exact role name in Keycloak. For realm type: 'admin' | 'user'.
     // For client type: whatever name was created in that client.
@@ -54,6 +57,12 @@ class SystemRole extends BaseModel<SystemRole> {
 
     // ============================================================================================ Many to One
     @BelongsTo(() => System, { foreignKey: 'system_id',  as: 'system'  })                           declare system: System;
+
+    // ============================================================================================ One tp Many
+    @HasMany(() => UserSystemRole, 'role_id')                                                       declare user_system_roles: UserSystemRole[];
+
+    // ============================================================================================ Many to Many
+    @BelongsToMany(() => User, { through: () => UserSystemRole, as: 'users' })                      declare users: User[];
 
 }
 

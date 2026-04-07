@@ -120,14 +120,11 @@ export class LanguagesComponent implements OnInit, OnDestroy {
         // List of navigation items and their corresponding translation keys
         const navigationItems = [
             { id: 'home',                           translationKey: 'Navigation.Home' },
-            { id: 'operation',                      translationKey: 'Navigation.Operation' },
-            { id: 'invoice',                        translationKey: 'Navigation.Invoice' },
-            { id: 'sale',                           translationKey: 'Navigation.Sale' },
-            { id: 'price',                          translationKey: 'Navigation.Price' },
-            { id: 'price.indicator',                translationKey: 'Navigation.Price.Indicator' },
-            { id: 'price.setting',                  translationKey: 'Navigation.Price.Setting' },
-            { id: 'price.english',                  translationKey: 'Navigation.Price.English' },
-            { id: 'user',                           translationKey: 'Navigation.User' },
+            { id: 'accounts',                      translationKey: 'Navigation.Account' },
+            { id: 'systems',                        translationKey: 'Navigation.System' },
+            { id: 'new-knowledge',                           translationKey: 'Navigation.New_Knowledge' },
+            { id: 'security',                          translationKey: 'Navigation.Security' },
+            { id: 'settings',                translationKey: 'Navigation.Settings' }
         ];
 
         // Iterate over each item and update its title

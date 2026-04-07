@@ -9,6 +9,10 @@
         <mat-icon svgIcon="mdi:account" />
         <span class="text-lg text-slate-900"> {{ 'Menu-Option.Profile' | transloco }} </span>
     </button>
+    <button *ngIf="user?.roles?.length > 1" mat-menu-item (click)="handleSwitchRole()">
+        <mat-icon svgIcon="mdi:swap-horizontal" />
+        <span class="text-slate-900 -mb-0.5">{{ 'Menu-Option.Switch-Role' | transloco }}</span>
+    </button>
     <button mat-menu-item (click)="signOut()">
         <mat-icon svgIcon="feather:log-out" />
         <span class="text-lg text-slate-900"> {{ 'Menu-Option.Sign-Out' | transloco }} </span>

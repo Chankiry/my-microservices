@@ -58,8 +58,8 @@ export class SystemService {
         const user   = await this.userService.findByKeycloakId(user_keycloak_id);
 
         const keycloak_changed =
-            (dto.name        !== undefined && dto.name        !== system.name)        ||
-            (dto.description !== undefined && dto.description !== system.description);
+            (dto.name        !== undefined && dto.name        !== system.name_en)        ||
+            (dto.description !== undefined && dto.description !== system.description_en);
 
         if (keycloak_changed && system.keycloak_client_id) {
             await this.keycloakAdmin.updateClientInfo(system.keycloak_client_id, {

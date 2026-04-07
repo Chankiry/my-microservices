@@ -1,8 +1,9 @@
-export interface PlatformRole {
+export interface Role {
     id     : string;
     slug   : string;
     name_kh: string;
     name_en: string;
+    is_default: boolean;
     icon   : string | null;
     color  : string | null;
 }
@@ -17,5 +18,5 @@ export interface User {
     gender         : string | null;
     is_active      : boolean;
     created_at     : string;
-    platform_roles : PlatformRole[];
+    roles : Role[];
 }

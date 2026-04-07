@@ -291,7 +291,7 @@ export class KeycloakAdminService implements OnModuleInit {
     ): Promise<void> {
         await this.ensureAuth();
 
-        // console.log(keycloak_client_id)
+        console.log(keycloak_client_id)
         const client_uuid = await this.getClientUUID(keycloak_client_id);
         if (!client_uuid) throw new Error(`Keycloak client '${keycloak_client_id}' not found`);
 

@@ -16,6 +16,7 @@ import { AUTH_MESSAGE, PROFILE_ERROR_MESSAGE } from '@app/shared/enums/message.e
 import { Sequelize } from 'sequelize';
 import { RegisterDto } from './dto';
 import { ResponseUtil } from '@app/shared/interfaces/base.interface';
+import { InjectConnection } from '@nestjs/sequelize';
 
 @Injectable()
 export class AuthService {
@@ -35,7 +36,7 @@ export class AuthService {
         private readonly keycloakAdmin  : KeycloakAdminService,
         private readonly userService    : UserService,
         private readonly profileService : ProfileService,
-        private readonly sequelize      : Sequelize,
+        @InjectConnection() private sequelize: Sequelize,
         
     ) {
         this.keycloakUrl        = this.configService.get('KEYCLOAK_URL',  'http://keycloak:8080');
@@ -87,7 +88,7 @@ export class AuthService {
             // Assign the default platform 'user' role in user_system_roles
             // so the /me endpoint returns the correct platform_roles[]
             try {
-                await this.profileService.assignPlatformUserRole(res, user.id);
+                await this.profileService.assignPlatformUserRole(user.id);
             } catch (err: any) {
                 this.logger.warn(`Could not assign platform user role: ${err.message}`);
             }

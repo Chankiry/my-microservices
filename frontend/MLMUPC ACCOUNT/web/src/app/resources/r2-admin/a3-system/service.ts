@@ -11,7 +11,7 @@ import { env } from 'envs/env';
 
 
 @Injectable({ providedIn: 'root' })
-export class UserDashboardService {
+export class AdminSystemService {
 
     private _httpOptions = {
         headers: new HttpHeaders().set('Content-Type', 'application/json'),
@@ -19,12 +19,12 @@ export class UserDashboardService {
 
     constructor(private _httpClient: HttpClient) {}
 
-    getData(params?: any): Observable<any>{
+    statusData(params?: any): Observable<any>{
         let httpParams = new HttpParams();
         if (params.startDate) httpParams = httpParams.set('startDate', params.startDate);
         if (params.endDate) httpParams = httpParams.set('endDate', params.endDate);
 
-        return this._httpClient.get<any>(`${env.API_BASE_URL}/user/dashboards`,
+        return this._httpClient.get<any>(`${env.API_BASE_URL}/admin/homes`,
             {
                 headers: this._httpOptions.headers,
                 params: httpParams

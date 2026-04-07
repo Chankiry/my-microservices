@@ -11,10 +11,11 @@ import UserSystemAccess      from '../../../../models/user/user-system-access.mo
 import UserExternalLinks     from '../../../../models/user/user-external-links.model';
 import UserSystemRole from '../../../../models/user/user-system-role.model';
 import SystemRole from '../../../../models/system/system-role.model';
+import System from '@models/system/system.model';
 
 @Module({
     imports: [
-        SequelizeModule.forFeature([UserSystemAccess, UserExternalLinks, UserSystemRole, SystemRole]),
+        SequelizeModule.forFeature([UserSystemAccess, UserExternalLinks, UserSystemRole, SystemRole, System]),
         UserModule,
         KeycloakModule,
         AuthModule,
