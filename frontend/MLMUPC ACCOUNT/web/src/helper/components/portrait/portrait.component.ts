@@ -4,7 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { SnackbarService } from 'helper/services/snack-bar/snack-bar.service';
-import { ImageCroppedEvent, ImageCropperModule } from 'ngx-image-cropper';
+import { ImageCroppedEvent, ImageCropperComponent } from 'ngx-image-cropper';
 
 @Component({
     selector: 'helper-portrait',
@@ -53,7 +53,14 @@ export class PortraitComponent {
                 }
             });
         } else {
-            this.snackBar.openSnackBar('សូមជ្រើសរើស file ប្រភេទជារូបភាព', 'error');
+
+            this.snackBar.openSnackBar(
+                {
+                    name_kh: 'សូមជ្រើសរើស file ប្រភេទជារូបភាព',
+                    name_en: 'Please select an image file',
+                },
+                'error'
+            );
         }
     }
 
@@ -85,7 +92,7 @@ function base64ToFile(base64: string, filename: string): File {
     templateUrl: 'dialog.component.html',
     styleUrls: ['./portrait.component.scss'],
     standalone: true,
-    imports: [MatIconModule, MatDialogModule, ImageCropperModule, MatButtonModule]
+    imports: [MatIconModule, MatDialogModule, ImageCropperComponent, MatButtonModule]
 })
 export class PortraitDialogComponent {
     public result: any;
@@ -115,7 +122,7 @@ export class PortraitDialogComponent {
         }
     }
 
-    
+
     imageLoaded(): void {
         // show cropper
     }

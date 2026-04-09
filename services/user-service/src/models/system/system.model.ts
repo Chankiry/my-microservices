@@ -48,6 +48,12 @@ class System extends BaseModel<System> {
     // e.g. http://localhost:3005 or https://plt.example.com
     @Column({ type: DataType.STRING(500), allowNull: true })                                        declare base_url: string | null;
 
+    // URL on the integrated system's frontend where the user lands to confirm
+    // account linking. Platform redirects here with ?platform_link_code=<hex>.
+    // If null, falls back to {base_url}/platform/link by convention.
+    // e.g. http://localhost:4444/platform/link
+    @Column({ type: DataType.STRING(500), allowNull: true })                                        declare link_entry_url: string | null;
+
     // ============================================================================================ Many to One
 
     // ============================================================================================ One to Many

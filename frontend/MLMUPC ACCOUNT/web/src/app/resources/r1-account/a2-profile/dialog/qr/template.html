@@ -1,0 +1,32 @@
+<div class="p-4 relative rounded-md">
+    <div class="flex items-center cursor-pointer absolute top-3 right-3">
+        <button [mat-dialog-close]="false" mat-icon-button>
+            <mat-icon svgIcon="heroicons_outline:x-mark" />
+        </button>
+    </div>
+    <h2 class="text-xl w-full font-semibold text-center">
+        ចូលគណនីដោយប្រើ QR 
+    </h2>
+    <div class="flex justify-center flex-col sm:flex-row mt-4 items-center">
+        <ng-container *ngIf="!isLoading(); else loading">
+            <div class="relative qrbox">
+                <img [src]="qrCode()" alt="QR Code" class="size-64 object-contain">
+                <img src="/images/logo/Cdc_icon_logo.png" alt="QR Code" class="size-12 bg-white rounded-full object-cover absolute right-1/2 top-1/2 translate-x-1/2 -translate-y-1/2 aspect-square">
+            </div>
+        </ng-container>
+        <ng-template #loading>
+            
+        </ng-template>
+        <div class="flex flex-col gap-y-3 pl-3">
+            <span class="mb-2 font-bold">សូមអនុវត្តជំហានដូចតទៅ</span>
+            <span>1. បើកកម្មវិធីទូរស័ព្ទដៃ នៃ ក.អ.ក</span>
+            <span>2. ចុចប៊ូតុង ចូលប្រើប្រាស់</span>
+            <span>3. ជ្រើសរើស "ប្រើ QR Code"</span>
+            <span>4. ស្កេន QR Code នេះ</span>
+            <span>5. បញ្ជាក់ និងយល់ព្រម</span>
+            <div class="self-end">
+                សម្គាល់៖ QR កូដនេះមានរយៈពេលកំណត់ចំនួន ១នាទី សូមអរគុណ។
+            </div>
+        </div>
+    </div>
+</div>

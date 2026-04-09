@@ -6,6 +6,7 @@
 
     <!-- Main Content Wrapper -->
     <div class="mx-auto max-w-[80%]">
+
         <!-- Profile Card Section -->
         <div class="flex justify-between flex-col md:flex-row md:items-start gap-2 -mt-16 relative z-10 rounded-lg mb-8">
             <div class="flex gap-4">
@@ -13,10 +14,7 @@
                 <div class="relative w-32 h-32 flex-shrink-0">
                     <img [src]="avatar" alt="Profile avatar" class="w-full h-full rounded-full object-cover border-4 border-[#0DA487]">
                     <div class="absolute -bottom-1 -right-1 w-10 h-10 bg-[#0DA487] rounded-full flex items-center justify-center p-2">
-                        <mat-icon
-                            svgIcon="mdi:shield-check"
-                            class="h-8 w-8 flex-shrink-0 text-white">
-                        </mat-icon>
+                        <mat-icon svgIcon="mdi:shield-check" class="h-8 w-8 flex-shrink-0 text-white"></mat-icon>
                     </div>
                 </div>
 
@@ -42,42 +40,34 @@
                     </div>
                 </div>
             </div>
-        <!-- Action -->
+
+            <!-- Action Buttons -->
             <div class="inline-flex self-center bg-white rounded-xl -mt-0 md:-mt-[20px]">
-                <!-- Request Button -->
                 <button mat-stroked-button
                         class="min-w-[136px] flex items-center gap-2 px-4 rounded-xl rounded-r-none hover:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-2px_rgba(0,0,0,0.1)]"
-                        >
-                    <mat-icon class="icon-size-5" svgIcon="mdi:file-edit-outline"></mat-icon>
-                    <div class="flex items-center gap-2">
-                        <span class="flex text-base">{{ "ប្រវត្តិចូល" | transloco }}</span>
-                    </div>
+                        (click)="openEditProfileDialog()">
+                    <mat-icon class="icon-size-5" svgIcon="mdi:account-edit-outline"></mat-icon>
+                    <span class="flex text-base">កែប្រែ</span>
                 </button>
-
-                <!-- Download Button -->
                 <button mat-stroked-button
                         class="min-w-[136px] flex items-center gap-2 px-4 rounded-xl rounded-l-none hover:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),0_2px_4px_-2px_rgba(0,0,0,0.1)]"
-                        >
-                    <mat-icon class="icon-size-5" svgIcon="mdi:download-outline"></mat-icon>
-                    <div class="flex items-center gap-2">
-                        <span class="flex text-base">{{ "ទាញយក" | transloco }}</span>
-                    </div>
+                        (click)="openChangePasswordDialog()">
+                    <mat-icon class="icon-size-5" svgIcon="mdi:lock-outline"></mat-icon>
+                    <span class="flex text-base">ប្ដូរពាក្យសម្ងាត់</span>
                 </button>
-
             </div>
-
         </div>
 
         <!-- Services Section -->
         <section class="mb-8">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div *ngFor="let service of services" class="flex flex-col border-2 border-gray-200 bg-white rounded-[10px] transition0 justify-between ">
+                <div *ngFor="let service of services; let i = index"
+                     class="flex flex-col border-2 border-gray-200 bg-white rounded-[10px] justify-between">
                     <div class="flex items-start justify-start p-5 w-full gap-4">
                         <div class="flex items-center justify-center p-3 rounded-full bg-[#64748B1A]">
-                            <mat-icon
-                                [svgIcon]="service.icon"
-                                [style.color]="service.color || '#0ea5e9'"
-                                class="h-14 w-14 flex-shrink-0">
+                            <mat-icon [svgIcon]="service.icon"
+                                      [style.color]="service.color || '#0ea5e9'"
+                                      class="h-14 w-14 flex-shrink-0">
                             </mat-icon>
                         </div>
                         <div class="flex flex-col items-start">
@@ -89,7 +79,10 @@
                         <button mat-flat-button class="flex items-center justify-end text-gray-500 hover:bg-gray-200 rounded-full p-2">
                             <mat-icon svgIcon="mdi:information-outline" class="w-6 h-6 flex-shrink-0"></mat-icon>
                         </button>
-                        <button mat-flat-button class="flex items-center justify-end text-[#0C7EA5] hover:bg-gray-200 rounded-full p-2">
+                        <!-- Card 0 → Edit Profile, Card 1 → Change Password, Card 2 → QR (future) -->
+                        <button mat-flat-button
+                                class="flex items-center justify-end text-[#0C7EA5] hover:bg-gray-200 rounded-full p-2"
+                                (click)="i === 0 ? openEditProfileDialog() : i === 1 ? openChangePasswordDialog() : null">
                             <mat-icon svgIcon="mdi:chevron-double-right" class="w-6 h-6 flex-shrink-0"></mat-icon>
                         </button>
                     </div>
@@ -97,65 +90,143 @@
             </div>
         </section>
 
-        <!-- System Icons Section -->
+        <!-- Connected Systems Section -->
         <section class="mb-8">
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-semibold text-gray-900">កម្មវិធីឌីជីថល នៃ ដ.ន.ស.</h2>
-                <button mat-flat-button class="rounded-full text-gray-600 hover:text-[#0C7EA5] hover:bg-gray-200 p-2">
-                    <mat-icon svgIcon="mdi:chevron-double-right" class="w-6 h-6 flex-shrink-0"></mat-icon>
-                </button>
+                <div class="flex items-center gap-2">
+                    <h2 class="text-xl font-semibold text-gray-900">កម្មវិធីឌីជីថល នៃ ដ.ន.ស.</h2>
+                    <span class="text-sm text-gray-400">({{ activeSystemCount() }} សកម្ម)</span>
+                </div>
             </div>
 
-            <!-- Scroll Container with full edge visibility -->
-            <div class="relative overflow-x-auto scrollbar-hide pb-6 -mx-[12.5%] px-[10%]">
-                <div class="flex gap-6 min-w-max px-6">   <!-- Important: px-6 here -->
+            <!-- Empty state -->
+            <div *ngIf="systems.length === 0 && !isLoading"
+                 class="text-center py-10 text-gray-400 text-sm border-2 border-dashed border-gray-200 rounded-xl">
+                <mat-icon svgIcon="mdi:monitor-off" class="w-10 h-10 mb-2 text-gray-300"></mat-icon>
+                <p>អ្នកមិនទាន់ភ្ជាប់ប្រព័ន្ធណាមួយ</p>
+            </div>
+
+            <!-- Scroll Container -->
+            <div *ngIf="systems.length > 0"
+                 class="relative overflow-x-auto scrollbar-hide pb-6 -mx-[12.5%] px-[10%]">
+                <div class="flex gap-6 min-w-max px-6">
                     <div *ngFor="let system of systems"
-                        class="flex flex-col items-center gap-2 flex-shrink-0">
+                         class="flex flex-col items-center gap-2 flex-shrink-0 relative group">
 
-                    <button color="primary"
-                            class="system-button flex items-center justify-center
-                                    min-h-14 min-w-14 max-h-14 max-w-14
-                                    bg-white shadow-sm hover:shadow-md transition-shadow">
-                        <img [src]="getSystemLogoUrl(system?.logo)" alt="System Logo" class="w-10 h-10 object-contain">
-                    </button>
+                        <!-- System button with SSO navigate -->
+                        <button class="system-button flex items-center justify-center
+                                       min-h-14 min-w-14 max-h-14 max-w-14
+                                       bg-white shadow-sm hover:shadow-md transition-shadow
+                                       relative overflow-hidden"
+                                [class.opacity-60]="system.registration_status !== 'active'"
+                                [matTooltip]="system.registration_status !== 'active' ? getStatusLabel(system.registration_status) : ''"
+                                (click)="navigateToSystem(system)">
 
-                    <p [matTooltip]="system.name_kh" class="text-md text-gray-600 text-center w-16 line-clamp-1">
-                        {{ system.name_kh }}
-                    </p>
+                            <!-- Loading spinner overlay -->
+                            <mat-progress-spinner *ngIf="navigatingSystemId === system.id"
+                                                  diameter="28" mode="indeterminate"
+                                                  class="absolute">
+                            </mat-progress-spinner>
+
+                            <img *ngIf="navigatingSystemId !== system.id"
+                                 [src]="getSystemLogoUrl(system?.logo)"
+                                 alt="System Logo" class="w-10 h-10 object-contain">
+                        </button>
+
+                        <!-- System name -->
+                        <p [matTooltip]="system.name_kh"
+                           class="text-md text-gray-600 text-center w-16 line-clamp-1">
+                            {{ system.name_kh }}
+                        </p>
+
+                        <!-- Status badge -->
+                        <span class="text-[10px] px-1.5 py-0.5 rounded-full leading-none"
+                              [ngClass]="getStatusColor(system.registration_status)">
+                            {{ getStatusLabel(system.registration_status) }}
+                        </span>
+
+                        <!-- Disconnect menu (shown on hover) -->
+                        <button mat-icon-button
+                                class="!absolute -top-2 -right-2 !w-6 !h-6 !min-w-0
+                                       bg-red-50 text-red-400 hover:bg-red-100
+                                       rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                [matMenuTriggerFor]="systemMenu"
+                                (click)="$event.stopPropagation()">
+                            <mat-icon svgIcon="mdi:dots-vertical" class="!text-base !w-4 !h-4"></mat-icon>
+                        </button>
+                        <mat-menu #systemMenu="matMenu">
+                            <button mat-menu-item (click)="openDisconnectDialog(system)"
+                                    class="text-red-600">
+                                <mat-icon svgIcon="mdi:link-off" class="text-red-500"></mat-icon>
+                                <span>ដាច់ភ្ជាប់</span>
+                            </button>
+                        </mat-menu>
+
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Devices Section -->
-        <!-- <section class="mb-8">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4">ឧបករណ៍</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pb-8">
-            <div *ngFor="let device of devices" class="bg-white rounded-lg p-6 shadow hover:shadow-lg transition cursor-pointer">
-                <div class="flex items-start justify-between mb-4">
-                <div class="w-12 h-12 bg-gray-300 rounded flex items-center justify-center text-lg">
-                    {{ getDeviceIcon(device.name) }}
-                </div>
-                <button class="bg-transparent border-none cursor-pointer text-gray-400 hover:text-gray-600 p-2 transition">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-                    </svg>
-                </button>
-                </div>
-                <h3 class="text-lg font-semibold text-gray-900 mb-1">{{ device.name }}</h3>
-                <div class="mb-4">
-                <p class="text-sm text-gray-600 m-0">{{ device.model }}</p>
-                <p class="text-sm text-gray-600 m-0">{{ device.carrier }}</p>
-                <p *ngIf="device.count" class="text-sm text-gray-600 m-0">{{ device.count }}</p>
-                </div>
-                <div *ngIf="device.status === 'active'" class="flex items-center gap-2 text-sm text-green-600">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-4 h-4">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-                <span>មានលក្ខណៈបានភ្ជាប់</span>
+        <!-- Available Systems Section -->
+        <section *ngIf="availableSystems.length > 0" class="mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-gray-900">ប្រព័ន្ធដែលអាចភ្ជាប់</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div *ngFor="let system of availableSystems"
+                     class="flex items-center justify-between bg-white border border-gray-200 rounded-xl p-4 hover:shadow-sm transition-shadow">
+
+                    <!-- Left: logo + name -->
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 flex-shrink-0 rounded-lg bg-gray-50 flex items-center justify-center">
+                            <img [src]="getSystemLogoUrl(system.logo)"
+                                 alt="logo" class="w-8 h-8 object-contain">
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-900 leading-tight">{{ system.name_kh }}</p>
+                            <p class="text-xs text-gray-400">{{ system.name_en }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Right: connect / link button -->
+                    <div class="flex items-center gap-2">
+
+                        <!-- Redirect-based link (has link_entry_url or base_url) -->
+                        <button *ngIf="system.link_entry_url || system.base_url"
+                                mat-stroked-button
+                                class="text-[#0C7EA5] border-[#0C7EA5] text-xs px-3 py-1 min-w-0"
+                                [disabled]="linkingSystemId === system.id"
+                                (click)="linkSystem(system)">
+                            <mat-progress-spinner *ngIf="linkingSystemId === system.id"
+                                                  diameter="14" mode="indeterminate" class="mr-1">
+                            </mat-progress-spinner>
+                            {{ linkingSystemId === system.id ? '...' : 'ភ្ជាប់' }}
+                        </button>
+
+                        <!-- Credential-based connect (has auth_callback_url, no link_entry_url) -->
+                        <button *ngIf="!system.link_entry_url && !system.base_url && system.auth_callback_url"
+                                mat-flat-button
+                                class="bg-[#0C7EA5] text-white text-xs px-3 py-1 min-w-0"
+                                (click)="openConnectDialog(system)">
+                            ភ្ជាប់
+                        </button>
+
+                        <!-- Approval required badge -->
+                        <span *ngIf="system.require_approval"
+                              class="text-[10px] text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-full">
+                            រង់ចាំ
+                        </span>
+
+                    </div>
                 </div>
             </div>
-            </div>
-        </section> -->
+        </section>
+
+        <!-- Devices Section (reserved for future) -->
+        <!--
+        <section class="mb-8">...</section>
+        -->
+
     </div>
 </div>

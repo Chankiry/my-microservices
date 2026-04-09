@@ -14,6 +14,8 @@ export interface User {
     email          : string | null;
     first_name     : string | null;
     last_name      : string | null;
+    name_kh        : string | null;
+    name_en        : string | null;
     avatar         : string | null;
     gender         : string | null;
     is_active      : boolean;

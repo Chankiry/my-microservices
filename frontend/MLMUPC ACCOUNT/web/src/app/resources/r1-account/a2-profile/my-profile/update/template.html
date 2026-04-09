@@ -1,0 +1,56 @@
+<!-- Header -->
+<div mat-dialog-title class="w-full flex justify-between">
+    <span class="w-full text-2xl font-medium"> កែប្រែគណនី </span>
+    <button [mat-dialog-close]="false" mat-icon-button>
+        <mat-icon svgIcon="heroicons_outline:x-mark" />
+    </button>
+</div>
+
+<mat-dialog-content class="border-t md-form-field-appearance-outline">
+    <form [formGroup]="form">
+
+        <div class="p-5">
+            <div class="w-full flex justify-center items-center">
+                <!-- Image Display -->
+                <img [src]="src" (click)="fileInput.click()"
+                    class="cursor-pointer rounded-full w-40 h-40 border-2 border-dashed border-gray-500 object-cover" alt="Profile Picture" />
+
+                <!-- Hidden File Input -->
+                <input type="file" #fileInput style="display: none;" (change)="onFileChange($event)"
+                    accept="image/*" />
+            </div>
+        </div>
+
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>ឈ្មោះ</mat-label>
+            <input matInput [formControlName]="'name_en'" placeholder="បញ្ចូលឈ្មោះ">
+            <mat-error> ឈ្មោះត្រូវបានទាមទារ </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>លេខទូរសព្ទ</mat-label>
+            <input matInput [formControlName]="'phone'" placeholder="បញ្ចូលលេខទូរស័ព្ទ">
+            <mat-error> ទូរសព្ទត្រូវបានទាមទារ </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="w-full">
+            <mat-label>អ៊ីមែល</mat-label>
+            <input matInput [formControlName]="'email'" placeholder="បញ្ចូលអ៊ីម៉ែល">
+            <mat-error *ngIf=" form.get('email').hasError('required') ">
+                អ៊ីមែលត្រូវបានទាមទារ
+            </mat-error>
+            <mat-error *ngIf=" form.get('email').hasError('pattern') ">
+                សូមបញ្ជូលE-mail អោយបានត្រឹមត្រូវ
+            </mat-error>
+        </mat-form-field>
+
+    </form>
+</mat-dialog-content>
+
+<mat-dialog-actions class="flex items-center justify-end">
+    <button class="bg-blue-900" mat-flat-button (click)="submit()"
+        [disabled]="form.invalid || form.disabled">
+        <span *ngIf="!form.disabled" class="text-white">រួចរាល់</span>
+        <mat-progress-spinner *ngIf="form.disabled" [diameter]="24" [mode]="'indeterminate'"></mat-progress-spinner>
+    </button>
+</mat-dialog-actions>

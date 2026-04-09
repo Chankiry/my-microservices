@@ -13,6 +13,7 @@ import { Subject, takeUntil }   from 'rxjs';
 import { TranslocoModule }      from '@ngneat/transloco';
 import { MatDialog, MatDialogConfig } from '@angular/material/dialog';
 import { SwitchRoleComponent } from './switch-role/switch-role.component';
+import { ProfileViewComponent } from 'app/resources/r1-account/a2-profile/view/component';
 
 @Component({
     selector   : 'user',
@@ -64,8 +65,19 @@ export class UserComponent implements OnInit, OnDestroy {
             .filter(Boolean).join(' ') || this.user.phone;
     }
 
-    goToProfile(): void {
-        this._router.navigateByUrl('/profile/my-profile');
+    handleShowUser(): void {
+
+        const dialogConfig: MatDialogConfig = {
+            autoFocus: false,
+            width: '600px',
+            height: '100vh',
+            position: { right: '0px' },
+            panelClass: 'side-dialog',
+            enterAnimationDuration: '0s',
+            // data: {cv_id: id , org_id: this.org_id , module: this.role},
+        };
+
+        const dialogRef = this._matDialog.open(ProfileViewComponent, dialogConfig);
     }
 
     handleSwitchRole(): void {

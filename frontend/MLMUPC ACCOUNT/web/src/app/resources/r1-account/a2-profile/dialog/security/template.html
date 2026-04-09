@@ -1,0 +1,217 @@
+<div>
+    <div class="min-h-14 max-h-14 flex gap-2 px-3 justify-between items-center border-b border-gray-300 dark:border-gray-700">
+        <span class="font-semibold text-2xl">ការកំណត់</span>
+        <div class="flex items-center gap-2">        
+            <!-- <div class="flex flex-1 items-center text-slate-500" (click)="openQrDialog()">
+                <button mat-icon-button>
+                    <mat-icon svgIcon="mdi:qrcode" />
+                </button>
+            </div> -->
+            <div class="flex items-center cursor-pointer">
+                <button [mat-dialog-close]="false" mat-icon-button>
+                    <mat-icon svgIcon="heroicons_outline:x-mark" />
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="p-3 flex flex-col gap-y-3 pb-18">
+        <!-- security status  -->
+        <div class="flex border border-gray-300 dark:border-gray-700 p-3 gap-3 rounded-lg dark:brightness-[120%] filter dark:drop-shadow-lg">
+            <div class="size-18 rounded-full p-1" [ngStyle]="{ background: drawSecurityStatus()?.style }">
+                <div class="w-full h-full rounded-full bg-white dark:bg-background-dark-3 flex items-center justify-center">       
+                    <mat-icon class="icon-size-10" [ngStyle]="{ color: drawSecurityStatus()?.color }" svgIcon="mdi:shield-check" />
+                </div>
+            </div>
+            <div class="flex flex-col justify-center">
+                <span class="text-xl font-semibold">{{ drawSecurityStatus()?.status }}</span>
+                <span class="text-base text-gray-500">{{ drawSecurityStatus()?.description }}</span>
+            </div>
+        </div>
+
+        <!-- password options -->
+        <div class="flex gap-3 px-4 p-3 border items-center border-gray-300 dark:border-gray-700 rounded-lg cursor-pointer" (click)="openPasswordDialog()">
+            <mat-icon class="icon-size-7" svgIcon="mdi:lock-outline"></mat-icon>
+            <div class="flex flex-1 gap-1 justify-between">
+                <div class="flex flex-col">
+                    <span class="text-lg font-semibold">ពាក្យសម្ងាត់</span>
+                    <span class="text-sm text-gray-500">បានផ្លាស់ប្តូរ 2 ខែមុន</span>
+                </div>
+
+                <div class="flex items-center gap-1 w-fit">
+                    <mat-icon class="text-emerald-600 dark:text-emerald-400" svgIcon="mat_solid:check_circle"/>
+                    <button class="mt-1 size-7 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-full" >
+                        <mat-icon svgIcon="mdi:chevron-right" />
+                    </button>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- password options -->
+        <!-- <div class="opacity-50 flex gap-3 px-4 p-3 border items-center border-gray-300 dark:border-gray-700 rounded-lg cursor-pointer" (click)="openPasswordDialog()">
+            <mat-icon class="icon-size-7" svgIcon="mdi:robot-excited-outline"></mat-icon>
+            <div class="flex flex-1 gap-1 justify-between">
+                <div class="flex flex-col">
+                    <span class="text-lg font-semibold">{{"តេឡេក្រាម Bot" | transloco}}</span>
+                    <span class="text-sm text-gray-500">
+                        @if(user?.telegram_activated){
+                            {{"បានភ្ចាប់" | transloco}}
+                        }@else {
+                            {{" មិនទាន់បានភ្ចាប់ " | transloco}}
+                        }
+                    </span>
+                </div>
+
+                <div class="flex items-center gap-1 w-fit">
+                    <mat-icon 
+                        [ngClass]="user?.telegram_activated ? 'text-green-600 dark:text-green-400' : 'text-yellow-500 dark:text-yellow-500'" 
+                        svgIcon="mat_solid:check_circle">
+                    </mat-icon>
+                    <button class="mt-1 size-7 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-full" >
+                        <mat-icon svgIcon="mdi:chevron-right" />
+                    </button>
+                </div>
+            </div>
+        </div> -->
+
+
+        <!-- 2FA options -->
+        <div class="opacity-30 select-none pointer-events-none py-3 border rounded-lg border-gray-300 dark:border-gray-700"  aria-disabled="true" tabindex="-1">
+            <span class="px-3">ស្រទាបសុវត្ថិភាព (2FA)</span>
+            <div class="flex gap-3 p-3 border-b items-center border-gray-300 dark:border-gray-700">
+                <mat-icon class="icon-size-7" svgIcon="call"></mat-icon>
+                <div class="flex flex-1 gap-1 justify-between">
+                    <div class="flex flex-col">
+                        <span class="text-lg font-semibold">លេខទូរស័ព្ទ</span>
+                        <span class="text-sm text-gray-500">*** *** **04</span>
+                    </div>
+
+                    <div class="flex items-center gap-1 w-fit">
+                        <mat-icon class="text-emerald-600 dark:text-emerald-400" svgIcon="mat_solid:check_circle" />
+                        <button class="mt-1 size-7 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-full">
+                            <mat-icon svgIcon="mdi:chevron-right" />
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="flex gap-3 p-3 border-b items-center border-gray-300 dark:border-gray-700">
+                <mat-icon class="icon-size-7" svgIcon="telegram"></mat-icon>
+                <div class="flex flex-1 gap-1 justify-between">
+                    <div class="flex flex-col">
+                        <span class="text-lg font-semibold">តេឡេក្រាម</span>                  
+                        <span class="text-sm text-gray-500">*** *** **04</span>
+                    </div>
+
+                    <div class="flex items-center gap-1 w-fit">                        
+                        <mat-icon class="text-emerald-600 dark:text-emerald-400" svgIcon="mat_solid:check_circle" />
+                        <button class="mt-1 size-7 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-full">
+                            <mat-icon svgIcon="mdi:chevron-right" />
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="flex gap-3 p-3 border-b items-center border-gray-300 dark:border-gray-700">
+                <mat-icon class="icon-size-7" svgIcon="mdi:email-outline"></mat-icon>
+                <div class="flex flex-1 gap-1 justify-between">
+                    <div class="flex flex-col">
+                        <span class="text-lg font-semibold">អុីមែល</span>
+                        <span class="text-sm text-gray-500">{{'b***************h@gmail.com'}}</span>
+                    </div>
+
+                    <div class="flex items-center gap-1 w-fit">
+                        <mat-icon class="text-emerald-600 dark:text-emerald-400" svgIcon="mat_solid:check_circle" />
+                        <button class="mt-1 size-7 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-full">
+                            <mat-icon svgIcon="mdi:chevron-right" />
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="flex gap-3 px-3 pt-3  items-center">
+                <mat-icon class="icon-size-7" svgIcon="google-authenticator"></mat-icon>
+                <div class="flex flex-1 gap-1 justify-between">
+                    <div class="flex flex-col">
+                        <span class="text-lg font-semibold">Google Authenticator</span>
+                        <span class="text-sm text-emerald-600 dark:text-emerald-400">Recommended</span>
+                    </div>
+
+                    <div class="flex items-center gap-1 w-fit">
+                        <!-- <mat-icon class="text-green-500" svgIcon="mat_solid:check_circle" /> -->
+                        <button class="mt-1 size-7 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-full">
+                            <mat-icon svgIcon="mdi:chevron-right" />
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- pin options -->
+        <!-- <div class="flex gap-3 px-4 p-3 border items-center border-gray-300 dark:border-gray-700 rounded-lg">
+            <mat-icon class="icon-size-7" svgIcon="mdi:face-man-outline"></mat-icon>
+            <div class="flex flex-1 gap-1 justify-between">
+                <div class="flex flex-col">
+                    <span class="text-lg font-semibold">FacePass</span>
+                    <span class="text-sm text-gray-500">បានផ្លាស់ប្តូរ 2 ខែមុន</span>
+                </div>
+
+                <div class="flex items-center gap-1 w-fit">
+                    <mat-icon class="rotate-180 text-amber-500 dark:text-amber-400" svgIcon="mat_solid:info" />
+                    <button class="mt-1 size-7 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-full">
+                        <mat-icon svgIcon="mdi:chevron-right" />
+                    </button>
+                </div>
+            </div>
+        </div> -->
+        <!-- facepass options -->
+        <!-- <div class="flex gap-3 px-4 p-3 border items-center border-gray-300 dark:border-gray-700 rounded-lg">
+            <mat-icon class="icon-size-7" svgIcon="mdi:shield-lock-outline"></mat-icon>
+            <div class="flex flex-1 gap-1 justify-between">
+                <div class="flex flex-col">
+                    <span class="text-lg font-semibold">PIN សុវត្ថិភាព</span>
+                    <span class="text-sm text-gray-500">បានផ្លាស់ប្តូរ 2 ខែមុន</span>
+                </div>
+
+                <div class="flex items-center gap-1 w-fit">
+                    <mat-icon class="text-emerald-600 dark:text-emerald-400" svgIcon="mat_solid:check_circle" />
+                    <button class="mt-1 size-7 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-full">
+                        <mat-icon svgIcon="mdi:chevron-right" />
+                    </button>
+                </div>
+            </div>
+        </div> -->
+        <!-- device -->
+        <div class="opacity-30 select-none pointer-events-none flex gap-3 px-4 p-3 border items-center border-gray-300 dark:border-gray-700 rounded-lg" aria-disabled="true" tabindex="-1">
+            <mat-icon class="icon-size-7" svgIcon="mdi:devices"></mat-icon>
+            <div class="flex flex-1 gap-1 justify-between">
+                <div class="flex flex-col">
+                    <span class="text-lg font-semibold">ឧបករណ៍</span>
+                    <span class="text-sm text-gray-500">3 ឧបករណ៍</span>
+                </div>
+<!-- 
+                <div class="flex items-center gap-1 w-fit">
+                    <mat-icon class="rotate-180 text-amber-500 dark:text-amber-400" svgIcon="mat_solid:info" />
+                    <button class="mt-1 size-7 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-full" (click)="openDeviceDialog()">
+                        <mat-icon svgIcon="mdi:chevron-right" />
+                    </button>
+                </div> -->
+            </div>
+        </div>
+
+        <!-- history activity -->
+        <div class="opacity-30 select-none pointer-events-none pointer-events-none flex gap-3 px-4 p-3 border items-center border-gray-300 dark:border-gray-700 rounded-lg" aria-disabled="true" tabindex="-1">
+            <mat-icon class="icon-size-7" svgIcon="mdi:history"></mat-icon>
+            <div class="flex flex-1 gap-1 justify-between">
+            <div class="flex flex-col">
+                <span class="text-lg font-semibold">ប្រវត្តិចូល</span>
+                <span class="text-sm text-gray-500">1 ម៉ោងមុន (IPhone 16,ភ្នំពេញ, កម្ពុជា)</span>
+            </div>
+
+            <div class="flex items-center gap-1 w-fit">
+                <button class="mt-1 size-7 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-full" disabled>
+                <mat-icon svgIcon="mdi:chevron-right" />
+                </button>
+            </div>
+            </div>
+        </div>
+    </div>
+</div>

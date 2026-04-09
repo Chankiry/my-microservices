@@ -1,0 +1,101 @@
+<div class="w-full flex flex-col">
+
+    <!-- isLoading -->
+    <ng-container *ngIf="isLoading; else content">
+        <div class="flex flex-col gap-8 justify-center items-center h-full">
+            <mat-progress-spinner [diameter]="128" [mode]="'indeterminate'"></mat-progress-spinner>
+            <span class="text-slate-500 text-3xl font-semibold">កំពុងទាញយកទិន្នន័យ...</span>
+        </div>
+    </ng-container>
+
+    <!-- !isLoading -->
+    <ng-template #content>
+        <!-- Body -->
+        <div class="body">
+
+            <!-- Log Listing -->
+            <div class="data">
+
+                <!-- Title -->
+                <!-- <div class="flex items-center gap-2 p-4 border-b">
+                    <mat-icon class="text-slate-900" svgIcon="mdi:format-list-text"></mat-icon>
+                    <span class="font-medium mb-0.5">ចូលប្រព័ន្ធ</span>
+                </div> -->
+
+                <!-- No Data -->
+                <ng-container *ngIf="dataSource.data.length === 0">
+                    <div class="flex flex-col justify-center items-center mb-4">
+                        <mat-icon class="icon-size-24" svgIcon="toc"></mat-icon>
+                        <span class="text-xl -mt-6">គ្មានទិន្នន័យ</span>
+                    </div>
+                </ng-container>
+
+                <!-- Data -->
+                <ng-container *ngIf="dataSource.data.length > 0">
+                    <table mat-table [dataSource]="dataSource">
+
+                        <ng-container matColumnDef="no">
+                            <th mat-header-cell *matHeaderCellDef>ល.រ.</th>
+                            <td mat-cell *matCellDef="let i = index">
+                                <span>{{ i + 1 }}</span>
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="type">
+                            <th mat-header-cell *matHeaderCellDef> តាមរយៈ </th>
+                            <td mat-cell *matCellDef="let element">
+                                <mat-icon *ngIf="element.platform === 'Web'" svgIcon="mdi:monitor" />
+                                <mat-icon *ngIf="element.platform === 'Phone'" svgIcon="mdi:cellphone" />
+                                <mat-icon *ngIf="element.platform === 'Unknown' || element.platform === null"
+                                    svgIcon="mdi:crosshairs-question" />
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="ip">
+                            <th mat-header-cell *matHeaderCellDef> IP Address </th>
+                            <td mat-cell *matCellDef="let item">
+                                {{ item.ip_address }}
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="date">
+                            <th mat-header-cell *matHeaderCellDef> កាលបរិច្ឆេទ </th>
+                            <td mat-cell *matCellDef="let item" class="text-slate-500">
+                                {{ item.timestamp | date: 'dd-LL-YYY'}}
+                            </td>
+                        </ng-container>
+
+                        <ng-container matColumnDef="time">
+                            <th mat-header-cell *matHeaderCellDef> ម៉ោង </th>
+                            <td mat-cell *matCellDef="let item" class="text-slate-500">
+                                {{ item.timestamp | date: 'hh:mm a' }}
+                            </td>
+                        </ng-container>
+
+                        <!-- Header Row -->
+                        <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+
+                        <!-- Data Rows with alternating background colors -->
+                        <tr mat-row *matRowDef="let row; columns: displayedColumns; let i = index" [ngClass]="{
+                            'bg-white': i % 2 === 0,
+                            'bg-gray-100': i % 2 !== 0
+                        }">
+                        </tr>
+
+                    </table>
+                </ng-container>
+
+            </div>
+
+            <!-- Paginator -->
+            <ng-container *ngIf="dataSource.data.length > 0">
+                <mat-paginator class="flex justify-end overflow-hidden" [pageSizeOptions]="[15, 30, 45]"
+                    [showFirstLastButtons]="true" [pageIndex]="page - 1" [length]="total" [pageSize]="limit"
+                    (page)="onPageChanged($event)">
+                </mat-paginator>
+            </ng-container>
+
+        </div>
+    </ng-template>
+
+</div>

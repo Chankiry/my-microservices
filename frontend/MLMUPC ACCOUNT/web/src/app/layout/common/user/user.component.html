@@ -5,9 +5,9 @@
 </button>
 
 <mat-menu [xPosition]="'before'" #userActions="matMenu" class="absolute top-3 -right-2 py-0 bg-white">
-    <button mat-menu-item (click)="goToProfile()">
-        <mat-icon svgIcon="mdi:account" />
-        <span class="text-lg text-slate-900"> {{ 'Menu-Option.Profile' | transloco }} </span>
+    <button mat-menu-item (click)="handleShowUser()">
+        <mat-icon svgIcon="heroicons_outline:user-circle" />
+        <span class="text-slate-500"> {{ 'Menu-Option.Profile' | transloco }} </span>
     </button>
     <button *ngIf="user?.roles?.length > 1" mat-menu-item (click)="handleSwitchRole()">
         <mat-icon svgIcon="mdi:swap-horizontal" />

@@ -1,0 +1,53 @@
+.body
+.data {
+    height: calc(100dvh - 12rem) !important; // 56px(layout) + 32px(padding-y) + 56px(header) + 48px(pagination)
+    @apply overflow-auto px-4 #{'!important'};
+}
+
+
+.data {
+
+    .mat-mdc-header-cell {
+        font-size: 1rem !important;
+        padding: 0 !important;
+        color: #031D52 !important;
+        z-index: 10 !important;
+        padding: 0.5rem !important;
+        @apply dark:text-white #{'!important'};
+    }
+
+    .mat-mdc-cell {
+        padding: 0.5rem !important;
+    }
+
+    .mat-column-no {
+        min-width: 3.5rem;
+        width: 3.5rem;
+        max-width: 3.5rem;
+        text-align: center;
+    }
+
+    .mat-column-type {
+        min-width: 5rem;
+        width: 5rem;
+        max-width: 5rem;
+        text-align: center;
+    }
+
+    .mat-column-ip {
+        min-width: 20rem;
+        text-align: left;
+    }
+
+    .mat-column-date {
+        min-width: 8rem;
+        width: 8rem;
+        text-align: center;
+    }
+
+    .mat-column-time {
+        min-width: 8rem;
+        width: 8rem;
+        text-align: center;
+    }
+}

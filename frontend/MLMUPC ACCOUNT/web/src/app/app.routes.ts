@@ -32,7 +32,7 @@ export const appRoutes: Route[] = [
         canActivate: [NoAuthGuard],
         component : LayoutComponent,
         data      : { layout: 'empty' },
-        loadChildren: () => import('app/resources/r1-account/auth/auth.routes'),
+        loadChildren: () => import('app/resources/r1-account/a1-auth/auth.routes'),
     },
 
     // ─── Service down — NO guard, NO resolver ─────────────────────────────────
@@ -50,7 +50,7 @@ export const appRoutes: Route[] = [
         component   : LayoutComponent,
         data        : { layout: 'header' },
         resolve     : { initialData: initialDataResolver },
-        loadChildren: () => import('app/resources/r1-account/profile/routes'),
+        loadChildren: () => import('app/resources/r1-account/a2-profile/routes'),
     },
 
     // ─── User (authenticated, no navigation) ────────────────────────────────

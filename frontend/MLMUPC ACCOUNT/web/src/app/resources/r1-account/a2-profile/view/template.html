@@ -1,0 +1,116 @@
+<div mat-dialog-title class="w-full flex justify-between">
+
+    <span class="w-full text-2xl font-medium mr-10">{{"គណនី" | transloco}}</span>
+
+    <button mat-icon-button [mat-dialog-close]="false">
+        <mat-icon svgIcon="mat_outline:close"></mat-icon>
+    </button>
+</div>
+
+
+<mat-dialog-content class="dark:bg-background-dark-3 w-full h-[calc(100dvh-4.5rem)] pb-2 overflow-auto">
+    <section class="overflow-x-hidden">
+        <!-- ✅ COVER SECTION -->
+        <div class="relative w-full h-[15rem] group">
+            <img [src]="user?.banner ? (fileUrl + '/' + user?.banner) : 'images/background/background_banner.jpeg'"
+                alt="cover" class="w-full h-full object-cover" />
+
+            <!-- Cover hover icon -->
+            <div
+                class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity">
+                <mat-icon class="icon-size-24 text-white" svgIcon="mdi:upload"></mat-icon>
+            </div>
+
+            <!-- Cover file input -->
+            <input type="file" accept="image/*" (change)="openCroppedDialog($event, 2/1 , 'cover')"
+                class="absolute inset-0 opacity-0 cursor-pointer" />
+        </div>
+
+        <!-- ✅ LOGO SECTION (overlapping the bottom of cover) -->
+        <div class="relative w-36 h-36 -mt-20 ml-4 group ">
+            <img [src]="user?.avatar ? (fileUrl + '/' + user?.avatar) : 'images/avatars/avatar.jpeg'"
+                alt="logo" class="w-full h-full rounded-full object-cover border-2 border-white bg-slate-100" />
+
+            <!-- Logo hover icon -->
+            <div
+                class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
+                <mat-icon class="icon-size-20 text-white" svgIcon="mdi:upload"></mat-icon>
+            </div>
+
+            <!-- Logo file input -->
+            <input type="file" accept="image/*" (change)="openCroppedDialog($event , 1 , 'avatar' )"
+                class="absolute inset-0 opacity-0 cursor-pointer" />
+        </div>
+
+        <div class="flex items-center justify-between px-4 pt-2">
+            <div class="flex flex-col">
+
+
+                <span class="text-3xl text-gray-900  mt-2 font-medium"> {{user.name}}</span>
+                <!-- <div class="flex items-center gap-1.5 ">
+                    <mat-icon class="icon-size-4"
+                        [svgIcon]="user?.sex?.id === 1 ? 'mdi:gender-male' : 'mdi:gender-female'"></mat-icon>
+
+                </div> -->
+
+
+                <div class="flex items-center gap-2 leading-3 leadning mt-1">
+                    @if(user?.phone) {
+
+                    <div class="t flex items-center gap-1 mt-1 text-gray-500 ">
+                        <mat-icon svgIcon="mdi:phone-outline" class="icon-size-4"></mat-icon>
+                        <span class="text-[12px]">{{ user?.phone }}</span>
+                    </div>
+
+                    }
+
+                    @if(user?.email) {
+                    |
+                    <div class=" flex items-center gap-1 mt-1 text-gray-500 font-[16px]">
+                        <mat-icon svgIcon="mdi:email-outline" class="icon-size-4"></mat-icon>
+                        <span class="text-[12px]">{{ user?.email }}</span>
+                    </div>
+
+                    }
+
+                </div>
+
+            </div>
+            <div class="flex gap-2 items-center z-10">
+                <button class="px-2 bg-white rounded-full" (click)="updateProfile()" mat-icon-button>
+                    <mat-icon svgIcon="mdi:pencil-outline"></mat-icon>
+                </button>
+
+                <!-- <button class="px-2 bg-white rounded-full" (click)="openSettingDialog()" mat-icon-button>
+                    <mat-icon svgIcon="mdi:cog-outline"></mat-icon>
+                </button> -->
+            </div>
+        </div>
+
+        <div class="w-full grid grid-cols-2 gap-2 px-2 py-4">
+            <!-- <button mat-stroked-button class="bg-blue-900 hover:bg-blue-800/90 text-white">
+                <div class="gap-2 flex items-center">
+                    <mat-icon svgIcon="mdi:qrcode" class="text-white"></mat-icon>
+                    <span>{{"បង្ហាញ QR" | transloco}}</span>
+                </div>
+            </button> -->
+
+            <button mat-flat-button class="bg-primary text-white" (click)="openQrDialog()">
+                <div class="gap-2 flex items-center">
+                    <mat-icon svgIcon="mdi:qrcode" class="icon-size-5"></mat-icon>
+                    <span class="text-base">{{"បង្ហាញ QR" | transloco}}</span>
+                </div>
+            </button>
+
+            <button mat-stroked-button class="bg-slate-200 border-none " (click)="securityDialog()">
+                <div class="gap-2 flex items-center">
+                    <mat-icon svgIcon="mdi:shield-outline" ></mat-icon>
+                    <span>{{"សុវត្ថិភាព" | transloco}}</span>
+                </div>
+            </button>
+
+        </div>
+
+    </section>
+
+</mat-dialog-content>

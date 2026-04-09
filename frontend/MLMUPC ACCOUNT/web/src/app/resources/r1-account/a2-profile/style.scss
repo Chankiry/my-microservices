@@ -1,0 +1,113 @@
+.section {
+    width: 100%;
+    height: calc(100dvh - 3.5rem) !important; // 56px is header of layout
+    @apply overflow-hidden p-4 #{'!important'};
+
+    .container {
+        height: calc(100dvh - 5.5rem) !important; // 56px(layout) + 32px(padding-y) is 88px
+        @apply bg-white dark:bg-opacity-5 rounded-xl overflow-hidden #{'!important'};
+
+        // shared-header-section: have h-14 is 56px
+        .body {
+            height: calc(100dvh - 5.5rem) !important; // 56px(layout) + 32px(padding-y) + 56px is 144px
+            @apply overflow-hidden flex #{'!important'};
+        }
+    }
+}
+
+::ng-deep .shared-header-section {
+    @apply pl-2 md:pl-4 #{'!important'};
+}
+
+::ng-deep .body {
+    helper-navigation {
+        .helper-navigation-wrapper {
+            background: white !important;
+        }
+
+        /* Navigation items common */
+        helper-navigation-basic-item,
+        helper-navigation-collapsable-item,
+        helper-navigation-group-item {
+            .helper-navigation-item-wrapper {
+                .helper-navigation-item {
+                    color: currentColor;
+
+                    .helper-navigation-item-icon {
+                        @apply text-current opacity-60;
+                    }
+
+                    .helper-navigation-item-title-wrapper {
+                        .helper-navigation-item-title {
+                            @apply text-current opacity-80;
+                        }
+                    }
+                }
+            }
+        }
+
+        /* Basic, Collapsable */
+        helper-navigation-basic-item,
+        helper-navigation-collapsable-item {
+            >.helper-navigation-item-wrapper {
+                .helper-navigation-item {
+
+                    /* Active state */
+                    &:not(.helper-navigation-item-disabled) {
+
+                        &.helper-navigation-item-active,
+                        &.helper-navigation-item-active-forced {
+                            @apply bg-gray-800 bg-opacity-5 dark:bg-white dark:bg-opacity-12;
+
+                            .helper-navigation-item-icon {
+                                @apply opacity-100 text-[#000]/85;
+                            }
+
+                            .helper-navigation-item-title {
+                                @apply opacity-100 text-[#000]/85;
+                            }
+                        }
+                    }
+
+                    /* Hover state */
+                    &:not(.helper-navigation-item-active-forced):not(.helper-navigation-item-active):not(.helper-navigation-item-disabled) {
+                        &:hover {
+                            @apply bg-gray-800 bg-opacity-5 dark:bg-white dark:bg-opacity-12;
+
+                            .helper-navigation-item-icon {
+                                @apply opacity-100 text-[#000]/85;
+                            }
+
+                            .helper-navigation-item-title,
+                            .helper-navigation-item-arrow {
+                                @apply opacity-100 text-[#000]/85;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+}
+
+.side-nav {
+    // class overwrite from direct navbar with new
+
+
+    --helpers-navigation-background: transparent;
+    // background-color: var(--helpers-navigation-background);\
+    --helper-navigation-text-color   : #000;
+    --helpers-nav-bg-active          : rgba(0, 0, 0, 0.04);
+    --helpers-nav-text-active        : #000;
+    --heleprs-nav-text               : #000;
+    --helpers-nav-text               : #000;
+
+}
+
+@media screen and (max-width: 768px) {
+    .side-nav {
+        --helpers-navigation-background: white;
+
+    }
+}

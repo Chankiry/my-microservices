@@ -1,0 +1,70 @@
+<div class="flex flex-col w-full min-w-[360px] max-w-[420px]">
+
+    <!-- Header -->
+    <div class="px-5 flex items-center justify-between h-16 border-b border-slate-200">
+        <div class="flex items-center gap-3">
+            <img [src]="getLogoUrl()" alt="logo" class="w-8 h-8 object-contain rounded">
+            <span class="text-lg font-semibold text-gray-900">ភ្ជាប់ {{ system.name_kh }}</span>
+        </div>
+        <button mat-icon-button (click)="close()" [disabled]="isLoading">
+            <mat-icon svgIcon="mdi:close"></mat-icon>
+        </button>
+    </div>
+
+    <!-- Body -->
+    <div class="px-5 py-6 flex flex-col gap-4">
+
+        <p class="text-sm text-gray-600">
+            បញ្ចូលព័ត៌មានចូលប្រព័ន្ធ <strong>{{ system.name_kh }}</strong> ដើម្បីភ្ជាប់គណនីរបស់អ្នក។
+        </p>
+
+        <form [formGroup]="form" class="flex flex-col gap-3" (ngSubmit)="submit()">
+
+            <!-- Username -->
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>ឈ្មោះអ្នកប្រើ</mat-label>
+                <input matInput formControlName="username" autocomplete="off">
+                <mat-icon matSuffix svgIcon="mdi:account-outline"></mat-icon>
+                <mat-error *ngIf="form.get('username')?.hasError('required')">
+                    សូមបញ្ចូលឈ្មោះអ្នកប្រើ
+                </mat-error>
+            </mat-form-field>
+
+            <!-- Password -->
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>ពាក្យសម្ងាត់</mat-label>
+                <input matInput formControlName="password"
+                       [type]="hidePassword ? 'password' : 'text'"
+                       autocomplete="current-password">
+                <button type="button" mat-icon-button matSuffix (click)="hidePassword = !hidePassword">
+                    <mat-icon [svgIcon]="hidePassword ? 'mdi:eye-off' : 'mdi:eye'"></mat-icon>
+                </button>
+                <mat-error *ngIf="form.get('password')?.hasError('required')">
+                    សូមបញ្ចូលពាក្យសម្ងាត់
+                </mat-error>
+            </mat-form-field>
+
+        </form>
+
+        <!-- Approval note -->
+        <p *ngIf="system.require_approval" class="text-xs text-amber-600 flex items-start gap-1">
+            <mat-icon svgIcon="mdi:information-outline" class="w-4 h-4 flex-shrink-0 mt-0.5"></mat-icon>
+            ការភ្ជាប់នេះត្រូវការការអនុម័តពីអ្នកគ្រប់គ្រង
+        </p>
+    </div>
+
+    <!-- Footer -->
+    <div class="px-5 pb-5 flex items-center justify-end gap-3">
+        <button mat-stroked-button (click)="close()" [disabled]="isLoading">
+            បោះបង់
+        </button>
+        <button mat-flat-button class="bg-[#0C7EA5] text-white"
+                (click)="submit()"
+                [disabled]="form.invalid || isLoading">
+            <mat-progress-spinner *ngIf="isLoading" diameter="18" mode="indeterminate" class="mr-2">
+            </mat-progress-spinner>
+            {{ isLoading ? 'កំពុងភ្ជាប់...' : 'ភ្ជាប់' }}
+        </button>
+    </div>
+
+</div>

@@ -1,0 +1,60 @@
+<div class="w-full flex flex-col">
+
+    <!-- isLoading -->
+    <ng-container *ngIf="isLoading; else content">
+        <div class="flex flex-col gap-8 justify-center items-center h-full">
+            <mat-progress-spinner [diameter]="128" [mode]="'indeterminate'"></mat-progress-spinner>
+            <span class="text-slate-500 text-3xl font-semibold">កំពុងទាញយកទិន្នន័យ...</span>
+        </div>
+    </ng-container>
+
+    <!-- !isLoading -->
+    <ng-template #content>
+        <!-- Body -->
+        <div class="body">
+
+            <!-- Info -->
+            <div class="flex flex-col items-center gap-2 p-4">
+
+                <!-- Action -->
+                <div class="w-full flex justify-end items-center gap-2">
+                    <button class="p-2" mat-icon-button (click)="updatePassword()">
+                        <mat-icon svgIcon="mdi:lock-outline"></mat-icon>
+                    </button>
+                    <button class="p-2" mat-icon-button (click)="updateProfile()">
+                        <mat-icon svgIcon="feather:edit"></mat-icon>
+                    </button>
+                </div>
+
+                <div class="max-w-32 w-32 h-32 flex justify-center">
+                    <img class="border-2 w-32 h-32 border-gray-500 object-cover rounded-full"
+                        [src]="fileUrl+ '/' + user?.avatar" alt="Profile Image">
+                </div>
+
+                <span class="leading-[56px] text-3xl font-medium text-slate-900"> {{ user?.name }} </span>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+                    <div class="flex flex-row justify-center gap-2">
+                        <mat-icon svgIcon="mdi:cellphone"></mat-icon>
+                        <span class="text-gray-500"> {{ user?.phone }} </span>
+                    </div>
+
+                    <div class="flex flex-row justify-center gap-2">
+                        <mat-icon svgIcon="mdi:email-outline"></mat-icon>
+                        <span class="text-gray-500"> {{ user?.email }} </span>
+                    </div>
+
+                    <div class="flex flex-row justify-center gap-2">
+                        <mat-icon svgIcon="mdi:calendar-blank-outline"></mat-icon>
+                        <span class="text-gray-500"> {{ user?.created_at | date: 'dd LLL YYY' }} </span>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    </ng-template>
+
+</div>

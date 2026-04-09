@@ -1,0 +1,36 @@
+<section class="section">
+    <div class="container" @fadeInCustom>
+
+        <!-- Header  -->
+        <div class="shared-header-section">
+
+            <!-- Breadcrumb -->
+            <div class="flex items-center gap-3 font-medium">
+
+                <button class="block md:hidden pt-1" mat-icon-button (click)="toggleNavigation('subNavigation')">
+                    <mat-icon [svgIcon]="'heroicons_outline:bars-3'"></mat-icon>
+                </button>
+
+                <span class="text-2xl font-semibold"> {{ user?.name_en }} </span>
+
+            </div>
+
+        </div>
+
+        <!-- Body  -->
+        <div class="body">
+            <!-- Navigation -->
+            <helper-navigation class="md:bg-transparent mt-2 bg-white side-nav" appearance="default" [mode]="isScreenSmall ? 'over' : 'side'"
+                [name]="'subNavigation'"  [opened]="!isScreenSmall">
+            </helper-navigation>
+
+            <div class="flex grow flex-col border-l">
+                @if(true){
+                    <router-outlet></router-outlet>
+                }
+            </div>
+
+        </div>
+
+    </div>
+</section>

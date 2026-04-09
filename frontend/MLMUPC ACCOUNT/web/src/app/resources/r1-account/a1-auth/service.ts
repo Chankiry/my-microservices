@@ -3,6 +3,7 @@ import { HttpClient }       from '@angular/common/http';
 import { Observable }       from 'rxjs';
 import { tap }              from 'rxjs/operators';
 import { AuthService as CoreAuthService } from 'app/core/auth/auth.service';
+import { env }              from 'envs/env';
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
 
@@ -41,10 +42,10 @@ export interface RedirectParams {
 @Injectable({ providedIn: 'root' })
 export class ResourceAuthService {
 
-    private readonly AUTH_BASE    = `http://localhost:8000/api/v1/account/auth`;
-    private readonly PROFILE_BASE = `http://localhost:8000/api/v1/account/profile`;
+    // FIX: was hardcoded http://localhost:8000 — now uses env
+    private readonly AUTH_BASE    = `${env.API_BASE_URL}/v1/account/auth`;
+    private readonly PROFILE_BASE = `${env.API_BASE_URL}/v1/account/profile`;
 
-    // Pending redirect stored during login flow
     private _pendingRedirect: RedirectParams | null = null;
 
     constructor(
@@ -93,22 +94,8 @@ export class ResourceAuthService {
 
     // ─── Redirect login helpers ───────────────────────────────────────────────
 
-    // NOTE: redirect params are read from ActivatedRoute in sign-in component.
-    // This method kept for compatibility — returns null.
-    readRedirectFromUrl(): RedirectParams | null {
-        return null;
-    }
-
     setPendingRedirect(params: RedirectParams): void {
         this._pendingRedirect = params;
-    }
-
-    // ─── GET /account/profile/me ─────────────────────────────────────────────
-    // Lightweight call — returns user fields + roles[].
-    // Used after login to determine navigation target.
-
-    getMe(): Observable<any> {
-        return this._http.get<any>(`${this.PROFILE_BASE}/me`);
     }
 
     getPendingRedirect(): RedirectParams | null {
@@ -123,6 +110,14 @@ export class ResourceAuthService {
         return !!this._pendingRedirect;
     }
 
+    // ─── Profile endpoints ────────────────────────────────────────────────────
+
+    // Lightweight — returns user info + platform roles[].
+    // Used after login to determine navigation target.
+    getMe(): Observable<any> {
+        return this._http.get<any>(`${this.PROFILE_BASE}/me`);
+    }
+
     validateRedirect(params: RedirectParams): Observable<any> {
         return this._http.post<any>(
             `${this.PROFILE_BASE}/redirect/validate`,
@@ -130,7 +125,7 @@ export class ResourceAuthService {
                 system_id   : params.system_id,
                 redirect_uri: params.redirect_uri,
                 action      : params.action,
-            }
+            },
         );
     }
 
@@ -140,9 +135,6 @@ export class ResourceAuthService {
         username    : string;
         password    : string;
     }): Observable<any> {
-        return this._http.post<any>(
-            `${this.PROFILE_BASE}/redirect/link`, params
-        );
+        return this._http.post<any>(`${this.PROFILE_BASE}/redirect/link`, params);
     }
-
 }

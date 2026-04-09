@@ -210,23 +210,23 @@ export class AuthSignInComponent implements OnInit {
 
     // ─── Login — saved account password confirm ───────────────────────────────
 
-  confirmPassword(): void {
-      if (this.passwordForm.invalid || this.isLoading || !this.selectedAccount) return;
-      this.isLoading = true;
-      this.passwordForm.disable();
+    confirmPassword(): void {
+        if (this.passwordForm.invalid || this.isLoading || !this.selectedAccount) return;
+        this.isLoading = true;
+        this.passwordForm.disable();
 
-      this._authService.login({
-          phone   : this.selectedAccount.phone,
-          password: this.passwordForm.value.password,
-      }).subscribe({
-          next : res => this._saveAndProceed(res, this.selectedAccount!.phone),
-          error: err => {
-              this.isLoading = false;
-              this.passwordForm.enable();
-              this._errorHandleService.handleHttpError(err);
-          },
-      });
-  }
+        this._authService.login({
+            phone   : this.selectedAccount.phone,
+            password: this.passwordForm.value.password,
+        }).subscribe({
+            next : res => this._saveAndProceed(res, this.selectedAccount!.phone),
+            error: err => {
+                this.isLoading = false;
+                this.passwordForm.enable();
+                this._errorHandleService.handleHttpError(err);
+            },
+        });
+    }
 
     // ─── Link account (Phase 8) ───────────────────────────────────────────────
 
@@ -244,7 +244,7 @@ export class AuthSignInComponent implements OnInit {
             next: res => {
                 this._authService.clearPendingRedirect();
                 this._snackBarService.openSnackBar(res.message, GlobalConstants.success);
-                window.location.href = res.redirect_url;
+                window.location.href = res.data.redirect_url;
             },
             error: err => {
                 this.isLinking = false;
@@ -287,7 +287,7 @@ export class AuthSignInComponent implements OnInit {
             this._authService.validateRedirect(pending).subscribe({
                 next: res => {
                     this._authService.clearPendingRedirect();
-                    window.location.href = res.redirect_url;
+                    window.location.href = res.data.redirect_url;
                 },
                 error: err => {
                     this.isLoading = false;

@@ -1,0 +1,75 @@
+<div class="flex flex-col w-full min-w-[360px] max-w-[420px]">
+
+    <!-- Header -->
+    <div class="px-5 flex items-center justify-between h-16 border-b border-slate-200">
+        <div class="flex items-center gap-2">
+            <mat-icon svgIcon="mdi:lock-outline" class="text-[#0C7EA5]"></mat-icon>
+            <span class="text-lg font-semibold text-gray-900">ប្ដូរពាក្យសម្ងាត់</span>
+        </div>
+        <button mat-icon-button (click)="close()" [disabled]="isLoading">
+            <mat-icon svgIcon="mdi:close"></mat-icon>
+        </button>
+    </div>
+
+    <!-- Body -->
+    <div class="px-5 py-6 flex flex-col gap-4">
+
+        <form [formGroup]="form" class="flex flex-col gap-3" (ngSubmit)="submit()">
+
+            <!-- New password -->
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>ពាក្យសម្ងាត់ថ្មី</mat-label>
+                <input matInput formControlName="new_password"
+                       [type]="hideNew ? 'password' : 'text'"
+                       autocomplete="new-password">
+                <button type="button" mat-icon-button matSuffix (click)="hideNew = !hideNew">
+                    <mat-icon [svgIcon]="hideNew ? 'mdi:eye-off' : 'mdi:eye'"></mat-icon>
+                </button>
+                <mat-error *ngIf="form.get('new_password')?.hasError('required')">
+                    សូមបញ្ចូលពាក្យសម្ងាត់ថ្មី
+                </mat-error>
+                <mat-error *ngIf="form.get('new_password')?.hasError('minlength')">
+                    ពាក្យសម្ងាត់ត្រូវមានយ៉ាងតិច ៨ តួអក្សរ
+                </mat-error>
+            </mat-form-field>
+
+            <!-- Confirm password -->
+            <mat-form-field appearance="outline" class="w-full">
+                <mat-label>បញ្ជាក់ពាក្យសម្ងាត់</mat-label>
+                <input matInput formControlName="confirm_password"
+                       [type]="hideConf ? 'password' : 'text'"
+                       autocomplete="new-password">
+                <button type="button" mat-icon-button matSuffix (click)="hideConf = !hideConf">
+                    <mat-icon [svgIcon]="hideConf ? 'mdi:eye-off' : 'mdi:eye'"></mat-icon>
+                </button>
+                <mat-error *ngIf="form.get('confirm_password')?.hasError('required')">
+                    សូមបញ្ជាក់ពាក្យសម្ងាត់
+                </mat-error>
+                <mat-error *ngIf="form.hasError('mismatch') && !form.get('confirm_password')?.hasError('required')">
+                    ពាក្យសម្ងាត់មិនត្រូវគ្នា
+                </mat-error>
+            </mat-form-field>
+
+        </form>
+
+        <p class="text-xs text-gray-500 flex items-start gap-1">
+            <mat-icon svgIcon="mdi:information-outline" class="w-4 h-4 flex-shrink-0 mt-0.5"></mat-icon>
+            ពាក្យសម្ងាត់ថ្មីត្រូវមានយ៉ាងតិច ៨ តួអក្សរ
+        </p>
+    </div>
+
+    <!-- Footer -->
+    <div class="px-5 pb-5 flex items-center justify-end gap-3">
+        <button mat-stroked-button (click)="close()" [disabled]="isLoading">
+            បោះបង់
+        </button>
+        <button mat-flat-button class="bg-[#0C7EA5] text-white"
+                (click)="submit()"
+                [disabled]="form.invalid || isLoading">
+            <mat-progress-spinner *ngIf="isLoading" diameter="18" mode="indeterminate" class="mr-2">
+            </mat-progress-spinner>
+            {{ isLoading ? 'កំពុងរក្សាទុក...' : 'រក្សាទុក' }}
+        </button>
+    </div>
+
+</div>

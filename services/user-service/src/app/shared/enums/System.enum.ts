@@ -14,8 +14,8 @@ export enum PLTRoleIdEnum {
 }
 
 export enum SystemEnum {
-    ACCOUNT_SYSTEM = 'mlmupc-account-system',
-    PLT           = 'plt',
+    ACCOUNT_SYSTEM  = 'mlmupc-account-system',
+    PLT             = 'plt',
 }
 
 export enum UserSystemAccessRegistrationStatusEnum {
